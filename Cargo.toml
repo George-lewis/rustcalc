@@ -1,9 +1,10 @@
 [package]
 name = "rustmatheval"
 version = "0.1.0"
-authors = ["George"]
+authors = ["George-Lewis <georgejeffreylewis@gmail.com>"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "A library for evaluating mathematical statements"
+license = "MIT"
 
 [dependencies]
+# None!
