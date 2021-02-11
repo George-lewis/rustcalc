@@ -1,3 +1,8 @@
-pub fn slice(s: &str, a: usize, b: usize) -> String {
-    s.chars().skip(a).take(b - a).collect()
+pub fn slice(s: &str, a: usize, b: i64) -> String {
+    let last = if b > 0 {
+        (b as usize) - a
+    } else {
+        s.chars().count() - (b.abs() as usize)
+    };
+    s.chars().skip(a).take(last).collect()
 }
