@@ -6,18 +6,25 @@ pub enum Associativity {
 
 #[derive(Clone)]
 pub struct Operator {
-    repr: &'static [&'static str],
+    pub repr: &'static [&'static str],
     pub precedence: i8,
     pub associativity: Associativity,
     pub arity: i8,
     pub doit: fn(&Vec<f64>) -> f64
 }
 
+fn factorial(x: f64) -> f64 {
+    if  x > 1.0 {
+        return x * factorial(x - 1.0);
+    }
+    x
+}
+
 static OPERATORS: &[Operator] = &[
     Operator { repr: &["+", "add", "plus"], precedence: 1, associativity: Associativity::LEFT, arity: 2, doit: |arr| arr[0] + arr[1] },
     Operator { repr: &["-", "sub", "minus"], precedence: 1, associativity: Associativity::LEFT, arity: 2, doit: |arr| arr[0] - arr[1] },
-    Operator { repr: &["*", "times", "×", "⋅"], precedence: 2, associativity: Associativity::LEFT, arity: 2, doit: |arr| arr[0] * arr[1] },
-    Operator { repr: &["/", "over", "divide", "÷"], precedence: 2, associativity: Associativity::LEFT, arity: 2, doit: |arr| arr[0] / arr[1] },
+    Operator { repr: &["×", "*", "times", "⋅", "mul"], precedence: 2, associativity: Associativity::LEFT, arity: 2, doit: |arr| arr[0] * arr[1] },
+    Operator { repr: &["÷", "/", "over", "divide", "div"], precedence: 2, associativity: Associativity::LEFT, arity: 2, doit: |arr| arr[0] / arr[1] },
     Operator { repr: &["^", "exp", "pow"], precedence: 3, associativity: Associativity::RIGHT, arity: 2, doit: |arr| arr[0].powf(arr[1]) },
     Operator { repr: &["%", "mod"], precedence: 3, associativity: Associativity::LEFT, arity: 2, doit: |arr| arr[0] % arr[1] },
     Operator { repr: &["sin"], precedence: 4, associativity: Associativity::RIGHT, arity: 1, doit: |arr| arr[0].sin() },
@@ -25,7 +32,8 @@ static OPERATORS: &[Operator] = &[
     Operator { repr: &["tan"], precedence: 4, associativity: Associativity::RIGHT, arity: 1, doit: |arr| arr[0].tan() },
     Operator { repr: &["max"], precedence: 4, associativity: Associativity::RIGHT, arity: 2, doit: |arr| arr[0].max(arr[1]) },
     Operator { repr: &["min"], precedence: 4, associativity: Associativity::RIGHT, arity: 2, doit: |arr| arr[0].min(arr[1]) },
-    Operator { repr: &["sqrt", "root"], precedence: 4, associativity: Associativity::RIGHT, arity: 1, doit: |arr| arr[0].sqrt() },
+    Operator { repr: &["√", "sqrt", "root"], precedence: 4, associativity: Associativity::RIGHT, arity: 1, doit: |arr| arr[0].sqrt() },
+    Operator { repr: &["!"], precedence: 4, associativity: Associativity::RIGHT, arity: 1, doit: |arr| factorial(arr[0]) },
 ];
 
 impl Operator {
@@ -41,13 +49,13 @@ impl Operator {
     }
 }
 pub struct Constant {
-    repr: &'static [&'static str],
+    pub repr: &'static [&'static str],
     pub value: f64
 }
 
 static CONSTANTS: &[Constant] = &[
-    Constant { repr: &["pi", "π"], value: std::f64::consts::PI },
-    Constant { repr: &["tau", "τ"], value: std::f64::consts::TAU },
+    Constant { repr: &["π", "pi"], value: std::f64::consts::PI },
+    Constant { repr: &["τ", "tau"], value: std::f64::consts::TAU },
     Constant { repr: &["e"], value: std::f64::consts::E }
 ];
 
