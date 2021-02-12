@@ -5,6 +5,8 @@ use std::{io::Write};
 
 use tokens::*;
 
+use colored::*;
+
 // mod operators;
 mod utils;
 mod tokens;
@@ -40,7 +42,7 @@ fn main() {
 
     loop {
 
-        print!("Please input a statement: ");
+        print!("> ");
         std::io::stdout().flush().ok().unwrap();
 
         let mut input = String::new();
@@ -73,11 +75,18 @@ fn main() {
         //     println!("[{}] = [{}] => [{:.5}] = [{:.5}]; equal: {}", left, right.to_string(), lr, rr, (lr - rr).abs() < 0.01);
         // } else {
 
-        let (x, repr) = doeval(input);
+        let (x, repr) = match doeval(&input) {
+            Ok((a, b)) => (a, b),
+            Err(idx) => {
+                println!("{} to {}, {} to {}", 0, idx, idx + 1, input.chars().count());
+                println!("Couldn't parse the token at index [{}]\n{}{}{}\n{}{}", idx.to_string().red(), utils::slice(&input, 0, (idx) as i64), input.chars().nth(idx).unwrap().to_string().on_red().white(), utils::slice(&input, idx + 1, -0), "~".repeat(idx).red(), "^".red());
+                continue;
+            }
+        };
 
         let formatted = stringify(&repr);
 
-        println!("[{}] => {:.3}", formatted, x);
+        println!("[ {} ] => {:.3}", formatted.blue(), x.to_string().bright_green());
 
         // }
 
@@ -89,7 +98,7 @@ fn next_num(string: &str) -> String {
     string.chars().take_while(|c| NUMBER_CHARACTERS.contains(c)).collect::<String>()
 }
 
-fn tokenize(string: &str) -> Vec<Token> {
+fn tokenize(string: &str) -> Result<Vec<Token>, usize> {
     let mut vec: Vec<Token> = Vec::new();
     let mut idx = 0;
 
@@ -117,7 +126,7 @@ fn tokenize(string: &str) -> Vec<Token> {
             coeff = false;
         }
         // println!("[{}] is A [{:?}]", &slice, 0);
-        match _type(&slice) {
+        match _type(&slice, idx)? {
             TokenType::OPERATOR => {
                 let (op, s) = Operator::by_repr(&slice).expect("Not an operator");
 
@@ -145,12 +154,12 @@ fn tokenize(string: &str) -> Vec<Token> {
         }
     }
     // println!("tokens {:?}", vec.iter().map(|t| &t.value).cloned().collect::<Vec<String>>());
-    vec
+    Ok(vec)
 }
 
-fn _type(s: &str) -> TokenType {
+fn _type(s: &str, idx: usize) -> Result<TokenType, usize> {
     let c = &s.chars().nth(0).unwrap();
-    if NUMBER_CHARACTERS.contains(c) {
+    Ok(if NUMBER_CHARACTERS.contains(c) {
         TokenType::NUMBER
     } else if Operator::is(s) {
         TokenType::OPERATOR
@@ -159,8 +168,8 @@ fn _type(s: &str) -> TokenType {
     } else if Constant::is(s) {
         TokenType::CONSTANT
     } else {
-        panic!("NOT A VALID TOKEN");
-    }
+        return Err(idx);
+    })
 }
 
 fn rpn(tokens: Vec<Token>) -> Vec<Token> {
@@ -271,7 +280,7 @@ fn rpn(tokens: Vec<Token>) -> Vec<Token> {
 fn eval(_k: Vec<Token>) -> f64 {
     let mut k: Vec<Token> = _k.iter().rev().cloned().collect();
     let mut args: Vec<f64> = Vec::new(); 
-    println!("tokens : {:?}", k);
+    // println!("tokens : {:?}", k);
     while k.len() > 0 {
         let token = k.pop().unwrap();
 
@@ -302,13 +311,13 @@ fn eval(_k: Vec<Token>) -> f64 {
     }
 }
 
-fn doeval(string: String) -> (f64, Vec<Token>) {
-    let tokens = tokenize(&string);
+fn doeval(string: &str) -> Result<(f64, Vec<Token>), usize> {
+    let tokens = tokenize(&string)?;
     // let mut constants = tokens.clone();
     // process_constants(&mut constants);
     let rpn = rpn(tokens.clone());
     let result = eval(rpn);
-    (result, tokens)
+    Ok((result, tokens))
 }
 
 fn stringify(tokens: &Vec<Token>) -> String {
