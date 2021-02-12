@@ -1,10 +1,11 @@
 use core::panic;
-use std::{io::Write};
+use std::{fmt::{Debug, Display}, io::Write, process::exit};
 
 // use operators::{Associativity, Operator};
 
 use tokens::*;
 
+// #[cfg(feature = "color")]
 use colored::*;
 
 // mod operators;
@@ -16,6 +17,12 @@ mod tokens;
 static NUMBER_CHARACTERS: [char; 11] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'];
 static PAREN_CHARACTERS: [char; 2] = ['(', ')'];
 
+enum RMEError {
+    ParseError(usize),
+    OperandError(OperatorType),
+    EmptyStack
+}
+
 #[derive(Clone, Debug, PartialEq)]
 enum TokenType {
     NUMBER,
@@ -23,18 +30,6 @@ enum TokenType {
     PAREN,
     CONSTANT
 }
-
-// #[derive(Clone, Debug)]
-// struct Token {
-//     value: String,
-//     kind: TokenType
-// }
-
-// impl Display for Token {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         write!(f, "({})", self.value)
-//     }
-// }
 
 fn main() {
 
@@ -63,6 +58,10 @@ fn main() {
             continue;
         }
 
+        if input.to_lowercase() == "quit" {
+            exit(0);
+        }
+
         // if input.contains("=") {
         //     // println!("splitting");
         //     // let (left, right) = input.split_at(input.find("=").unwrap());
@@ -77,16 +76,31 @@ fn main() {
 
         let (x, repr) = match doeval(&input) {
             Ok((a, b)) => (a, b),
-            Err(idx) => {
-                println!("{} to {}, {} to {}", 0, idx, idx + 1, input.chars().count());
-                println!("Couldn't parse the token at index [{}]\n{}{}{}\n{}{}", idx.to_string().red(), utils::slice(&input, 0, (idx) as i64), input.chars().nth(idx).unwrap().to_string().on_red().white(), utils::slice(&input, idx + 1, -0), "~".repeat(idx).red(), "^".red());
+            Err(e) => {
+                match e {
+                    RMEError::ParseError(idx) => {
+                        let first = if idx > 0 {
+                            utils::slice(&input, 0, (idx) as i64)
+                        } else {
+                            "".to_string()
+                        };
+                        println!("Couldn't parse the token at index [{}]\n{}{}{}\n{}{}", idx.to_string().red(), first, input.chars().nth(idx).unwrap().to_string().on_red().white(), utils::slice(&input, idx + 1, -0), "~".repeat(idx).red().bold(), "^".red());
+                    }
+                    RMEError::OperandError(kind) => {
+                        println!("Couldn't evaluate. Operator [{}] requires an operand", format!("{:?}", kind).green());
+                    }
+                    RMEError::EmptyStack => {
+                        // println!("Unknown problem causing the s")
+                    }
+                }
+                
                 continue;
             }
         };
 
-        let formatted = stringify(&repr);
+        let formatted = stringify_color(&repr, color_cli);
 
-        println!("[ {} ] => {:.3}", formatted.blue(), x.to_string().bright_green());
+        println!("[ {} ] => {}", formatted, format!("{:.3}", x).blue());
 
         // }
 
@@ -98,10 +112,9 @@ fn next_num(string: &str) -> String {
     string.chars().take_while(|c| NUMBER_CHARACTERS.contains(c)).collect::<String>()
 }
 
-fn tokenize(string: &str) -> Result<Vec<Token>, usize> {
+fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
     let mut vec: Vec<Token> = Vec::new();
     let mut idx = 0;
-
     let mut coeff = false;
     while idx < string.chars().count() {
         let c = string.chars().nth(idx).unwrap();
@@ -112,21 +125,22 @@ fn tokenize(string: &str) -> Result<Vec<Token>, usize> {
         }
         let slice = utils::slice(string,idx, -0);
         if coeff {
-            // match _type(&c) {
-            //     TokenType::NUMBER | TokenType::CONSTANT | TokenType::PAREN => {
-                    if c != ')' {//&& Operator::which_operator(c.to_string().as_str()).cloned().map_or(0, |op| op.arity) < 2 {\
-                        let opt = Operator::by_repr(&slice);
-                        if opt.map_or(0, |(op, _)| op.arity) < 2 {
-                            vec.push(Token::Operator { kind: OperatorType::Mul });
-                        }
-                    }
-                // },
-                // _ => {}
-            
+            if c != ')' {
+                let opt = Operator::by_repr(&slice);
+                if opt.map_or(true, |(op, _)| op.associativity != Associativity::Left) {
+                    vec.push(Token::Operator { kind: OperatorType::Mul });
+                }
+            }
             coeff = false;
         }
         // println!("[{}] is A [{:?}]", &slice, 0);
-        match _type(&slice, idx)? {
+        let kind = match _type(&slice) {
+            Ok(k) => k,
+            Err(_) => {
+                return Err(RMEError::ParseError(idx));
+            }
+        };
+        match kind {
             TokenType::OPERATOR => {
                 let (op, s) = Operator::by_repr(&slice).expect("Not an operator");
 
@@ -134,7 +148,9 @@ fn tokenize(string: &str) -> Result<Vec<Token>, usize> {
                 vec.push(Token::Operator { kind: op.kind });
             },
             TokenType::PAREN => {
-                vec.push(Token::paren(c));
+                let (t, kind) = Token::paren(c);
+                coeff = kind == ParenType::Right;
+                vec.push(t);
                 idx += 1;
             },
             TokenType::NUMBER => {
@@ -157,7 +173,7 @@ fn tokenize(string: &str) -> Result<Vec<Token>, usize> {
     Ok(vec)
 }
 
-fn _type(s: &str, idx: usize) -> Result<TokenType, usize> {
+fn _type(s: &str) -> Result<TokenType, ()> {
     let c = &s.chars().nth(0).unwrap();
     Ok(if NUMBER_CHARACTERS.contains(c) {
         TokenType::NUMBER
@@ -168,7 +184,7 @@ fn _type(s: &str, idx: usize) -> Result<TokenType, usize> {
     } else if Constant::is(s) {
         TokenType::CONSTANT
     } else {
-        return Err(idx);
+        return Err(());
     })
 }
 
@@ -244,15 +260,6 @@ fn rpn(tokens: Vec<Token>) -> Vec<Token> {
 
 }
 
-// fn process_constants(tokens: &mut Vec<Token>) {
-//     for token in tokens.iter_mut() {
-//         if let Token::Constant{ kind } = token {
-//             let constant = Constant::by_type(*kind);
-//             *token = Token::Number { value: constant.value };
-//         }
-//     }
-// }
-
 // fn process_unary(tokens: &Vec<Token>) -> Vec<Token> {
 //     let mut out: Vec<Token> = tokens.clone();
 //     for (idx, token) in out.iter_mut().enumerate() {
@@ -277,7 +284,7 @@ fn rpn(tokens: Vec<Token>) -> Vec<Token> {
 //     out
 // }
 
-fn eval(_k: Vec<Token>) -> f64 {
+fn eval(_k: Vec<Token>) -> Result<f64, RMEError> {
     let mut k: Vec<Token> = _k.iter().rev().cloned().collect();
     let mut args: Vec<f64> = Vec::new(); 
     // println!("tokens : {:?}", k);
@@ -296,7 +303,10 @@ fn eval(_k: Vec<Token>) -> f64 {
                 let op = Operator::by_type(kind);
                 let mut argg: Vec<f64> = Vec::new();
                 for _ in 0..op.arity {
-                    argg.push(args.pop().unwrap());
+                    match args.pop() {
+                        Some(e) => argg.push(e),
+                        None => return Err(RMEError::OperandError(op.kind))
+                    };
                 }
                 let result = (op.doit)(&argg.iter().rev().cloned().collect());
                 k.push(Token::Number { value: result });
@@ -305,62 +315,123 @@ fn eval(_k: Vec<Token>) -> f64 {
         }
     }
     if k.len() == 0 {
-        return args[0];
+        return Ok(args[0]);
     } else {
-        return std::f64::NAN;
+        return Ok(std::f64::NAN);
     }
 }
 
-fn doeval(string: &str) -> Result<(f64, Vec<Token>), usize> {
+fn doeval(string: &str) -> Result<(f64, Vec<Token>), RMEError> {
     let tokens = tokenize(&string)?;
+    // println!("Tokens: {:?}", tokens);
     // let mut constants = tokens.clone();
     // process_constants(&mut constants);
     let rpn = rpn(tokens.clone());
-    let result = eval(rpn);
+    let result = eval(rpn)?;
     Ok((result, tokens))
 }
 
-fn stringify(tokens: &Vec<Token>) -> String {
-    let mut out = String::new();
+fn color_cli(string: &str, token: &Token) -> Box<dyn Display> {
+    Box::new(match token {
+        Token::Number{..} => string.clear(),
+        Token::Operator{ kind } => {
+            let op = Operator::by_type(*kind);
+            if op.associativity == Associativity::Left {
+                string.green().bold()
+            } else {
+                string.blue().bold()
+            }
+        },
+        Token::Paren{..} => string.magenta(),
+        Token::Constant{..} => string.yellow()
+    })
+}
+
+fn color_html(string: &str, token: &Token) -> Box<dyn Display> {
+    let code = match token {
+        Token::Number {..} => "red",
+        Token::Operator {..} => "blue",
+        Token::Paren {..} => "green",
+        Token::Constant {..} => "orange",
+    };
+    Box::new(format!("<span style=\"color: {}\">{}</span>", code, string))
+}
+
+fn stringify_color<F>(tokens: &Vec<Token>, f: F) -> String
+    where F: Fn(&str, &Token) -> Box<dyn Display> {
+    let string_tokens: Vec<(String, &Token, bool, bool)> = stringify(tokens);
+    string_tokens.iter().map(|(s, t, space, comma)| (space, comma, f(s, t)))
+    .fold("".to_string(), |acc, (space, comma, x)| format!("{}{}{}{}", acc, x, if *comma {",".to_string()} else {"".to_string()}, if *space {" ".to_string()} else {"".to_string()}))
+}
+
+
+fn stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
+    let mut out: Vec<(String, &Token, bool, bool)> = Vec::new();
+    // println!("tokens: {:?}", tokens);
+    // let mut out = String::new();
     let mut implicit_paren = 0;
+    let mut explicit_paren = 0;
     for (idx, token) in tokens.iter().enumerate() {
-        let (append, just) = match *token {
+        let (mut append, just) = match *token {
             Token::Number{value} => {
                 if implicit_paren > 0 {
-                    (format!("{}{} ", value, ")".repeat(implicit_paren)), false)
+                    (vec![(value.to_string(), token, false, false), (")".repeat(implicit_paren), &Token::Paren{ kind: ParenType::Right }, true, false)], false)
+                    // (format!("{}{} ", value, ")".repeat(implicit_paren)), false)
                 } else {
-                    (format!("{} ", value), false)
+                    // (format!("{} ", value), false)
+                    let is_r_paren = matches!(tokens.get(idx + 1), Some(Token::Paren { kind: ParenType::Right }));
+                    if is_r_paren {
+                        (vec![(value.to_string(), token, true, false)], false)
+                    } else {
+                        (vec![(value.to_string(), token, true, true)], false)
+                    }
                 }
             },
             Token::Constant{ kind } => {
                 let constant = Constant::by_type(kind);
                 let repr = constant.repr.first().unwrap();
                 if implicit_paren > 0 {
-                    (format!("{}{} ", repr, ")".repeat(implicit_paren)), false)
+                    (vec![(repr.to_string(), token, false, false), (")".repeat(implicit_paren), &Token::Paren { kind: ParenType::Right }, true, false)], false)
+                    // (format!("{}{} ", repr, ")".repeat(implicit_paren)), false)
                 } else {
-                    (format!("{} ", repr), false)
+                    let is_r_paren = matches!(tokens.get(idx + 1), Some(Token::Paren { kind: ParenType::Right }));
+                    if is_r_paren {
+                        (vec![(repr.to_string(), token, true, false)], false)
+                    } else {
+                        (vec![(repr.to_string(), token, true, true)], false)
+                    }
+                    // (format!("{} ", repr), false)
                 }
             },
             Token::Operator{ kind } => {
                 let op = Operator::by_type(kind);
                 let repr = op.repr.first().unwrap().clone();
                 match op.associativity {
-                    Associativity::Left => (format!("{} ", repr), false),
+                    Associativity::Left => (vec![(repr.to_string(), token, true, false)], false),//(format!("{} ", repr), false),
                     Associativity::Right => {
                         let is_l_paren = matches!(tokens.get(idx + 1), Some(Token::Paren { kind: ParenType::Left }));
+
                         if kind != OperatorType::Pow && !is_l_paren {
                             implicit_paren += 1;
-                            (format!("{}(", repr.to_owned()), true)
+                            // (format!("{}(", repr.to_owned()), true)
+                            (vec![(repr.to_string(), token, false, false), ("(".to_owned(), &Token::Paren { kind: ParenType::Left }, false, false)], true)
                         } else {
-                            (format!("{}", repr.to_owned()), false)
+                            // (format!("{}", repr.to_owned()), false)
+                            (vec![(repr.to_string(), token, false, false)], false)
                         }
                     }
                 }
             }
             Token::Paren{ kind } => {
                 (match kind {
-                    ParenType::Left => "(".to_owned(),
-                    ParenType::Right => ") ".to_owned()
+                    ParenType::Left => {
+                        explicit_paren += 1;
+                        vec![("(".to_string(), token, false, false)]
+                    }, //"(".to_owned(),
+                    ParenType::Right => {
+                        explicit_paren -= 1;
+                        vec![(")".to_string(), token, true, false)]
+                    }//") ".to_owned()
                 }, false)
             }
         };
@@ -368,14 +439,17 @@ fn stringify(tokens: &Vec<Token>) -> String {
             implicit_paren = 0;
         }
         let is_l_paren_or_pow = matches!(tokens.get(idx + 1), Some(Token::Paren { kind: ParenType::Right }) | Some(Token::Operator { kind: OperatorType::Pow }));
-        if append.chars().last().unwrap() == ' ' && is_l_paren_or_pow {
-            out.push_str(&utils::slice(&append, 0, -1));
-        } else {
-            out.push_str(&append);
+        if append.last().unwrap().2 && is_l_paren_or_pow {
+            append.iter_mut().last().unwrap().2 = false;
         }
+        if idx == tokens.len() - 1 {
+            append.iter_mut().last().unwrap().3 = false;
+        }
+        out.extend_from_slice(&append);
     }
-    if out.chars().last().unwrap() == ' ' {
-        return utils::slice(out.as_str(), 0,-1);
+    if out.last().unwrap().2 {
+        // return utils::slice(out.as_str(), 0,-1);
+        out.iter_mut().last().unwrap().2 = false;
     }
     out
 }

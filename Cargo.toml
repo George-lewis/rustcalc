@@ -6,5 +6,10 @@ edition = "2018"
 description = "A library for evaluating mathematical statements"
 license = "MIT"
 
+#[features]
+#colors = {"colored"}
+
 [dependencies]
+#colored = { version = "2", optional = true }
 colored = "2"
+rand = "0.8.3"

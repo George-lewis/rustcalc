@@ -1,4 +1,5 @@
 use core::panic;
+use rand::Rng;
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum OperatorType {
@@ -7,7 +8,8 @@ pub enum OperatorType {
     Sin, Cos, Tan,
     Max, Min,
     Sqrt,
-    Fact
+    Factorial,
+    RandomInt, RandomFloat,
 }
 
 
@@ -28,10 +30,10 @@ pub enum Token {
 }
 
 impl Token {
-    pub fn paren(c: char) -> Token {
+    pub fn paren(c: char) -> (Token, ParenType) {
         match c {
-            '(' => Token::Paren { kind: ParenType::Left },
-            ')' => Token::Paren { kind: ParenType::Right },
+            '(' => (Token::Paren { kind: ParenType::Left }, ParenType::Left),
+            ')' => (Token::Paren { kind: ParenType::Right }, ParenType::Right),
             _ => panic!("[{}] IS NOT A PAREN", c)
         }
     }
@@ -61,7 +63,7 @@ fn factorial(x: f64) -> f64 {
 
 static OPERATORS: &[Operator] = &[
     Operator { kind: OperatorType::Add, repr: &["+", "add", "plus"], precedence: 1, associativity: Associativity::Left, arity: 2, doit: |arr| arr[0] + arr[1] },
-    Operator { kind: OperatorType::Sub, repr: &["-", "sub", "minus"], precedence: 1, associativity: Associativity::Left, arity: 2, doit: |arr| arr[0] - arr[1] },
+    Operator { kind: OperatorType::Sub, repr: &["-", "subtract", "sub", "minus"], precedence: 1, associativity: Associativity::Left, arity: 2, doit: |arr| arr[0] - arr[1] },
     Operator { kind: OperatorType::Mul, repr: &["×", "*", "times", "⋅", "mul"], precedence: 2, associativity: Associativity::Left, arity: 2, doit: |arr| arr[0] * arr[1] },
     Operator { kind: OperatorType::Div, repr: &["÷", "/", "over", "divide", "div"], precedence: 2, associativity: Associativity::Left, arity: 2, doit: |arr| arr[0] / arr[1] },
     Operator { kind: OperatorType::Pow, repr: &["^", "exp", "pow"], precedence: 3, associativity: Associativity::Right, arity: 2, doit: |arr| arr[0].powf(arr[1]) },
@@ -70,9 +72,12 @@ static OPERATORS: &[Operator] = &[
     Operator { kind: OperatorType::Cos, repr: &["cos"], precedence: 4, associativity: Associativity::Right, arity: 1, doit: |arr| arr[0].cos() },
     Operator { kind: OperatorType::Tan, repr: &["tan"], precedence: 4, associativity: Associativity::Right, arity: 1, doit: |arr| arr[0].tan() },
     Operator { kind: OperatorType::Max, repr: &["max"], precedence: 4, associativity: Associativity::Right, arity: 2, doit: |arr| arr[0].max(arr[1]) },
+    
     Operator { kind: OperatorType::Min, repr: &["min"], precedence: 4, associativity: Associativity::Right, arity: 2, doit: |arr| arr[0].min(arr[1]) },
     Operator { kind: OperatorType::Sqrt, repr: &["√", "sqrt", "root"], precedence: 4, associativity: Associativity::Right, arity: 1, doit: |arr| arr[0].sqrt() },
-    Operator { kind: OperatorType::Fact, repr: &["!"], precedence: 4, associativity: Associativity::Right, arity: 1, doit: |arr| factorial(arr[0]) },
+    Operator { kind: OperatorType::Factorial, repr: &["!", "factorial", "fact"], precedence: 4, associativity: Associativity::Right, arity: 1, doit: |arr| factorial(arr[0]) },
+    Operator { kind: OperatorType::RandomFloat, repr: &["randf"], precedence: 4, associativity: Associativity::Right, arity: 2, doit: |arr| rand::thread_rng().gen_range(arr[0]..arr[1]) },
+    Operator { kind: OperatorType::RandomInt, repr: &["randint"], precedence: 4, associativity: Associativity::Right, arity: 2, doit: |arr| rand::thread_rng().gen_range((arr[0] as i64)..(arr[1] as i64)) as f64 }
 ];
 
 impl Operator {
