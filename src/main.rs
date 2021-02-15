@@ -280,15 +280,9 @@ fn rpn(tokens: Vec<Token>) -> Vec<Token> {
                             panic!("Mismatched parens!");
                         }
                     }
-                    if let Some(op) = operator_stack.last() {
-                        if let Token::Paren { kind } = op {
-                            if kind == &ParenType::Left {
-                                operator_stack.pop();
-                            }
-                        } else if let Token::Operator { .. } = op {
-                            output.push(operator_stack.pop().unwrap());
-                        }
-                    };
+                    if matches!(operator_stack.last(), Some(Token::Operator { .. })) {
+                        output.push(operator_stack.pop().unwrap());
+                    }
                 }
             },
         }
@@ -709,6 +703,40 @@ mod tests {
                         kind: OperatorType::Pow,
                     },
                     Token::Number { value: 2.0 },
+                ],
+            ),
+            (
+                "(1)",
+                "(1)",
+                1.0,
+                vec![
+                    Token::Paren {
+                        kind: ParenType::Left,
+                    },
+                    Token::Number { value: 1.0 },
+                    Token::Paren {
+                        kind: ParenType::Right,
+                    },
+                ],
+            ),
+            (
+                "((1))",
+                "((1))",
+                1.0,
+                vec![
+                    Token::Paren {
+                        kind: ParenType::Left,
+                    },
+                    Token::Paren {
+                        kind: ParenType::Left,
+                    },
+                    Token::Number { value: 1.0 },
+                    Token::Paren {
+                        kind: ParenType::Right,
+                    },
+                    Token::Paren {
+                        kind: ParenType::Right,
+                    },
                 ],
             ),
         ]
