@@ -1,5 +1,6 @@
 use core::panic;
 use std::{
+    cmp::min,
     fmt::{Debug, Display},
     io::Write,
     process::exit,
@@ -64,6 +65,8 @@ fn main() {
         if input.to_lowercase() == "quit" {
             exit(0);
         }
+
+        print!("Tokenized: {:?}", tokenize(&input));
 
         // if input.contains("=") {
         //     // println!("splitting");
@@ -131,7 +134,9 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
     let mut vec: Vec<Token> = Vec::new();
     let mut idx = 0;
     let mut coeff = false;
+    let mut implicit_paren = 0;
     while idx < string.chars().count() {
+        let mut just = false;
         let c = string.chars().nth(idx).unwrap();
         if c.is_whitespace() || c == ',' {
             idx += 1;
@@ -157,9 +162,21 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
                 return Err(RMEError::ParseError(idx));
             }
         };
+        if c == '(' {
+            implicit_paren = min(0, implicit_paren - 1);
+        } else if implicit_paren > 0 {
+            vec.push(Token::Paren {
+                kind: ParenType::Left,
+            });
+        }
         match kind {
             TokenType::OPERATOR => {
                 let (op, s) = Operator::by_repr(&slice).expect("Not an operator");
+
+                if op.associativity == Associativity::Right && op.kind != OperatorType::Pow {
+                    implicit_paren += 1;
+                    just = true;
+                }
 
                 idx += s.chars().count();
                 vec.push(Token::Operator { kind: op.kind });
@@ -167,6 +184,9 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
             TokenType::PAREN => {
                 let (t, kind) = Token::paren(c);
                 coeff = kind == ParenType::Right;
+                // if kind == ParenType::Left {
+                //     implicit_paren -= 1;
+                // }
                 vec.push(t);
                 idx += 1;
             }
@@ -188,6 +208,14 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
                 });
                 coeff = true;
             }
+        }
+        if !just {
+            for _ in 0..implicit_paren {
+                vec.push(Token::Paren {
+                    kind: ParenType::Right,
+                });
+            }
+            implicit_paren = 0;
         }
     }
     // println!("tokens {:?}", vec.iter().map(|t| &t.value).cloned().collect::<Vec<String>>());
@@ -388,11 +416,15 @@ fn color_html(string: &str, token: &Token) -> Box<dyn Display> {
     Box::new(format!("<span style=\"color: {}\">{}</span>", code, string))
 }
 
+fn stringify(tokens: &Vec<Token>) -> String {
+    stringify_color(tokens, |a, b| Box::new(a.to_string()))
+}
+
 fn stringify_color<F>(tokens: &Vec<Token>, f: F) -> String
 where
     F: Fn(&str, &Token) -> Box<dyn Display>,
 {
-    let string_tokens: Vec<(String, &Token, bool, bool)> = stringify(tokens);
+    let string_tokens: Vec<(String, &Token, bool, bool)> = _stringify(tokens);
     string_tokens
         .iter()
         .map(|(s, t, space, comma)| (space, comma, f(s, t)))
@@ -415,12 +447,11 @@ where
         })
 }
 
-fn stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
+fn _stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
     let mut out: Vec<(String, &Token, bool, bool)> = Vec::new();
     // println!("tokens: {:?}", tokens);
     // let mut out = String::new();
     let mut implicit_paren = 0;
-    let mut explicit_paren = 0;
     for (idx, token) in tokens.iter().enumerate() {
         let (mut append, just) = match *token {
             Token::Number { value } => {
@@ -442,13 +473,13 @@ fn stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
                     // (format!("{}{} ", value, ")".repeat(implicit_paren)), false)
                 } else {
                     // (format!("{} ", value), false)
-                    let is_r_paren = matches!(
+                    let is_r_paren_or_op = matches!(
                         tokens.get(idx + 1),
                         Some(Token::Paren {
                             kind: ParenType::Right
-                        })
+                        }) | Some(Token::Operator { .. })
                     );
-                    if is_r_paren {
+                    if is_r_paren_or_op {
                         (vec![(value.to_string(), token, true, false)], false)
                     } else {
                         (vec![(value.to_string(), token, true, true)], false)
@@ -475,13 +506,13 @@ fn stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
                     )
                     // (format!("{}{} ", repr, ")".repeat(implicit_paren)), false)
                 } else {
-                    let is_r_paren = matches!(
+                    let is_r_paren_or_op = matches!(
                         tokens.get(idx + 1),
                         Some(Token::Paren {
                             kind: ParenType::Right
-                        })
+                        }) | Some(Token::Operator { .. })
                     );
-                    if is_r_paren {
+                    if is_r_paren_or_op {
                         (vec![(repr.to_string(), token, true, false)], false)
                     } else {
                         (vec![(repr.to_string(), token, true, true)], false)
@@ -530,11 +561,11 @@ fn stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
                 (
                     match kind {
                         ParenType::Left => {
-                            explicit_paren += 1;
+                            // explicit_paren += 1;
                             vec![("(".to_string(), token, false, false)]
                         } //"(".to_owned(),
                         ParenType::Right => {
-                            explicit_paren -= 1;
+                            // explicit_paren -= 1;
                             vec![(")".to_string(), token, true, false)]
                         } //") ".to_owned()
                     },
@@ -572,13 +603,14 @@ fn stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
 mod tests {
 
     use crate::{
-        doeval, tokenize, tokens::ConstantType, tokens::OperatorType, tokens::ParenType, Token,
+        doeval, stringify, tokens::ConstantType, tokens::OperatorType, tokens::ParenType, Token,
     };
 
     #[test]
     fn test_tokenize() {
         [
             (
+                "1 + 1",
                 "1 + 1",
                 2.0,
                 vec![
@@ -591,18 +623,26 @@ mod tests {
             ),
             (
                 "sin pi",
+                "sin(π)",
                 std::f64::consts::PI.sin(),
                 vec![
                     Token::Operator {
                         kind: OperatorType::Sin,
                     },
+                    Token::Paren {
+                        kind: ParenType::Left,
+                    },
                     Token::Constant {
                         kind: ConstantType::PI,
+                    },
+                    Token::Paren {
+                        kind: ParenType::Right,
                     },
                 ],
             ),
             (
                 "1 plus 7 sub 2 times 3",
+                "1 + 7 - 2 × 3",
                 2.0,
                 vec![
                     Token::Number { value: 1.0 },
@@ -621,6 +661,7 @@ mod tests {
                 ],
             ),
             (
+                "sin(1 + 2 + 3)",
                 "sin(1 + 2 + 3)",
                 ((1.0 + 2.0 + 3.0) as f64).sin(),
                 vec![
@@ -644,15 +685,22 @@ mod tests {
                     },
                 ],
             ),
+            (
+                "345.67",
+                "345.67",
+                345.67,
+                vec![Token::Number { value: 345.67 }],
+            ),
         ]
         .iter()
-        .for_each(|(a, b, c)| {
+        .for_each(|(a, b, c, d)| {
             let (result, tokens) = match doeval(a) {
                 Ok((x, y)) => (x, y),
                 Err(e) => panic!("FAILED! {:?}", e),
             };
-            assert_eq!(result, *b, "Checking evaluation of [{}] => [{}]", a, b);
-            assert_eq!(tokens, *c, "Checking tokenization of [{}] => [{:?}]", a, c);
+            assert_eq!(result, *c, "Checking evaluation of [{}]", a);
+            assert_eq!(tokens, *d, "Checking tokenization of [{}]", a);
+            assert_eq!(stringify(&tokens), *b);
         });
     }
 }
