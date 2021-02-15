@@ -222,12 +222,20 @@ fn rpn(tokens: Vec<Token>) -> Vec<Token> {
                 let op1 = Operator::by_type(*kind);
                 while operator_stack.len() > 0 {
                     let last = operator_stack.last().expect("Empty op stack?");
-                    if matches!(last, Token::Paren{kind: ParenType::Left}) {
+                    if matches!(
+                        last,
+                        Token::Paren {
+                            kind: ParenType::Left
+                        }
+                    ) {
                         break;
                     }
                     if let Token::Operator { kind } = last {
                         let op2 = Operator::by_type(*kind);
-                        if op2.precedence <= op1.precedence || !(op2.precedence == op1.precedence && op1.associativity == Associativity::Left) {
+                        if op2.precedence <= op1.precedence
+                            || !(op2.precedence == op1.precedence
+                                && op1.associativity == Associativity::Left)
+                        {
                             break;
                         }
                     }
@@ -236,7 +244,7 @@ fn rpn(tokens: Vec<Token>) -> Vec<Token> {
                     //     || (op2 == op1.precedence
                     //         && op1.associativity == Associativity::Left)
                     // {
-                        
+
                     // } else {
                     //     break;
                     // }
@@ -633,7 +641,7 @@ mod tests {
                     Token::Number { value: 3.0 },
                     Token::Paren {
                         kind: ParenType::Right,
-                    }
+                    },
                 ],
             ),
         ]
@@ -641,7 +649,7 @@ mod tests {
         .for_each(|(a, b, c)| {
             let (result, tokens) = match doeval(a) {
                 Ok((x, y)) => (x, y),
-                Err(e) => panic!("FAILED! {:?}", e)
+                Err(e) => panic!("FAILED! {:?}", e),
             };
             assert_eq!(result, *b, "Checking evaluation of [{}] => [{}]", a, b);
             assert_eq!(tokens, *c, "Checking tokenization of [{}] => [{:?}]", a, c);
