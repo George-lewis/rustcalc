@@ -6,18 +6,13 @@ use std::{
     process::exit,
 };
 
-// use operators::{Associativity, Operator};
-
 use tokens::*;
 
 // #[cfg(feature = "color")]
 use colored::*;
 
-// mod operators;
 mod tokens;
 mod utils;
-
-// use operators::*;
 
 static NUMBER_CHARACTERS: [char; 11] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'];
 static PAREN_CHARACTERS: [char; 2] = ['(', ')'];
@@ -38,8 +33,6 @@ enum TokenType {
 }
 
 fn main() {
-    // let q = TToken::Paren { kind: ParenType::Left };
-
     loop {
         print!("> ");
         std::io::stdout().flush().ok().unwrap();
@@ -66,7 +59,7 @@ fn main() {
             exit(0);
         }
 
-        print!("Tokenized: {:?}", tokenize(&input));
+        // print!("Tokenized: {:?}", tokenize(&input));
 
         // if input.contains("=") {
         //     // println!("splitting");
@@ -118,8 +111,6 @@ fn main() {
         let formatted = stringify_color(&repr, color_cli);
 
         println!("[ {} ] => {}", formatted, format!("{:.3}", x).blue());
-
-        // }
     }
 }
 
@@ -147,7 +138,9 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
         if coeff {
             if c != ')' {
                 let opt = Operator::by_repr(&slice);
-                if opt.map_or(true, |(op, _)| op.associativity != Associativity::Left) {
+                if opt.map_or(true, |(op, _)| {
+                    op.associativity != Associativity::Left && op.kind != OperatorType::Pow
+                }) {
                     vec.push(Token::Operator {
                         kind: OperatorType::Mul,
                     });
@@ -260,22 +253,13 @@ fn rpn(tokens: Vec<Token>) -> Vec<Token> {
                     }
                     if let Token::Operator { kind } = last {
                         let op2 = Operator::by_type(*kind);
-                        if op2.precedence <= op1.precedence
-                            || !(op2.precedence == op1.precedence
-                                && op1.associativity == Associativity::Left)
+                        if !(op2.precedence > op1.precedence
+                            || (op2.precedence == op1.precedence
+                                && op1.associativity == Associativity::Left))
                         {
                             break;
                         }
                     }
-                    // let op2 = opt.map_or(9, |x| x.precedence);
-                    // if op2 > op1.precedence
-                    //     || (op2 == op1.precedence
-                    //         && op1.associativity == Associativity::Left)
-                    // {
-
-                    // } else {
-                    //     break;
-                    // }
                     output.push(operator_stack.pop().unwrap());
                 }
                 operator_stack.push(*token);
@@ -346,9 +330,11 @@ fn rpn(tokens: Vec<Token>) -> Vec<Token> {
 fn eval(_k: Vec<Token>) -> Result<f64, RMEError> {
     let mut k: Vec<Token> = _k.iter().rev().cloned().collect();
     let mut args: Vec<f64> = Vec::new();
-    println!("tokens : {:?}", k);
+    // println!("tokens : {:?}", k);
     while k.len() > 0 {
         let token = k.pop().unwrap();
+
+        // println!("Cur: {:?}; args; {:?}; k; {:?}", token, args, k);
 
         match token {
             Token::Number { value } => {
@@ -373,6 +359,7 @@ fn eval(_k: Vec<Token>) -> Result<f64, RMEError> {
             Token::Paren { .. } => {}
         }
     }
+    // println!("args; {:?}; k; {:?}", args, k);
     if k.len() == 0 {
         return Ok(args[0]);
     } else {
@@ -551,27 +538,22 @@ fn _stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
                                 true,
                             )
                         } else {
-                            // (format!("{}", repr.to_owned()), false)
                             (vec![(repr.to_string(), token, false, false)], false)
                         }
                     }
                 }
             }
-            Token::Paren { kind } => {
-                (
-                    match kind {
-                        ParenType::Left => {
-                            // explicit_paren += 1;
-                            vec![("(".to_string(), token, false, false)]
-                        } //"(".to_owned(),
-                        ParenType::Right => {
-                            // explicit_paren -= 1;
-                            vec![(")".to_string(), token, true, false)]
-                        } //") ".to_owned()
-                    },
-                    false,
-                )
-            }
+            Token::Paren { kind } => (
+                match kind {
+                    ParenType::Left => {
+                        vec![("(".to_string(), token, false, false)]
+                    }
+                    ParenType::Right => {
+                        vec![(")".to_string(), token, true, false)]
+                    }
+                },
+                false,
+            ),
         };
         if !just {
             implicit_paren = 0;
@@ -690,6 +672,44 @@ mod tests {
                 "345.67",
                 345.67,
                 vec![Token::Number { value: 345.67 }],
+            ),
+            (
+                "sin 66 pow 2 plus cos(66)^2",
+                "sin(66)^2 + cos(66)^2",
+                1.0,
+                vec![
+                    Token::Operator {
+                        kind: OperatorType::Sin,
+                    },
+                    Token::Paren {
+                        kind: ParenType::Left,
+                    },
+                    Token::Number { value: 66.0 },
+                    Token::Paren {
+                        kind: ParenType::Right,
+                    },
+                    Token::Operator {
+                        kind: OperatorType::Pow,
+                    },
+                    Token::Number { value: 2.0 },
+                    Token::Operator {
+                        kind: OperatorType::Add,
+                    },
+                    Token::Operator {
+                        kind: OperatorType::Cos,
+                    },
+                    Token::Paren {
+                        kind: ParenType::Left,
+                    },
+                    Token::Number { value: 66.0 },
+                    Token::Paren {
+                        kind: ParenType::Right,
+                    },
+                    Token::Operator {
+                        kind: OperatorType::Pow,
+                    },
+                    Token::Number { value: 2.0 },
+                ],
             ),
         ]
         .iter()
