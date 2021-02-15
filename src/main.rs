@@ -430,82 +430,41 @@ where
 
 fn _stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
     let mut out: Vec<(String, &Token, bool, bool)> = Vec::new();
-    // println!("tokens: {:?}", tokens);
-    // let mut out = String::new();
-    let mut implicit_paren = 0;
     for (idx, token) in tokens.iter().enumerate() {
-        let (mut append, just) = match *token {
+        let mut append = match *token {
             Token::Number { value } => {
-                if implicit_paren > 0 {
-                    (
-                        vec![
-                            (value.to_string(), token, false, false),
-                            (
-                                ")".repeat(implicit_paren),
-                                &Token::Paren {
-                                    kind: ParenType::Right,
-                                },
-                                true,
-                                false,
-                            ),
-                        ],
-                        false,
-                    )
-                    // (format!("{}{} ", value, ")".repeat(implicit_paren)), false)
+                let is_r_paren_or_op = matches!(
+                    tokens.get(idx + 1),
+                    Some(Token::Paren {
+                        kind: ParenType::Right
+                    }) | Some(Token::Operator { .. })
+                );
+                vec![if is_r_paren_or_op {
+                    (value.to_string(), token, true, false)
                 } else {
-                    // (format!("{} ", value), false)
-                    let is_r_paren_or_op = matches!(
-                        tokens.get(idx + 1),
-                        Some(Token::Paren {
-                            kind: ParenType::Right
-                        }) | Some(Token::Operator { .. })
-                    );
-                    if is_r_paren_or_op {
-                        (vec![(value.to_string(), token, true, false)], false)
-                    } else {
-                        (vec![(value.to_string(), token, true, true)], false)
-                    }
-                }
+                    (value.to_string(), token, true, true)
+                }]
             }
             Token::Constant { kind } => {
                 let constant = Constant::by_type(kind);
                 let repr = constant.repr.first().unwrap();
-                if implicit_paren > 0 {
-                    (
-                        vec![
-                            (repr.to_string(), token, false, false),
-                            (
-                                ")".repeat(implicit_paren),
-                                &Token::Paren {
-                                    kind: ParenType::Right,
-                                },
-                                true,
-                                false,
-                            ),
-                        ],
-                        false,
-                    )
-                    // (format!("{}{} ", repr, ")".repeat(implicit_paren)), false)
+                let is_r_paren_or_op = matches!(
+                    tokens.get(idx + 1),
+                    Some(Token::Paren {
+                        kind: ParenType::Right
+                    }) | Some(Token::Operator { .. })
+                );
+                vec![if is_r_paren_or_op {
+                    (repr.to_string(), token, true, false)
                 } else {
-                    let is_r_paren_or_op = matches!(
-                        tokens.get(idx + 1),
-                        Some(Token::Paren {
-                            kind: ParenType::Right
-                        }) | Some(Token::Operator { .. })
-                    );
-                    if is_r_paren_or_op {
-                        (vec![(repr.to_string(), token, true, false)], false)
-                    } else {
-                        (vec![(repr.to_string(), token, true, true)], false)
-                    }
-                    // (format!("{} ", repr), false)
-                }
+                    (repr.to_string(), token, true, true)
+                }]
             }
             Token::Operator { kind } => {
                 let op = Operator::by_type(kind);
                 let repr = op.repr.first().unwrap().clone();
                 match op.associativity {
-                    Associativity::Left => (vec![(repr.to_string(), token, true, false)], false), //(format!("{} ", repr), false),
+                    Associativity::Left => vec![(repr.to_string(), token, true, false)],
                     Associativity::Right => {
                         let is_l_paren = matches!(
                             tokens.get(idx + 1),
@@ -515,43 +474,32 @@ fn _stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
                         );
 
                         if kind != OperatorType::Pow && !is_l_paren {
-                            implicit_paren += 1;
-                            // (format!("{}(", repr.to_owned()), true)
-                            (
-                                vec![
-                                    (repr.to_string(), token, false, false),
-                                    (
-                                        "(".to_owned(),
-                                        &Token::Paren {
-                                            kind: ParenType::Left,
-                                        },
-                                        false,
-                                        false,
-                                    ),
-                                ],
-                                true,
-                            )
+                            vec![
+                                (repr.to_string(), token, false, false),
+                                (
+                                    "(".to_owned(),
+                                    &Token::Paren {
+                                        kind: ParenType::Left,
+                                    },
+                                    false,
+                                    false,
+                                ),
+                            ]
                         } else {
-                            (vec![(repr.to_string(), token, false, false)], false)
+                            vec![(repr.to_string(), token, false, false)]
                         }
                     }
                 }
             }
-            Token::Paren { kind } => (
-                match kind {
-                    ParenType::Left => {
-                        vec![("(".to_string(), token, false, false)]
-                    }
-                    ParenType::Right => {
-                        vec![(")".to_string(), token, true, false)]
-                    }
-                },
-                false,
-            ),
+            Token::Paren { kind } => match kind {
+                ParenType::Left => {
+                    vec![("(".to_string(), token, false, false)]
+                }
+                ParenType::Right => {
+                    vec![(")".to_string(), token, true, false)]
+                }
+            },
         };
-        if !just {
-            implicit_paren = 0;
-        }
         let is_l_paren_or_pow = matches!(
             tokens.get(idx + 1),
             Some(Token::Paren {
