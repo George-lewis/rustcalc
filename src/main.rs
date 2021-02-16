@@ -398,7 +398,7 @@ fn color_html(string: &str, token: &Token) -> String {
 }
 
 fn stringify(tokens: &Vec<Token>) -> String {
-    stringify_color(tokens, |a, b| Box::new(a.to_string()))
+    stringify_color(tokens, |a, _| a.to_string())
 }
 
 fn stringify_color<F, T: Display>(tokens: &Vec<Token>, f: F) -> String
@@ -430,11 +430,7 @@ fn _stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
                         kind: ParenType::Right
                     }) | Some(Token::Operator { .. })
                 );
-                vec![if is_r_paren_or_op {
-                    (value.to_string(), token, true, false)
-                } else {
-                    (value.to_string(), token, true, true)
-                }]
+                vec![(value.to_string(), token, true, !is_r_paren_or_op)]
             }
             Token::Constant { kind } => {
                 let constant = Constant::by_type(kind);
@@ -445,11 +441,7 @@ fn _stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
                         kind: ParenType::Right
                     }) | Some(Token::Operator { .. })
                 );
-                vec![if is_r_paren_or_op {
-                    (repr.to_string(), token, true, false)
-                } else {
-                    (repr.to_string(), token, true, true)
-                }]
+                vec![(repr.to_string(), token, true, !is_r_paren_or_op)]
             }
             Token::Operator { kind } => {
                 let op = Operator::by_type(kind);
