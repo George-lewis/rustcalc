@@ -433,8 +433,7 @@ fn _stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
                 vec![(value.to_string(), token, true, !is_r_paren_or_op)]
             }
             Token::Constant { kind } => {
-                let constant = Constant::by_type(kind);
-                let repr = constant.repr.first().unwrap();
+                let repr = Constant::by_type(kind).repr.first().unwrap();
                 let is_r_paren_or_op = matches!(
                     tokens.get(idx + 1),
                     Some(Token::Paren {
@@ -460,7 +459,7 @@ fn _stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
                             vec![
                                 (repr.to_string(), token, false, false),
                                 (
-                                    "(".to_owned(),
+                                    "(".to_string(),
                                     &Token::Paren {
                                         kind: ParenType::Left,
                                     },
