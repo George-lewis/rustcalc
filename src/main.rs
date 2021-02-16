@@ -371,8 +371,8 @@ fn doeval(string: &str) -> Result<(f64, Vec<Token>), RMEError> {
     Ok((result, tokens))
 }
 
-fn color_cli(string: &str, token: &Token) -> Box<dyn Display> {
-    Box::new(match token {
+fn color_cli(string: &str, token: &Token) -> ColoredString {
+    match token {
         Token::Number { .. } => string.clear(),
         Token::Operator { kind } => {
             let op = Operator::by_type(*kind);
@@ -384,29 +384,28 @@ fn color_cli(string: &str, token: &Token) -> Box<dyn Display> {
         }
         Token::Paren { .. } => string.magenta(),
         Token::Constant { .. } => string.yellow(),
-    })
+    }
 }
 
-fn color_html(string: &str, token: &Token) -> Box<dyn Display> {
+fn color_html(string: &str, token: &Token) -> String {
     let code = match token {
         Token::Number { .. } => "red",
         Token::Operator { .. } => "blue",
         Token::Paren { .. } => "green",
         Token::Constant { .. } => "orange",
     };
-    Box::new(format!("<span style=\"color: {}\">{}</span>", code, string))
+    format!("<span style=\"color: {}\">{}</span>", code, string)
 }
 
 fn stringify(tokens: &Vec<Token>) -> String {
     stringify_color(tokens, |a, b| Box::new(a.to_string()))
 }
 
-fn stringify_color<F>(tokens: &Vec<Token>, f: F) -> String
+fn stringify_color<F, T: Display>(tokens: &Vec<Token>, f: F) -> String
 where
-    F: Fn(&str, &Token) -> Box<dyn Display>,
+    F: Fn(&str, &Token) -> T,
 {
-    let string_tokens: Vec<(String, &Token, bool, bool)> = _stringify(tokens);
-    string_tokens
+    _stringify(tokens)
         .iter()
         .map(|(s, t, space, comma)| (space, comma, f(s, t)))
         .fold("".to_string(), |acc, (space, comma, x)| {
@@ -414,16 +413,8 @@ where
                 "{}{}{}{}",
                 acc,
                 x,
-                if *comma {
-                    ",".to_string()
-                } else {
-                    "".to_string()
-                },
-                if *space {
-                    " ".to_string()
-                } else {
-                    "".to_string()
-                }
+                if *comma { "," } else { "" },
+                if *space { " " } else { "" }
             )
         })
 }
@@ -508,18 +499,16 @@ fn _stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
                 kind: OperatorType::Pow
             })
         );
-        if append.last().unwrap().2 && is_l_paren_or_pow {
-            append.iter_mut().last().unwrap().2 = false;
+        let mut last = append.iter_mut().last().unwrap();
+        if last.2 && is_l_paren_or_pow {
+            last.2 = false;
         }
         if idx == tokens.len() - 1 {
-            append.iter_mut().last().unwrap().3 = false;
+            last.3 = false;
         }
         out.extend_from_slice(&append);
     }
-    if out.last().unwrap().2 {
-        // return utils::slice(out.as_str(), 0,-1);
-        out.iter_mut().last().unwrap().2 = false;
-    }
+    out.iter_mut().last().unwrap().2 = false;
     out
 }
 
