@@ -15,6 +15,8 @@ pub enum OperatorType {
     Max,
     Min,
     Sqrt,
+    Negative,
+    Positive,
     Factorial,
     RandomInt,
     RandomFloat,
@@ -202,6 +204,22 @@ static OPERATORS: &[Operator] = &[
         arity: 2,
         doit: |arr| rand::thread_rng().gen_range((arr[0] as i64)..(arr[1] as i64)) as f64,
     },
+    Operator {
+        kind: OperatorType::Negative,
+        repr: &["-"],
+        precedence: 4,
+        associativity: Associativity::Right,
+        arity: 1,
+        doit: |arr| -arr[0],
+    },
+    Operator {
+        kind: OperatorType::Positive,
+        repr: &["+"],
+        precedence: 4,
+        associativity: Associativity::Right,
+        arity: 1,
+        doit: |arr| arr[0],
+    },
 ];
 
 impl Operator {
@@ -221,6 +239,20 @@ impl Operator {
     }
     pub fn is(repr: &str) -> bool {
         Operator::by_repr(repr).is_some()
+    }
+    pub fn unary(s: &str) -> Option<(&OperatorType, &&str)> {
+        [OperatorType::Positive, OperatorType::Negative]
+            .iter()
+            .map(|kind| (kind, Operator::by_type(*kind)))
+            .find_map(|(kind, op)| {
+                op.repr
+                    .iter()
+                    .find(|str| {
+                        s.to_lowercase()
+                            .starts_with(&str.to_lowercase().to_string())
+                    })
+                    .and_then(|sstr| Option::Some((kind, sstr)))
+            })
     }
 }
 

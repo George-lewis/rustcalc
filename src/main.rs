@@ -2,13 +2,14 @@ use core::panic;
 use std::{
     cmp::min,
     fmt::{Debug, Display},
+    fs::{self, File},
     io::Write,
     process::exit,
 };
 
+use fs::write;
 use tokens::*;
 
-// #[cfg(feature = "color")]
 use colored::*;
 
 mod tokens;
@@ -59,20 +60,6 @@ fn main() {
             exit(0);
         }
 
-        // print!("Tokenized: {:?}", tokenize(&input));
-
-        // if input.contains("=") {
-        //     // println!("splitting");
-        //     // let (left, right) = input.split_at(input.find("=").unwrap());
-        //     let mut split = input.split("=");
-        //     let left =  split.next().unwrap().trim();
-        //     let right = split.next().unwrap().trim();
-        //     // println!("[{}] - [{}]", left, right);
-        //     let lr = eval(&left.to_string());
-        //     let rr = eval(&right.to_string());
-        //     println!("[{}] = [{}] => [{:.5}] = [{:.5}]; equal: {}", left, right.to_string(), lr, rr, (lr - rr).abs() < 0.01);
-        // } else {
-
         let (x, repr) = match doeval(&input) {
             Ok((a, b)) => (a, b),
             Err(e) => {
@@ -99,9 +86,7 @@ fn main() {
                             format!("{:?}", kind).green()
                         );
                     }
-                    RMEError::EmptyStack => {
-                        // println!("Unknown problem causing the s")
-                    }
+                    RMEError::EmptyStack => {}
                 }
 
                 continue;
@@ -126,8 +111,12 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
     let mut idx = 0;
     let mut coeff = false;
     let mut implicit_paren = 0;
+    let mut unary = true;
+    let mut unary_paren = false;
     while idx < string.chars().count() {
+        let mut just_unary = false;
         let mut just = false;
+
         let c = string.chars().nth(idx).unwrap();
         if c.is_whitespace() || c == ',' {
             idx += 1;
@@ -148,7 +137,7 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
             }
             coeff = false;
         }
-        // println!("[{}] is A [{:?}]", &slice, 0);
+
         let kind = match _type(&slice) {
             Ok(k) => k,
             Err(_) => {
@@ -158,42 +147,69 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
         if c == '(' {
             implicit_paren = min(0, implicit_paren - 1);
         } else if implicit_paren > 0 {
+            println!("impl paren; {}", idx);
             vec.push(Token::Paren {
                 kind: ParenType::Left,
             });
+            unary = true;
         }
         match kind {
             TokenType::OPERATOR => {
-                let (op, s) = Operator::by_repr(&slice).expect("Not an operator");
+                let unar = Operator::unary(&slice);
 
-                if op.associativity == Associativity::Right && op.kind != OperatorType::Pow {
-                    implicit_paren += 1;
-                    just = true;
+                if unary && unar.is_some() {
+                    let (a, b) = unar.unwrap();
+                    idx += b.chars().count();
+                    vec.push(Token::Paren {
+                        kind: ParenType::Left,
+                    });
+                    vec.push(Token::Operator { kind: *a });
+                    unary = false;
+                    unary_paren = true;
+                } else {
+                    just_unary = true;
+                    unary = true;
+                    let (op, s) = Operator::by_repr(&slice).expect("Not an operator");
+
+                    if op.associativity == Associativity::Right && op.kind != OperatorType::Pow {
+                        implicit_paren += 1;
+                        just = true;
+                    }
+
+                    idx += s.chars().count();
+                    vec.push(Token::Operator { kind: op.kind });
                 }
-
-                idx += s.chars().count();
-                vec.push(Token::Operator { kind: op.kind });
             }
             TokenType::PAREN => {
                 let (t, kind) = Token::paren(c);
-                coeff = kind == ParenType::Right;
-                // if kind == ParenType::Left {
-                //     implicit_paren -= 1;
-                // }
+                match kind {
+                    ParenType::Left => {
+                        unary = true;
+                        just_unary = true;
+                    }
+                    ParenType::Right => {
+                        coeff = true;
+                    }
+                }
+
                 vec.push(t);
                 idx += 1;
             }
             TokenType::NUMBER => {
-                // println!("SLICE FROM {} to {}", idx, string.chars().count() - idx);
                 let num = next_num(&utils::slice(string, idx, -0));
                 idx += num.chars().count();
                 vec.push(Token::Number {
                     value: num.parse().expect("NOT PARSABLE AS A FLOAT"),
                 });
                 coeff = true;
+                if unary_paren {
+                    unary_paren = false;
+                    vec.push(Token::Paren {
+                        kind: ParenType::Right,
+                    });
+                }
             }
             TokenType::CONSTANT => {
-                // println!("SLICED; {}", utils::slice(string,idx, string.chars().count() - idx));
                 let (constant, s) = Constant::by_repr(&slice).unwrap();
                 idx += s.chars().count();
                 vec.push(Token::Constant {
@@ -210,8 +226,10 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
             }
             implicit_paren = 0;
         }
+        if !just_unary {
+            unary = false;
+        }
     }
-    // println!("tokens {:?}", vec.iter().map(|t| &t.value).cloned().collect::<Vec<String>>());
     Ok(vec)
 }
 
@@ -231,8 +249,6 @@ fn _type(s: &str) -> Result<TokenType, ()> {
 }
 
 fn rpn(tokens: Vec<Token>) -> Vec<Token> {
-    // println!("Tokens: {:?}", tokens);
-
     let mut operator_stack: Vec<Token> = Vec::new();
     let mut output: Vec<Token> = Vec::new();
 
@@ -292,43 +308,15 @@ fn rpn(tokens: Vec<Token>) -> Vec<Token> {
         output.push(operator_stack.pop().unwrap());
     }
 
-    // println!("{:?}", output);
-
     output
 }
-
-// fn process_unary(tokens: &Vec<Token>) -> Vec<Token> {
-//     let mut out: Vec<Token> = tokens.clone();
-//     for (idx, token) in out.iter_mut().enumerate() {
-//         let op1 = Operator::which_operator(&token.value);
-//         let tok = tokens.iter().nth(idx + 1);
-//         if op1.is_some() && tok.is_some() {
-//             if let Some(op2) = tok.map(|t| Operator::which_operator(&t.value)) {
-//                 let repr1 = op1.unwrap().0.repr[0];
-//                 let repr2 = op2.unwrap().0.repr[0];
-//                 if repr1 == repr2 == "+" {
-
-//                 } else if repr1 == repr2 == "-" {
-
-//                 }
-//             }
-//         }
-//         if token.kind == TokenType::CONSTANT {
-//             let (constant, _) = get_constant(token.value.as_str()).expect("umm.. not a valid constant");
-//             *token = Token { value: constant.value.to_string(), kind: TokenType::NUMBER };
-//         }
-//     }
-//     out
-// }
 
 fn eval(_k: Vec<Token>) -> Result<f64, RMEError> {
     let mut k: Vec<Token> = _k.iter().rev().cloned().collect();
     let mut args: Vec<f64> = Vec::new();
-    // println!("tokens : {:?}", k);
+
     while k.len() > 0 {
         let token = k.pop().unwrap();
-
-        // println!("Cur: {:?}; args; {:?}; k; {:?}", token, args, k);
 
         match token {
             Token::Number { value } => {
@@ -353,7 +341,7 @@ fn eval(_k: Vec<Token>) -> Result<f64, RMEError> {
             Token::Paren { .. } => {}
         }
     }
-    // println!("args; {:?}; k; {:?}", args, k);
+
     if k.len() == 0 {
         return Ok(args[0]);
     } else {
@@ -363,9 +351,6 @@ fn eval(_k: Vec<Token>) -> Result<f64, RMEError> {
 
 fn doeval(string: &str) -> Result<(f64, Vec<Token>), RMEError> {
     let tokens = tokenize(&string)?;
-    // println!("Tokens: {:?}", tokens);
-    // let mut constants = tokens.clone();
-    // process_constants(&mut constants);
     let rpn = rpn(tokens.clone());
     let result = eval(rpn)?;
     Ok((result, tokens))
@@ -389,10 +374,17 @@ fn color_cli(string: &str, token: &Token) -> ColoredString {
 
 fn color_html(string: &str, token: &Token) -> String {
     let code = match token {
-        Token::Number { .. } => "red",
-        Token::Operator { .. } => "blue",
-        Token::Paren { .. } => "green",
-        Token::Constant { .. } => "orange",
+        Token::Number { .. } => "white",
+        Token::Operator { kind } => {
+            let op = Operator::by_type(*kind);
+            if op.associativity == Associativity::Left {
+                "limegreen"
+            } else {
+                "blue"
+            }
+        }
+        Token::Paren { .. } => "magenta",
+        Token::Constant { .. } => "yellow",
     };
     format!("<span style=\"color: {}\">{}</span>", code, string)
 }
@@ -445,6 +437,7 @@ fn _stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
             Token::Operator { kind } => {
                 let op = Operator::by_type(kind);
                 let repr = op.repr.first().unwrap().clone();
+
                 match op.associativity {
                     Associativity::Left => vec![(repr.to_string(), token, true, false)],
                     Associativity::Right => {
@@ -455,7 +448,14 @@ fn _stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
                             })
                         );
 
-                        if kind != OperatorType::Pow && !is_l_paren {
+                        if ![
+                            OperatorType::Positive,
+                            OperatorType::Negative,
+                            OperatorType::Pow,
+                        ]
+                        .contains(&op.kind)
+                            && !is_l_paren
+                        {
                             vec![
                                 (repr.to_string(), token, false, false),
                                 (
@@ -674,8 +674,8 @@ mod tests {
                 Ok((x, y)) => (x, y),
                 Err(e) => panic!("FAILED! {:?}", e),
             };
-            assert_eq!(result, *c, "Checking evaluation of [{}]", a);
             assert_eq!(tokens, *d, "Checking tokenization of [{}]", a);
+            assert_eq!(result, *c, "Checking evaluation of [{}]", a);
             assert_eq!(stringify(&tokens), *b);
         });
     }
