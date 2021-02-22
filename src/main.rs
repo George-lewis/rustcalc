@@ -13,9 +13,6 @@ use colored::*;
 mod tokens;
 mod utils;
 
-static NUMBER_CHARACTERS: [char; 11] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'];
-static PAREN_CHARACTERS: [char; 2] = ['(', ')'];
-
 #[derive(Debug)]
 enum RMEError {
     ParseError(usize),

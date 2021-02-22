@@ -1,6 +1,9 @@
 use core::panic;
 use rand::Rng;
 
+pub const NUMBER_CHARACTERS: [char; 11] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'];
+pub const PAREN_CHARACTERS: [char; 2] = ['(', ')'];
+
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum OperatorType {
     Add,
