@@ -437,7 +437,7 @@ mod tests {
     };
 
     #[test]
-    fn test_tokenize() {
+    fn test() {
         [
             (
                 "1 + 1",
