@@ -1,9 +1,9 @@
 [package]
-name = "rustmatheval"
+name = "rustcalc"
 version = "0.1.0"
 authors = ["George-Lewis <georgejeffreylewis@gmail.com>"]
 edition = "2018"
-description = "A library for evaluating mathematical statements"
+description = "A command-line utility for evaluating mathematical statements"
 license = "MIT"
 
 #[features]
