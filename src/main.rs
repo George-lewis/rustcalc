@@ -2,12 +2,10 @@ use core::panic;
 use std::{
     cmp::min,
     fmt::{Debug, Display},
-    fs::{self, File},
     io::Write,
     process::exit,
 };
 
-use fs::write;
 use tokens::*;
 
 use colored::*;
@@ -110,13 +108,8 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
     let mut vec: Vec<Token> = Vec::new();
     let mut idx = 0;
     let mut coeff = false;
-    let mut implicit_paren = 0;
     let mut unary = true;
-    let mut unary_paren = false;
     while idx < string.chars().count() {
-        let mut just_unary = false;
-        let mut just = false;
-
         let c = string.chars().nth(idx).unwrap();
         if c.is_whitespace() || c == ',' {
             idx += 1;
@@ -144,15 +137,6 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
                 return Err(RMEError::ParseError(idx));
             }
         };
-        if c == '(' {
-            implicit_paren = min(0, implicit_paren - 1);
-        } else if implicit_paren > 0 {
-            println!("impl paren; {}", idx);
-            vec.push(Token::Paren {
-                kind: ParenType::Left,
-            });
-            unary = true;
-        }
         match kind {
             TokenType::OPERATOR => {
                 let unar = Operator::unary(&slice);
@@ -160,21 +144,12 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
                 if unary && unar.is_some() {
                     let (a, b) = unar.unwrap();
                     idx += b.chars().count();
-                    vec.push(Token::Paren {
-                        kind: ParenType::Left,
-                    });
                     vec.push(Token::Operator { kind: *a });
                     unary = false;
-                    unary_paren = true;
                 } else {
-                    just_unary = true;
                     unary = true;
-                    let (op, s) = Operator::by_repr(&slice).expect("Not an operator");
 
-                    if op.associativity == Associativity::Right && op.kind != OperatorType::Pow {
-                        implicit_paren += 1;
-                        just = true;
-                    }
+                    let (op, s) = Operator::by_repr(&slice).expect("Not an operator");
 
                     idx += s.chars().count();
                     vec.push(Token::Operator { kind: op.kind });
@@ -185,7 +160,6 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
                 match kind {
                     ParenType::Left => {
                         unary = true;
-                        just_unary = true;
                     }
                     ParenType::Right => {
                         coeff = true;
@@ -202,12 +176,7 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
                     value: num.parse().expect("NOT PARSABLE AS A FLOAT"),
                 });
                 coeff = true;
-                if unary_paren {
-                    unary_paren = false;
-                    vec.push(Token::Paren {
-                        kind: ParenType::Right,
-                    });
-                }
+                unary = false;
             }
             TokenType::CONSTANT => {
                 let (constant, s) = Constant::by_repr(&slice).unwrap();
@@ -216,18 +185,8 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
                     kind: constant.kind,
                 });
                 coeff = true;
+                unary = false;
             }
-        }
-        if !just {
-            for _ in 0..implicit_paren {
-                vec.push(Token::Paren {
-                    kind: ParenType::Right,
-                });
-            }
-            implicit_paren = 0;
-        }
-        if !just_unary {
-            unary = false;
         }
     }
     Ok(vec)
@@ -393,53 +352,54 @@ fn stringify(tokens: &Vec<Token>) -> String {
     stringify_color(tokens, |a, _| a.to_string())
 }
 
-fn stringify_color<F, T: Display>(tokens: &Vec<Token>, f: F) -> String
+fn stringify_color<F, T: Display>(tokens: &Vec<Token>, colorize: F) -> String
 where
     F: Fn(&str, &Token) -> T,
 {
-    _stringify(tokens)
-        .iter()
-        .map(|(s, t, space, comma)| (space, comma, f(s, t)))
-        .fold("".to_string(), |acc, (space, comma, x)| {
-            format!(
-                "{}{}{}{}",
-                acc,
-                x,
-                if *comma { "," } else { "" },
-                if *space { " " } else { "" }
-            )
-        })
-}
-
-fn _stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
-    let mut out: Vec<(String, &Token, bool, bool)> = Vec::new();
+    let mut out = String::new();
+    let mut implicit_paren: i8 = 0;
     for (idx, token) in tokens.iter().enumerate() {
-        let mut append = match *token {
-            Token::Number { value } => {
-                let is_r_paren_or_op = matches!(
+        let append = match *token {
+            Token::Number { .. } | Token::Constant { .. } => {
+                let is_r_paren = matches!(
                     tokens.get(idx + 1),
                     Some(Token::Paren {
                         kind: ParenType::Right
-                    }) | Some(Token::Operator { .. })
+                    })
                 );
-                vec![(value.to_string(), token, true, !is_r_paren_or_op)]
-            }
-            Token::Constant { kind } => {
-                let repr = Constant::by_type(kind).repr.first().unwrap();
-                let is_r_paren_or_op = matches!(
-                    tokens.get(idx + 1),
-                    Some(Token::Paren {
-                        kind: ParenType::Right
-                    }) | Some(Token::Operator { .. })
-                );
-                vec![(repr.to_string(), token, true, !is_r_paren_or_op)]
+
+                let is_op = matches!(tokens.get(idx + 1), Some(Token::Operator { .. }));
+
+                let last = idx == tokens.len() - 1;
+
+                let appendix = if implicit_paren > 0 {
+                    let is_pow = matches!(
+                        tokens.get(idx + 1),
+                        Some(Token::Operator {
+                            kind: OperatorType::Pow
+                        })
+                    );
+                    let space = if last || is_pow { "" } else { " " };
+                    format!("{}{}", ")".repeat(implicit_paren as usize), space)
+                } else if last {
+                    "".to_string()
+                } else if !(is_r_paren || is_op) {
+                    ", ".to_string()
+                } else if is_op {
+                    " ".to_string()
+                } else {
+                    "".to_string()
+                };
+
+                implicit_paren = 0;
+
+                format!("{}{}", colorize(&token.ideal_repr(), token), appendix)
             }
             Token::Operator { kind } => {
                 let op = Operator::by_type(kind);
-                let repr = op.repr.first().unwrap().clone();
 
                 match op.associativity {
-                    Associativity::Left => vec![(repr.to_string(), token, true, false)],
+                    Associativity::Left => format!("{} ", colorize(&token.ideal_repr(), token)),
                     Associativity::Right => {
                         let is_l_paren = matches!(
                             tokens.get(idx + 1),
@@ -448,58 +408,27 @@ fn _stringify(tokens: &Vec<Token>) -> Vec<(String, &Token, bool, bool)> {
                             })
                         );
 
-                        if ![
-                            OperatorType::Positive,
-                            OperatorType::Negative,
-                            OperatorType::Pow,
-                        ]
-                        .contains(&op.kind)
-                            && !is_l_paren
-                        {
-                            vec![
-                                (repr.to_string(), token, false, false),
-                                (
-                                    "(".to_string(),
-                                    &Token::Paren {
-                                        kind: ParenType::Left,
-                                    },
-                                    false,
-                                    false,
-                                ),
-                            ]
+                        if op.implicit_paren() && !is_l_paren {
+                            implicit_paren += 1;
+                            format!("{}(", colorize(&token.ideal_repr(), token))
                         } else {
-                            vec![(repr.to_string(), token, false, false)]
+                            format!("{}", colorize(&token.ideal_repr(), token))
                         }
                     }
                 }
             }
             Token::Paren { kind } => match kind {
                 ParenType::Left => {
-                    vec![("(".to_string(), token, false, false)]
+                    implicit_paren = min(0, implicit_paren - 1);
+                    format!("{}", colorize(&token.ideal_repr(), token))
                 }
                 ParenType::Right => {
-                    vec![(")".to_string(), token, true, false)]
+                    format!("{}", colorize(&token.ideal_repr(), token))
                 }
             },
         };
-        let is_l_paren_or_pow = matches!(
-            tokens.get(idx + 1),
-            Some(Token::Paren {
-                kind: ParenType::Right
-            }) | Some(Token::Operator {
-                kind: OperatorType::Pow
-            })
-        );
-        let mut last = append.iter_mut().last().unwrap();
-        if last.2 && is_l_paren_or_pow {
-            last.2 = false;
-        }
-        if idx == tokens.len() - 1 {
-            last.3 = false;
-        }
-        out.extend_from_slice(&append);
+        out.push_str(&append)
     }
-    out.iter_mut().last().unwrap().2 = false;
     out
 }
 
@@ -533,14 +462,8 @@ mod tests {
                     Token::Operator {
                         kind: OperatorType::Sin,
                     },
-                    Token::Paren {
-                        kind: ParenType::Left,
-                    },
                     Token::Constant {
                         kind: ConstantType::PI,
-                    },
-                    Token::Paren {
-                        kind: ParenType::Right,
                     },
                 ],
             ),
@@ -603,13 +526,7 @@ mod tests {
                     Token::Operator {
                         kind: OperatorType::Sin,
                     },
-                    Token::Paren {
-                        kind: ParenType::Left,
-                    },
                     Token::Number { value: 66.0 },
-                    Token::Paren {
-                        kind: ParenType::Right,
-                    },
                     Token::Operator {
                         kind: OperatorType::Pow,
                     },
@@ -665,6 +582,32 @@ mod tests {
                     Token::Paren {
                         kind: ParenType::Right,
                     },
+                ],
+            ),
+            (
+                "-1",
+                "-1",
+                -1.0,
+                vec![
+                    Token::Operator {
+                        kind: OperatorType::Negative,
+                    },
+                    Token::Number { value: 1.0 },
+                ],
+            ),
+            (
+                "1 + -1",
+                "1 + -1",
+                0.0,
+                vec![
+                    Token::Number { value: 1.0 },
+                    Token::Operator {
+                        kind: OperatorType::Add,
+                    },
+                    Token::Operator {
+                        kind: OperatorType::Negative,
+                    },
+                    Token::Number { value: 1.0 },
                 ],
             ),
         ]

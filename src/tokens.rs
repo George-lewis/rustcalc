@@ -59,6 +59,17 @@ impl Token {
             _ => panic!("[{}] IS NOT A PAREN", c),
         }
     }
+    pub fn ideal_repr(&self) -> String {
+        match self {
+            Token::Number { value } => value.to_string(),
+            Token::Operator { kind } => Operator::by_type(*kind).repr[0].to_string(),
+            Token::Paren { kind } => match kind {
+                ParenType::Left => "(".to_string(),
+                ParenType::Right => ")".to_string(),
+            },
+            Token::Constant { kind } => Constant::by_type(*kind).repr[0].to_string(),
+        }
+    }
 }
 
 #[derive(Clone, PartialEq)]
@@ -253,6 +264,14 @@ impl Operator {
                     })
                     .and_then(|sstr| Option::Some((kind, sstr)))
             })
+    }
+    pub fn implicit_paren(&self) -> bool {
+        ![
+            OperatorType::Positive,
+            OperatorType::Negative,
+            OperatorType::Pow,
+        ]
+        .contains(&self.kind)
     }
 }
 
