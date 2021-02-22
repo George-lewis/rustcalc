@@ -367,22 +367,23 @@ where
 
                 let is_op = matches!(tokens.get(idx + 1), Some(Token::Operator { .. }));
 
+                let is_pow = matches!(
+                    tokens.get(idx + 1),
+                    Some(Token::Operator {
+                        kind: OperatorType::Pow
+                    })
+                );
+
                 let last = idx == tokens.len() - 1;
 
                 let appendix = if implicit_paren > 0 {
-                    let is_pow = matches!(
-                        tokens.get(idx + 1),
-                        Some(Token::Operator {
-                            kind: OperatorType::Pow
-                        })
-                    );
                     let space = if last || is_pow { "" } else { " " };
                     format!("{}{}", ")".repeat(implicit_paren as usize), space)
                 } else if last {
                     "".to_string()
                 } else if !(is_r_paren || is_op) {
                     ", ".to_string()
-                } else if is_op {
+                } else if is_op && !is_pow {
                     " ".to_string()
                 } else {
                     "".to_string()
