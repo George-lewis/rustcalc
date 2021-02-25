@@ -36,16 +36,8 @@ fn main() {
         let mut input = String::new();
         std::io::stdin().read_line(&mut input).unwrap();
 
-        fn clean(s: &mut String) {
-            if s.ends_with('\n') {
-                s.pop();
-                if s.ends_with('\r') {
-                    s.pop();
-                }
-            }
-        }
-
-        clean(&mut input);
+        // Trailing newlines
+        input = input.trim_end().to_string();
 
         if input.is_empty() {
             continue;
