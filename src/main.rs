@@ -124,6 +124,9 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
                 let is_left_assoc_or_pow = opt.map_or(false, |(op, _)| {
                     op.associativity == Associativity::Left || op.kind == OperatorType::Pow
                 });
+
+                // Only a coefficient if the next (current) token is not
+                // A left-associative function or pow
                 if !is_left_assoc_or_pow {
                     vec.push(Token::Operator {
                         kind: OperatorType::Mul,
@@ -145,6 +148,7 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
                 let unar = Operator::unary(&slice);
 
                 if unary && unar.is_some() {
+                    // Current token is a unary operator
                     let (a, b) = unar.unwrap();
                     idx += b.chars().count();
                     vec.push(Token::Operator { kind: *a });
@@ -162,9 +166,13 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
                 let (t, kind) = Token::paren(c);
                 match kind {
                     ParenType::Left => {
+                        
+                        // Covers cases like `sin(-x)`
                         unary = true;
                     }
                     ParenType::Right => {
+                        
+                        // Covers cases like `sin(x) y => sin(x) * y`
                         coeff = true;
                     }
                 }
@@ -277,6 +285,8 @@ fn rpn(tokens: &[Token]) -> Vec<Token> {
 }
 
 fn eval(tokens: &[Token]) -> Result<f64, RMEError> {
+
+    // We need a mutable copy of the tokens
     let mut stack: Vec<Token> = tokens.iter().rev().cloned().collect();
     let mut args: Vec<f64> = Vec::new();
 
@@ -297,14 +307,20 @@ fn eval(tokens: &[Token]) -> Result<f64, RMEError> {
                     Some(x) => x,
                     None => return Err(RMEError::OperandError(op.kind)),
                 };
+
+                // Takes the last `op.arity` number of values from `args`
+                // `start = args.len() - op.arity`
                 let args_: Vec<f64> = args.drain(start..).collect();
                 let result = (op.doit)(&args_);
+
+                // Push the result of the evaluation
                 stack.push(Token::Number { value: result });
             }
             Token::Paren { .. } => {}
         }
     }
 
+    // Result
     if stack.is_empty() && args.len() == 1 {
         return Ok(args[0]);
     }
