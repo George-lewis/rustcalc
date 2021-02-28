@@ -166,12 +166,10 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
                 let (t, kind) = Token::paren(c);
                 match kind {
                     ParenType::Left => {
-                        
                         // Covers cases like `sin(-x)`
                         unary = true;
                     }
                     ParenType::Right => {
-                        
                         // Covers cases like `sin(x) y => sin(x) * y`
                         coeff = true;
                     }
@@ -285,7 +283,6 @@ fn rpn(tokens: &[Token]) -> Vec<Token> {
 }
 
 fn eval(tokens: &[Token]) -> Result<f64, RMEError> {
-
     // We need a mutable copy of the tokens
     let mut stack: Vec<Token> = tokens.iter().rev().cloned().collect();
     let mut args: Vec<f64> = Vec::new();
