@@ -396,7 +396,7 @@ where
             }
             Token::Paren { kind } => match kind {
                 ParenType::Left => {
-                    implicit_paren = min(0, implicit_paren - 1);
+                    implicit_paren = min(0, implicit_paren.saturating_sub(1));
                     format!("{}", colorize(&token.ideal_repr(), token))
                 }
                 ParenType::Right => {
