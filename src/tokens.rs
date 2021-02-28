@@ -254,10 +254,7 @@ impl Operator {
         OPERATORS.iter().find_map(|op| {
             op.repr
                 .iter()
-                .find(|str| {
-                    repr.to_lowercase()
-                        .starts_with(&str.to_lowercase())
-                })
+                .find(|str| repr.to_lowercase().starts_with(&str.to_lowercase()))
                 .and_then(|sstr| Option::Some((op, sstr)))
         })
     }
@@ -271,10 +268,7 @@ impl Operator {
             .find_map(|(kind, op)| {
                 op.repr
                     .iter()
-                    .find(|str| {
-                        s.to_lowercase()
-                            .starts_with(&str.to_lowercase())
-                    })
+                    .find(|str| s.to_lowercase().starts_with(&str.to_lowercase()))
                     .and_then(|sstr| Option::Some((kind, sstr)))
             })
     }
@@ -320,10 +314,7 @@ impl Constant {
         CONSTANTS.iter().find_map(|c| {
             c.repr
                 .iter()
-                .find(|str| {
-                    repr.to_lowercase()
-                        .starts_with(&str.to_lowercase())
-                })
+                .find(|str| repr.to_lowercase().starts_with(&str.to_lowercase()))
                 .and_then(|sstr| Option::Some((c, sstr)))
         })
     }

@@ -9,8 +9,8 @@ use std::{
     process::exit,
 };
 
-use tokens::*;
 use colored::*;
+use tokens::*;
 
 mod tokens;
 mod utils;
@@ -412,7 +412,11 @@ where
 #[cfg(test)]
 mod tests {
 
-    #![allow(clippy::float_cmp, clippy::non_ascii_literal, clippy::clippy::too_many_lines)]
+    #![allow(
+        clippy::float_cmp,
+        clippy::non_ascii_literal,
+        clippy::clippy::too_many_lines
+    )]
 
     use crate::{
         doeval, stringify, tokens::ConstantType, tokens::OperatorType, tokens::ParenType, Token,
