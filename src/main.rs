@@ -1,4 +1,4 @@
-#![warn(clippy::pedantic)]
+#![warn(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::wildcard_imports)]
 
 use core::panic;
@@ -306,7 +306,7 @@ fn eval(tokens: &[Token]) -> Result<f64, RMEError> {
 }
 
 fn doeval(string: &str) -> Result<(f64, Vec<Token>), RMEError> {
-    let tokens = tokenize(&string)?;
+    let tokens = tokenize(string)?;
     let rpn = rpn(&tokens);
     let result = eval(&rpn)?;
     Ok((result, tokens))
@@ -411,8 +411,6 @@ where
 
 #[cfg(test)]
 mod tests {
-
-    #![warn(clippy::pedantic)]
 
     #![allow(
         clippy::float_cmp,

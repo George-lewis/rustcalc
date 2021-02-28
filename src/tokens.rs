@@ -1,4 +1,3 @@
-#![warn(clippy::pedantic)]
 #![allow(clippy::non_ascii_literal, clippy::bind_instead_of_map)]
 
 use core::panic;
@@ -48,16 +47,16 @@ pub enum Token {
 }
 
 impl Token {
-    pub fn paren(c: char) -> (Token, ParenType) {
+    pub fn paren(c: char) -> (Self, ParenType) {
         match c {
             '(' => (
-                Token::Paren {
+                Self::Paren {
                     kind: ParenType::Left,
                 },
                 ParenType::Left,
             ),
             ')' => (
-                Token::Paren {
+                Self::Paren {
                     kind: ParenType::Right,
                 },
                 ParenType::Right,
@@ -67,13 +66,13 @@ impl Token {
     }
     pub fn ideal_repr(&self) -> String {
         match self {
-            Token::Number { value } => value.to_string(),
-            Token::Operator { kind } => Operator::by_type(*kind).repr[0].to_string(),
-            Token::Paren { kind } => match kind {
+            Self::Number { value } => value.to_string(),
+            Self::Operator { kind } => Operator::by_type(*kind).repr[0].to_string(),
+            Self::Paren { kind } => match kind {
                 ParenType::Left => "(".to_string(),
                 ParenType::Right => ")".to_string(),
             },
-            Token::Constant { kind } => Constant::by_type(*kind).repr[0].to_string(),
+            Self::Constant { kind } => Constant::by_type(*kind).repr[0].to_string(),
         }
     }
 }
@@ -247,10 +246,10 @@ static OPERATORS: &[Operator] = &[
 ];
 
 impl Operator {
-    pub fn by_type(kind: OperatorType) -> &'static Operator {
+    pub fn by_type(kind: OperatorType) -> &'static Self {
         OPERATORS.iter().find(|op| op.kind == kind).unwrap()
     }
-    pub fn by_repr(repr: &str) -> Option<(&'static Operator, &'static &'static str)> {
+    pub fn by_repr(repr: &str) -> Option<(&'static Self, &'static &'static str)> {
         OPERATORS.iter().find_map(|op| {
             op.repr
                 .iter()
@@ -259,12 +258,12 @@ impl Operator {
         })
     }
     pub fn is(repr: &str) -> bool {
-        Operator::by_repr(repr).is_some()
+        Self::by_repr(repr).is_some()
     }
     pub fn unary(s: &str) -> Option<(&OperatorType, &&str)> {
         [OperatorType::Positive, OperatorType::Negative]
             .iter()
-            .map(|kind| (kind, Operator::by_type(*kind)))
+            .map(|kind| (kind, Self::by_type(*kind)))
             .find_map(|(kind, op)| {
                 op.repr
                     .iter()
@@ -307,10 +306,10 @@ static CONSTANTS: &[Constant] = &[
 ];
 
 impl Constant {
-    pub fn by_type(kind: ConstantType) -> &'static Constant {
+    pub fn by_type(kind: ConstantType) -> &'static Self {
         CONSTANTS.iter().find(|c| c.kind == kind).unwrap()
     }
-    pub fn by_repr(repr: &str) -> Option<(&'static Constant, &'static &'static str)> {
+    pub fn by_repr(repr: &str) -> Option<(&'static Self, &'static &'static str)> {
         CONSTANTS.iter().find_map(|c| {
             c.repr
                 .iter()
@@ -319,6 +318,6 @@ impl Constant {
         })
     }
     pub fn is(repr: &str) -> bool {
-        Constant::by_repr(repr).is_some()
+        Self::by_repr(repr).is_some()
     }
 }
