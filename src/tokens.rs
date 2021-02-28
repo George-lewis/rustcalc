@@ -90,11 +90,16 @@ pub struct Operator {
     pub doit: fn(&Vec<f64>) -> f64,
 }
 
-fn factorial(mut x: i64) -> i64 {
-    for i in 1..x {
-        x *= i;
+fn _factorial(x: f64) -> f64 {
+    let mut out: f64 = 1.0;
+    for i in 1..=(x as i64) {
+        out *= i as f64
     }
-    x
+    out
+}
+
+fn factorial(x: f64) -> f64 {
+    _factorial(x.floor())
 }
 
 static OPERATORS: &[Operator] = &[
@@ -200,7 +205,7 @@ static OPERATORS: &[Operator] = &[
         precedence: 4,
         associativity: Associativity::Right,
         arity: 1,
-        doit: |arr| factorial(arr[0] as i64) as f64,
+        doit: |arr| factorial(arr[0]),
     },
     Operator {
         kind: OperatorType::RandomFloat,
