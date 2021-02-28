@@ -104,20 +104,29 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
     let mut coeff = false;
     let mut unary = true;
     while idx < string.chars().count() {
+
+        // Current character
         let c = string.chars().nth(idx).unwrap();
+
+        // Ignore whitespace and commas
         if c.is_whitespace() || c == ',' {
             idx += 1;
             coeff = coeff && c != ',';
             continue;
         }
+
+        // Slice the input from the index until the end
         let slice = utils::slice(string, idx, -0);
+
         if coeff {
+
+            // No coefficient if the current character is an r-paren
             if c != ')' {
                 let opt = Operator::by_repr(&slice);
-                let not_left_assoc_or_pow = opt.map_or(true, |(op, _)| {
-                    op.associativity != Associativity::Left && op.kind != OperatorType::Pow
+                let is_left_assoc_or_pow = opt.map_or(false, |(op, _)| {
+                    op.associativity == Associativity::Left || op.kind == OperatorType::Pow
                 });
-                if not_left_assoc_or_pow {
+                if !is_left_assoc_or_pow {
                     vec.push(Token::Operator {
                         kind: OperatorType::Mul,
                     });
@@ -132,6 +141,7 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
                 return Err(RMEError::ParsingError(idx));
             }
         };
+        
         match kind {
             TokenType::OPERATOR => {
                 let unar = Operator::unary(&slice);
