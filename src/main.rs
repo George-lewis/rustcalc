@@ -43,6 +43,7 @@ fn main() {
         }
 
         if input.to_lowercase() == "quit" {
+            println!("{}{}", "Bye".blue(), "!".red());
             exit(0);
         }
 
