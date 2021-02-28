@@ -104,7 +104,6 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
     let mut coeff = false;
     let mut unary = true;
     while idx < string.chars().count() {
-
         // Current character
         let c = string.chars().nth(idx).unwrap();
 
@@ -119,7 +118,6 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
         let slice = utils::slice(string, idx, -0);
 
         if coeff {
-
             // No coefficient if the current character is an r-paren
             if c != ')' {
                 let opt = Operator::by_repr(&slice);
@@ -295,21 +293,19 @@ fn eval(tokens: &[Token]) -> Result<f64, RMEError> {
             }
             Token::Operator { kind } => {
                 let op = Operator::by_type(kind);
-                let mut args_: Vec<f64> = Vec::new();
-                for _ in 0..op.arity {
-                    match args.pop() {
-                        Some(e) => args_.push(e),
-                        None => return Err(RMEError::OperandError(op.kind)),
-                    };
-                }
-                let result = (op.doit)(&args_.iter().rev().cloned().collect());
+                let start = match args.len().checked_sub(op.arity) {
+                    Some(x) => x,
+                    None => return Err(RMEError::OperandError(op.kind)),
+                };
+                let args_: Vec<f64> = args.drain(start..).collect();
+                let result = (op.doit)(&args_);
                 stack.push(Token::Number { value: result });
             }
             Token::Paren { .. } => {}
         }
     }
 
-    if stack.is_empty() {
+    if stack.is_empty() && args.len() == 1 {
         return Ok(args[0]);
     }
     Err(RMEError::EmptyStack)

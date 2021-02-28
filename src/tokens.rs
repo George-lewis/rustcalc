@@ -86,10 +86,10 @@ pub enum Associativity {
 pub struct Operator {
     pub kind: OperatorType,
     pub repr: &'static [&'static str],
-    pub precedence: i8,
+    pub precedence: u8,
     pub associativity: Associativity,
-    pub arity: i8,
-    pub doit: fn(&Vec<f64>) -> f64,
+    pub arity: usize,
+    pub doit: fn(&[f64]) -> f64,
 }
 
 #[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
