@@ -1,3 +1,6 @@
+#![warn(clippy::pedantic)]
+#![allow(clippy::non_ascii_literal, clippy::bind_instead_of_map)]
+
 use core::panic;
 use rand::Rng;
 
@@ -90,6 +93,7 @@ pub struct Operator {
     pub doit: fn(&Vec<f64>) -> f64,
 }
 
+#[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
 fn _factorial(x: f64) -> f64 {
     let mut out: f64 = 1.0;
     for i in 1..=(x as i64) {
@@ -102,6 +106,7 @@ fn factorial(x: f64) -> f64 {
     _factorial(x.floor())
 }
 
+#[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
 static OPERATORS: &[Operator] = &[
     Operator {
         kind: OperatorType::Add,
@@ -251,7 +256,7 @@ impl Operator {
                 .iter()
                 .find(|str| {
                     repr.to_lowercase()
-                        .starts_with(&str.to_lowercase().to_string())
+                        .starts_with(&str.to_lowercase())
                 })
                 .and_then(|sstr| Option::Some((op, sstr)))
         })
@@ -268,7 +273,7 @@ impl Operator {
                     .iter()
                     .find(|str| {
                         s.to_lowercase()
-                            .starts_with(&str.to_lowercase().to_string())
+                            .starts_with(&str.to_lowercase())
                     })
                     .and_then(|sstr| Option::Some((kind, sstr)))
             })
@@ -317,7 +322,7 @@ impl Constant {
                 .iter()
                 .find(|str| {
                     repr.to_lowercase()
-                        .starts_with(&str.to_lowercase().to_string())
+                        .starts_with(&str.to_lowercase())
                 })
                 .and_then(|sstr| Option::Some((c, sstr)))
         })
