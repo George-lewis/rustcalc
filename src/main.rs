@@ -73,7 +73,9 @@ fn main() {
                             format!("{:?}", kind).green()
                         );
                     }
-                    RMEError::EmptyStack => {}
+                    RMEError::EmptyStack => {
+                        println!("Couldn't evalutate. Stack was empty?");
+                    }
                 }
 
                 continue;
@@ -259,12 +261,12 @@ fn rpn(tokens: Vec<Token>) -> Vec<Token> {
     output
 }
 
-fn eval(_k: Vec<Token>) -> Result<f64, RMEError> {
-    let mut k: Vec<Token> = _k.iter().rev().cloned().collect();
+fn eval(tokens: Vec<Token>) -> Result<f64, RMEError> {
+    let mut stack: Vec<Token> = tokens.iter().rev().cloned().collect();
     let mut args: Vec<f64> = Vec::new();
 
-    while k.len() > 0 {
-        let token = k.pop().unwrap();
+    while stack.len() > 0 {
+        let token = stack.pop().unwrap();
 
         match token {
             Token::Number { value } => {
@@ -284,17 +286,16 @@ fn eval(_k: Vec<Token>) -> Result<f64, RMEError> {
                     };
                 }
                 let result = (op.doit)(&argg.iter().rev().cloned().collect());
-                k.push(Token::Number { value: result });
+                stack.push(Token::Number { value: result });
             }
             Token::Paren { .. } => {}
         }
     }
 
-    if k.len() == 0 {
+    if stack.len() == 0 {
         return Ok(args[0]);
-    } else {
-        return Ok(std::f64::NAN);
     }
+    return Err(RMEError::EmptyStack);
 }
 
 fn doeval(string: &str) -> Result<(f64, Vec<Token>), RMEError> {
