@@ -221,7 +221,7 @@ fn _type(s: &str) -> Result<TokenType, ()> {
 
 fn rpn(tokens: &[Token]) -> Vec<Token> {
     let mut operator_stack: Vec<Token> = Vec::new();
-    let mut output: Vec<Token> = Vec::new();
+    let mut output: Vec<Token> = Vec::with_capacity(tokens.len());
 
     for token in tokens {
         match token {
