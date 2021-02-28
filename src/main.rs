@@ -412,6 +412,8 @@ where
 #[cfg(test)]
 mod tests {
 
+    #![warn(clippy::pedantic)]
+
     #![allow(
         clippy::float_cmp,
         clippy::non_ascii_literal,
