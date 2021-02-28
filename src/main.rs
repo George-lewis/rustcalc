@@ -71,7 +71,7 @@ fn main() {
                     }
                     RMEError::OperandError(kind) => {
                         println!(
-                            "Couldn't evaluate. Operator [{}] requires an operand",
+                            "Couldn't evaluate. Operator [{}] requires an operand.",
                             format!("{:?}", kind).green()
                         );
                     }
