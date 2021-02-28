@@ -15,11 +15,10 @@ mod utils;
 
 #[derive(Debug)]
 enum RMEError {
-    ParseError(usize),
+    ParsingError(usize),
     OperandError(OperatorType),
     EmptyStack,
 }
-
 #[derive(Clone, Debug, PartialEq)]
 enum TokenType {
     NUMBER,
@@ -51,7 +50,7 @@ fn main() {
             Ok((a, b)) => (a, b),
             Err(e) => {
                 match e {
-                    RMEError::ParseError(idx) => {
+                    RMEError::ParsingError(idx) => {
                         let first = if idx > 0 {
                             utils::slice(&input, 0, (idx) as i64)
                         } else {
@@ -125,7 +124,7 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
         let kind = match _type(&slice) {
             Ok(k) => k,
             Err(_) => {
-                return Err(RMEError::ParseError(idx));
+                return Err(RMEError::ParsingError(idx));
             }
         };
         match kind {
@@ -140,7 +139,7 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
                 } else {
                     unary = true;
 
-                    let (op, s) = Operator::by_repr(&slice).expect("Not an operator");
+                    let (op, s) = Operator::by_repr(&slice).unwrap();
 
                     idx += s.chars().count();
                     vec.push(Token::Operator { kind: op.kind });
@@ -162,10 +161,12 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
             }
             TokenType::NUMBER => {
                 let num = next_num(&utils::slice(string, idx, -0));
+                let value = match num.parse::<f64>() {
+                    Ok(x) => x,
+                    _ => return Err(RMEError::ParsingError(idx)),
+                };
                 idx += num.chars().count();
-                vec.push(Token::Number {
-                    value: num.parse().expect("NOT PARSABLE AS A FLOAT"),
-                });
+                vec.push(Token::Number { value });
                 coeff = true;
                 unary = false;
             }
@@ -208,7 +209,7 @@ fn rpn(tokens: Vec<Token>) -> Vec<Token> {
             Token::Operator { kind } => {
                 let op1 = Operator::by_type(*kind);
                 while operator_stack.len() > 0 {
-                    let last = operator_stack.last().expect("Empty op stack?");
+                    let last = operator_stack.last().unwrap();
                     if matches!(
                         last,
                         Token::Paren {
