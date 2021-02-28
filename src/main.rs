@@ -137,11 +137,11 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
 
         let kind = match _type(&slice) {
             Ok(k) => k,
-            Err(_) => {
+            Err(..) => {
                 return Err(RMEError::ParsingError(idx));
             }
         };
-        
+
         match kind {
             TokenType::OPERATOR => {
                 let unar = Operator::unary(&slice);
