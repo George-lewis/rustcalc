@@ -1,7 +1,6 @@
 #![warn(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::wildcard_imports)]
 
-use core::panic;
 use std::{
     fmt::{Debug, Display},
     io::Write,
@@ -19,6 +18,7 @@ enum RMEError {
     ParsingError(usize),
     OperandError(OperatorType),
     EmptyStack,
+    MismatchingParens,
 }
 #[derive(Clone, Debug, PartialEq)]
 enum TokenType {
@@ -76,6 +76,9 @@ fn main() {
                     }
                     RMEError::EmptyStack => {
                         println!("Couldn't evalutate. Stack was empty?");
+                    }
+                    RMEError::MismatchingParens => {
+                        println!("Couldn't evaluate. Mismatched parens.");
                     }
                 }
 
@@ -218,7 +221,7 @@ fn _type(s: &str) -> Result<TokenType, ()> {
     })
 }
 
-fn rpn(tokens: &[Token]) -> Vec<Token> {
+fn rpn(tokens: &[Token]) -> Result<Vec<Token>, RMEError> {
     let mut operator_stack: Vec<Token> = Vec::new();
     let mut output: Vec<Token> = Vec::with_capacity(tokens.len());
 
@@ -255,16 +258,15 @@ fn rpn(tokens: &[Token]) -> Vec<Token> {
                 ParenType::Right => {
                     loop {
                         if operator_stack.is_empty() {
-                            panic!("Mismatched parens!");
-                        } else {
-                            let op = operator_stack.pop().unwrap();
-                            if let Token::Paren { kind } = op {
-                                if kind == ParenType::Left {
-                                    break;
-                                }
-                            }
-                            output.push(op);
+                            return Err(RMEError::MismatchingParens);
                         }
+                        let op = operator_stack.pop().unwrap();
+                        if let Token::Paren { kind } = op {
+                            if kind == ParenType::Left {
+                                break;
+                            }
+                        }
+                        output.push(op);
                     }
                     if matches!(operator_stack.last(), Some(Token::Operator { .. })) {
                         output.push(operator_stack.pop().unwrap());
@@ -278,7 +280,7 @@ fn rpn(tokens: &[Token]) -> Vec<Token> {
         output.push(operator_stack.pop().unwrap());
     }
 
-    output
+    Ok(output)
 }
 
 fn eval(tokens: &[Token]) -> Result<f64, RMEError> {
@@ -325,7 +327,7 @@ fn eval(tokens: &[Token]) -> Result<f64, RMEError> {
 
 fn doeval(string: &str) -> Result<(f64, Vec<Token>), RMEError> {
     let tokens = tokenize(string)?;
-    let rpn = rpn(&tokens);
+    let rpn = rpn(&tokens)?;
     let result = eval(&rpn)?;
     Ok((result, tokens))
 }
@@ -376,7 +378,8 @@ where
 
                 let appendix = if implicit_paren > 0 {
                     let space = if last || is_pow { "" } else { " " };
-                    format!("{}{}", ")".repeat(implicit_paren), space)
+                    let r_paren: T = colorize(&")".repeat(implicit_paren), &Token::Paren{kind:ParenType::Right});
+                    format!("{}{}", r_paren, space)
                 } else if last {
                     "".to_string()
                 } else if !(is_r_paren || is_op) {
@@ -406,7 +409,8 @@ where
 
                         if op.implicit_paren() && !is_l_paren {
                             implicit_paren += 1;
-                            format!("{}(", colored)
+                            let l_paren: T = colorize("(", &Token::Paren{kind:ParenType::Left});
+                            format!("{}{}", colored, l_paren)
                         } else {
                             format!("{}", colored)
                         }
