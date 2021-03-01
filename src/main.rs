@@ -283,9 +283,8 @@ fn rpn(tokens: &[Token]) -> Result<Vec<Token>, RMEError> {
         }
     }
 
-    while !operator_stack.is_empty() {
-        output.push(operator_stack.pop().unwrap());
-    }
+    // Pop all of `operator_stack` onto `output`
+    output.extend(operator_stack.iter().rev());
 
     Ok(output)
 }
