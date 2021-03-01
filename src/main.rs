@@ -378,7 +378,12 @@ where
 
                 let appendix = if implicit_paren > 0 {
                     let space = if last || is_pow { "" } else { " " };
-                    let r_paren: T = colorize(&")".repeat(implicit_paren), &Token::Paren{kind:ParenType::Right});
+                    let r_paren: T = colorize(
+                        &")".repeat(implicit_paren),
+                        &Token::Paren {
+                            kind: ParenType::Right,
+                        },
+                    );
                     format!("{}{}", r_paren, space)
                 } else if last {
                     "".to_string()
@@ -409,7 +414,12 @@ where
 
                         if op.implicit_paren() && !is_l_paren {
                             implicit_paren += 1;
-                            let l_paren: T = colorize("(", &Token::Paren{kind:ParenType::Left});
+                            let l_paren: T = colorize(
+                                "(",
+                                &Token::Paren {
+                                    kind: ParenType::Left,
+                                },
+                            );
                             format!("{}{}", colored, l_paren)
                         } else {
                             format!("{}", colored)
