@@ -239,13 +239,10 @@ fn rpn(tokens: &[Token]) -> Result<Vec<Token>, RMEError> {
                 let op1 = Operator::by_type(*kind);
                 while !operator_stack.is_empty() {
                     let last = operator_stack.last().unwrap();
-                    if matches!(
-                        last,
-                        Token::Paren {
-                            kind: ParenType::Left
+                    if let Token::Paren { kind } = last {
+                        if *kind == ParenType::Left {
+                            break;
                         }
-                    ) {
-                        break;
                     }
                     if let Token::Operator { kind } = last {
                         let op2 = Operator::by_type(*kind);
