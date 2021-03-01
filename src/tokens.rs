@@ -102,7 +102,11 @@ fn _factorial(x: f64) -> f64 {
 }
 
 fn factorial(x: f64) -> f64 {
-    _factorial(x.floor())
+    if x >= 1000.0 {
+        f64::INFINITY
+    } else {
+        _factorial(x.floor())
+    }
 }
 
 #[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
