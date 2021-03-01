@@ -440,7 +440,28 @@ where
                     implicit_paren = implicit_paren.saturating_sub(1);
                     format!("{}", colored)
                 }
-                ParenType::Right => format!("{} ", colored),
+                ParenType::Right => {
+                    // Is this token the last one
+                    let is_last = idx + 1 == tokens.len();
+
+                    // Is the next token:
+                    //   - Pow
+                    //   - An R Paren
+                    let is_pow_or_r_paren = matches!(
+                        tokens.get(idx + 1),
+                        Some(Token::Operator {
+                            kind: OperatorType::Pow
+                        }) | Some(Token::Paren {
+                            kind: ParenType::Right,
+                        })
+                    );
+
+                    if is_last || is_pow_or_r_paren {
+                        format!("{}", colored)
+                    } else {
+                        format!("{} ", colored)
+                    }
+                }
             },
         };
         out.push_str(&append)
