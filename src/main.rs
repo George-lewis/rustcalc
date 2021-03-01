@@ -354,6 +354,7 @@ where
     let mut out = String::new();
     let mut implicit_paren: usize = 0;
     for (idx, token) in tokens.iter().enumerate() {
+        let colored: T = colorize(&token.ideal_repr(), token);
         let append = match *token {
             Token::Number { .. } | Token::Constant { .. } => {
                 let is_r_paren = matches!(
@@ -389,13 +390,13 @@ where
 
                 implicit_paren = 0;
 
-                format!("{}{}", colorize(&token.ideal_repr(), token), appendix)
+                format!("{}{}", colored, appendix)
             }
             Token::Operator { kind } => {
                 let op = Operator::by_type(kind);
 
                 match op.associativity {
-                    Associativity::Left => format!("{} ", colorize(&token.ideal_repr(), token)),
+                    Associativity::Left => format!("{} ", colored),
                     Associativity::Right => {
                         let is_l_paren = matches!(
                             tokens.get(idx + 1),
@@ -406,22 +407,21 @@ where
 
                         if op.implicit_paren() && !is_l_paren {
                             implicit_paren += 1;
-                            format!("{}(", colorize(&token.ideal_repr(), token))
+                            format!("{}(", colored)
                         } else {
-                            format!("{}", colorize(&token.ideal_repr(), token))
+                            format!("{}", colored)
                         }
                     }
                 }
             }
-            Token::Paren { kind } => match kind {
-                ParenType::Left => {
-                    implicit_paren = min(0, implicit_paren.saturating_sub(1));
-                    format!("{}", colorize(&token.ideal_repr(), token))
+            Token::Paren { kind } => {
+                if kind == ParenType::Left {
+
+                    // Subtracts one bottoming out at 0 because `implicit_paren` is a `usize`
+                    implicit_paren = implicit_paren.saturating_sub(1);
                 }
-                ParenType::Right => {
-                    format!("{}", colorize(&token.ideal_repr(), token))
-                }
-            },
+                format!("{}", colored)
+            }
         };
         out.push_str(&append)
     }
