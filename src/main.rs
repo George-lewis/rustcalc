@@ -13,7 +13,7 @@ use tokens::*;
 mod tokens;
 mod utils;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum RMEError {
     ParsingError(usize),
     OperandError(OperatorType),
@@ -479,7 +479,8 @@ mod tests {
     )]
 
     use crate::{
-        doeval, stringify, tokens::ConstantType, tokens::OperatorType, tokens::ParenType, Token,
+        doeval, stringify, tokens::ConstantType, tokens::OperatorType, tokens::ParenType, RMEError,
+        Token,
     };
 
     #[test]
@@ -664,5 +665,12 @@ mod tests {
             assert_eq!(result, *c, "Checking evaluation of [{}]", a);
             assert_eq!(stringify(&tokens, |a, _| a.to_string()), *b);
         });
+    }
+
+    #[test]
+    fn fail() {
+        vec![("1 +", RMEError::OperandError(OperatorType::Add))]
+            .iter()
+            .for_each(|(a, b)| assert_eq!(doeval(a).unwrap_err(), *b));
     }
 }
