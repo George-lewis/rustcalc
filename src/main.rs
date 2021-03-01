@@ -3,7 +3,6 @@
 
 use core::panic;
 use std::{
-    cmp::min,
     fmt::{Debug, Display},
     io::Write,
     process::exit,
@@ -416,7 +415,6 @@ where
             }
             Token::Paren { kind } => {
                 if kind == ParenType::Left {
-
                     // Subtracts one bottoming out at 0 because `implicit_paren` is a `usize`
                     implicit_paren = implicit_paren.saturating_sub(1);
                 }
