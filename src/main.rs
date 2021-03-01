@@ -427,13 +427,14 @@ where
                     }
                 }
             }
-            Token::Paren { kind } => {
-                if kind == ParenType::Left {
+            Token::Paren { kind } => match kind {
+                ParenType::Left => {
                     // Subtracts one bottoming out at 0 because `implicit_paren` is a `usize`
                     implicit_paren = implicit_paren.saturating_sub(1);
+                    format!("{}", colored)
                 }
-                format!("{}", colored)
-            }
+                ParenType::Right => format!("{} ", colored),
+            },
         };
         out.push_str(&append)
     }
