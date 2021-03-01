@@ -1,15 +1,11 @@
 [package]
 name = "rustcalc"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["George-Lewis <georgejeffreylewis@gmail.com>"]
 edition = "2018"
 description = "A command-line utility for evaluating mathematical statements"
 license = "MIT"
 
-#[features]
-#colors = {"colored"}
-
 [dependencies]
-#colored = { version = "2", optional = true }
 colored = "2"
 rand = "0.8.3"
