@@ -102,6 +102,7 @@ fn next_num(string: &str) -> String {
 #[allow(clippy::unnecessary_unwrap)]
 fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
     let mut vec: Vec<Token> = Vec::new();
+    let mut explicit_paren = 0;
     let mut idx = 0;
     let mut coeff = false;
     let mut unary = true;
@@ -170,10 +171,12 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
                     ParenType::Left => {
                         // Covers cases like `sin(-x)`
                         unary = true;
+                        explicit_paren += 1;
                     }
                     ParenType::Right => {
                         // Covers cases like `sin(x) y => sin(x) * y`
                         coeff = true;
+                        explicit_paren -= 1;
                     }
                 }
 
@@ -202,7 +205,11 @@ fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
             }
         }
     }
-    Ok(vec)
+    if explicit_paren == 0 {
+        Ok(vec)
+    } else {
+        Err(RMEError::MismatchingParens)
+    }
 }
 
 #[allow(clippy::clippy::iter_nth_zero)]
