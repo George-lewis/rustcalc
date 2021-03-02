@@ -665,8 +665,13 @@ mod tests {
 
     #[test]
     fn fail() {
-        vec![("1 +", RMEError::OperandError(OperatorType::Add))]
-            .iter()
-            .for_each(|(a, b)| assert_eq!(doeval(a).unwrap_err(), *b));
+        vec![
+            ("1 +", RMEError::OperandError(OperatorType::Add)),
+            ("1 + 2 + 3 + h", RMEError::ParsingError(12)),
+            ("h", RMEError::ParsingError(0)),
+            ("(1", RMEError::MismatchingParens),
+        ]
+        .iter()
+        .for_each(|(a, b)| assert_eq!(doeval(a).unwrap_err(), *b));
     }
 }
