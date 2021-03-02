@@ -479,6 +479,10 @@ mod tests {
         Token,
     };
 
+    fn same(a: f64, b: f64) -> bool {
+        (a - b).abs() < 0.000_001
+    }
+
     #[test]
     fn test() {
         [
@@ -650,15 +654,36 @@ mod tests {
                     Token::Number { value: 1.0 },
                 ],
             ),
+            (
+                "-   (  1.1 +  2.2)",
+                "-(1.1 + 2.2)",
+                -3.3,
+                vec![
+                    Token::Operator {
+                        kind: OperatorType::Negative,
+                    },
+                    Token::Paren {
+                        kind: ParenType::Left,
+                    },
+                    Token::Number { value: 1.1 },
+                    Token::Operator {
+                        kind: OperatorType::Add,
+                    },
+                    Token::Number { value: 2.2 },
+                    Token::Paren {
+                        kind: ParenType::Right,
+                    },
+                ],
+            ),
         ]
         .iter()
         .for_each(|(a, b, c, d)| {
             let (result, tokens) = match doeval(a) {
                 Ok((x, y)) => (x, y),
-                Err(e) => panic!("FAILED! {:?}", e),
+                Err(e) => panic!("error! {:?}; {}", e, a),
             };
             assert_eq!(tokens, *d, "Checking tokenization of [{}]", a);
-            assert_eq!(result, *c, "Checking evaluation of [{}]", a);
+            assert!(same(result, *c), "Checking evaluation of [{}]", a);
             assert_eq!(stringify(&tokens, |a, _| a.to_string()), *b);
         });
     }
