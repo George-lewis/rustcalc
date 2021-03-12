@@ -39,7 +39,7 @@ pub enum Token {
 }
 
 impl Token {
-    pub fn paren(c: char) -> Option<(Self, ParenType)> {
+    pub const fn paren(c: char) -> Option<(Self, ParenType)> {
         let kind = match c {
             '(' => ParenType::Left,
             ')' => ParenType::Right,
