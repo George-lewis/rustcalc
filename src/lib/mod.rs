@@ -1,17 +1,17 @@
 pub mod constants;
 pub mod errors;
+mod eval;
 pub mod operators;
+mod rpn;
+mod tokenize;
 pub mod tokens;
 pub mod utils;
-mod tokenize;
-mod rpn;
-mod eval;
 
-use tokens::Token;
 use errors::Error;
-use tokenize::tokenize;
-use rpn::rpn;
 use eval::eval;
+use rpn::rpn;
+use tokenize::tokenize;
+use tokens::Token;
 
 pub fn doeval(string: &str) -> Result<(f64, Vec<Token>), Error> {
     let tokens = tokenize(string)?;

@@ -1,7 +1,7 @@
 #![allow(clippy::non_ascii_literal)]
 
-use super::tokens::Representable;
 use super::tokens::get_by_repr;
+use super::tokens::Representable;
 
 use rand::Rng;
 
@@ -26,10 +26,7 @@ pub enum OperatorType {
     RandomFloat,
 }
 
-const UNARY_OPERATORS: &[OperatorType] = &[
-    OperatorType::Positive,
-    OperatorType::Negative
-];
+const UNARY_OPERATORS: &[OperatorType] = &[OperatorType::Positive, OperatorType::Negative];
 
 impl Representable for OperatorType {
     fn repr(&self) -> &'static [&'static str] {

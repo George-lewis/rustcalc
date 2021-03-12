@@ -1,19 +1,15 @@
 #![warn(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::wildcard_imports)]
 
-use std::{
-    fmt::Display,
-    io::Write,
-    process::exit,
-};
+use std::{fmt::Display, io::Write, process::exit};
 
 mod lib;
 
 use colored::*;
+use lib::doeval;
 use lib::errors::Error;
 use lib::operators::*;
 use lib::tokens::*;
-use lib::doeval;
 
 use lib::utils;
 
@@ -227,7 +223,8 @@ mod tests {
     )]
 
     use crate::{
-        lib::doeval, lib::constants::*, lib::errors::Error, lib::operators::*, lib::tokens::*, stringify,
+        lib::constants::*, lib::doeval, lib::errors::Error, lib::operators::*, lib::tokens::*,
+        stringify,
     };
 
     fn same(a: f64, b: f64) -> bool {

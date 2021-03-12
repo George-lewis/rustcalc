@@ -1,4 +1,8 @@
-use super::{tokens::{Token, ParenType}, errors::Error, operators::{Operator, Associativity}};
+use super::{
+    errors::Error,
+    operators::{Associativity, Operator},
+    tokens::{ParenType, Token},
+};
 
 pub fn rpn(tokens: &[Token]) -> Result<Vec<Token>, Error> {
     let mut operator_stack: Vec<Token> = Vec::new();

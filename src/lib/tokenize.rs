@@ -1,4 +1,6 @@
-use super::{tokens::Token, errors::Error, constants::Constant, utils, operators::*, tokens::ParenType};
+use super::{
+    constants::Constant, errors::Error, operators::*, tokens::ParenType, tokens::Token, utils,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 enum TokenType {

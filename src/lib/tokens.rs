@@ -14,7 +14,10 @@ pub trait Representable {
     fn repr(&self) -> &[&str];
 }
 
-pub(super) fn get_by_repr<'a, T: Representable>(search: &str, list: &'a [T]) -> Option<(&'a T, &'a &'a str)> {
+pub(super) fn get_by_repr<'a, T: Representable>(
+    search: &str,
+    list: &'a [T],
+) -> Option<(&'a T, &'a &'a str)> {
     list.iter().find_map(|t| {
         t.repr()
             .iter()
@@ -39,21 +42,12 @@ pub enum Token {
 
 impl Token {
     pub fn paren(c: char) -> (Self, ParenType) {
-        match c {
-            '(' => (
-                Self::Paren {
-                    kind: ParenType::Left,
-                },
-                ParenType::Left,
-            ),
-            ')' => (
-                Self::Paren {
-                    kind: ParenType::Right,
-                },
-                ParenType::Right,
-            ),
+        let kind = match c {
+            '(' => ParenType::Left,
+            ')' => ParenType::Right,
             _ => panic!("[{}] IS NOT A PAREN", c),
-        }
+        };
+        (Self::Paren { kind }, kind)
     }
     pub fn next_number(string: &str) -> String {
         string
@@ -62,10 +56,7 @@ impl Token {
             .collect::<String>()
     }
     fn is_next_t(string: &str, list: &[char]) -> bool {
-        string
-            .chars()
-            .next()
-            .map_or(false, |c| list.contains(&c))
+        string.chars().next().map_or(false, |c| list.contains(&c))
     }
     pub fn is_next_number(string: &str) -> bool {
         Self::is_next_t(string, &NUMBER_CHARACTERS)

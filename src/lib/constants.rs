@@ -1,7 +1,7 @@
 #![allow(clippy::non_ascii_literal)]
 
-use super::tokens::Representable;
 use super::tokens::get_by_repr;
+use super::tokens::Representable;
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum ConstantType {
