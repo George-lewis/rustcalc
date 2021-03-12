@@ -2,36 +2,31 @@
 #![allow(clippy::wildcard_imports)]
 
 use std::{
-    fmt::{Debug, Display},
+    fmt::Display,
     io::Write,
     process::exit,
 };
 
+mod lib;
+
 use colored::*;
-use tokens::*;
+use lib::errors::Error;
+use lib::operators::*;
+use lib::tokens::*;
+use lib::doeval;
 
-mod tokens;
-mod utils;
+use lib::utils;
 
-#[derive(Debug, PartialEq)]
-enum RMEError {
-    ParsingError(usize),
-    OperandError(OperatorType),
-    EmptyStack,
-    MismatchingParens,
-}
-#[derive(Clone, Debug, PartialEq)]
-enum TokenType {
-    NUMBER,
-    OPERATOR,
-    PAREN,
-    CONSTANT,
+macro_rules! flush {
+    () => {
+        std::io::stdout().flush().unwrap()
+    };
 }
 
 fn main() {
     loop {
         print!("> ");
-        std::io::stdout().flush().ok().unwrap();
+        flush!();
 
         let mut input = String::new();
         std::io::stdin().read_line(&mut input).unwrap();
@@ -52,7 +47,7 @@ fn main() {
             Ok((a, b)) => (a, b),
             Err(e) => {
                 match e {
-                    RMEError::ParsingError(idx) => {
+                    Error::Parsing(idx) => {
                         let first = if idx > 0 {
                             utils::slice(&input, 0, (idx) as i64)
                         } else {
@@ -68,16 +63,16 @@ fn main() {
                             "^".red()
                         );
                     }
-                    RMEError::OperandError(kind) => {
+                    Error::Operand(kind) => {
                         println!(
                             "Couldn't evaluate. Operator [{}] requires an operand.",
                             format!("{:?}", kind).green()
                         );
                     }
-                    RMEError::EmptyStack => {
+                    Error::EmptyStack => {
                         println!("Couldn't evalutate. Stack was empty?");
                     }
-                    RMEError::MismatchingParens => {
+                    Error::MismatchingParens => {
                         println!("Couldn't evaluate. Mismatched parens.");
                     }
                 }
@@ -90,249 +85,6 @@ fn main() {
 
         println!("[ {} ] => {}", formatted, format!("{:.3}", x).blue());
     }
-}
-
-fn next_num(string: &str) -> String {
-    string
-        .chars()
-        .take_while(|c| NUMBER_CHARACTERS.contains(c))
-        .collect::<String>()
-}
-
-#[allow(clippy::unnecessary_unwrap)]
-fn tokenize(string: &str) -> Result<Vec<Token>, RMEError> {
-    let mut vec: Vec<Token> = Vec::new();
-    let mut explicit_paren = 0;
-    let mut idx = 0;
-    let mut coeff = false;
-    let mut unary = true;
-    while idx < string.chars().count() {
-        // Current character
-        let c = string.chars().nth(idx).unwrap();
-
-        // Ignore whitespace and commas
-        if c.is_whitespace() || c == ',' {
-            idx += 1;
-            coeff = coeff && c != ',';
-            continue;
-        }
-
-        // Slice the input from the index until the end
-        let slice = utils::slice(string, idx, -0);
-
-        if coeff {
-            // No coefficient if the current character is an r-paren
-            if c != ')' {
-                let opt = Operator::by_repr(&slice);
-                let is_left_assoc_or_pow = opt.map_or(false, |(op, _)| {
-                    op.associativity == Associativity::Left || op.kind == OperatorType::Pow
-                });
-
-                // Only a coefficient if the next (current) token is not
-                // A left-associative function or pow
-                if !is_left_assoc_or_pow {
-                    vec.push(Token::Operator {
-                        kind: OperatorType::Mul,
-                    });
-                }
-            }
-            coeff = false;
-        }
-
-        let kind = match _type(&slice) {
-            Ok(k) => k,
-            Err(..) => {
-                return Err(RMEError::ParsingError(idx));
-            }
-        };
-
-        match kind {
-            TokenType::OPERATOR => {
-                let unar = Operator::unary(&slice);
-
-                if unary && unar.is_some() {
-                    // Current token is a unary operator
-                    let (a, b) = unar.unwrap();
-                    idx += b.chars().count();
-                    vec.push(Token::Operator { kind: *a });
-                    unary = false;
-                } else {
-                    unary = true;
-
-                    let (op, s) = Operator::by_repr(&slice).unwrap();
-
-                    idx += s.chars().count();
-                    vec.push(Token::Operator { kind: op.kind });
-                }
-            }
-            TokenType::PAREN => {
-                let (t, kind) = Token::paren(c);
-                match kind {
-                    ParenType::Left => {
-                        // Covers cases like `sin(-x)`
-                        unary = true;
-                        explicit_paren += 1;
-                    }
-                    ParenType::Right => {
-                        // Covers cases like `sin(x) y => sin(x) * y`
-                        coeff = true;
-                        explicit_paren -= 1;
-                    }
-                }
-
-                vec.push(t);
-                idx += 1;
-            }
-            TokenType::NUMBER => {
-                let num = next_num(&utils::slice(string, idx, -0));
-                let value = match num.parse::<f64>() {
-                    Ok(x) => x,
-                    Err(..) => return Err(RMEError::ParsingError(idx)),
-                };
-                idx += num.chars().count();
-                vec.push(Token::Number { value });
-                coeff = true;
-                unary = false;
-            }
-            TokenType::CONSTANT => {
-                let (constant, s) = Constant::by_repr(&slice).unwrap();
-                idx += s.chars().count();
-                vec.push(Token::Constant {
-                    kind: constant.kind,
-                });
-                coeff = true;
-                unary = false;
-            }
-        }
-    }
-    if explicit_paren == 0 {
-        Ok(vec)
-    } else {
-        Err(RMEError::MismatchingParens)
-    }
-}
-
-#[allow(clippy::clippy::iter_nth_zero)]
-fn _type(s: &str) -> Result<TokenType, ()> {
-    let c = &s.chars().nth(0).unwrap();
-    Ok(if NUMBER_CHARACTERS.contains(c) {
-        TokenType::NUMBER
-    } else if Operator::is(s) {
-        TokenType::OPERATOR
-    } else if PAREN_CHARACTERS.contains(c) {
-        TokenType::PAREN
-    } else if Constant::is(s) {
-        TokenType::CONSTANT
-    } else {
-        return Err(());
-    })
-}
-
-fn rpn(tokens: &[Token]) -> Result<Vec<Token>, RMEError> {
-    let mut operator_stack: Vec<Token> = Vec::new();
-    let mut output: Vec<Token> = Vec::with_capacity(tokens.len());
-
-    for token in tokens {
-        match token {
-            Token::Number { .. } | Token::Constant { .. } => output.push(*token),
-            Token::Operator { kind } => {
-                let op1 = Operator::by_type(*kind);
-                while !operator_stack.is_empty() {
-                    let last = operator_stack.last().unwrap();
-                    if let Token::Paren { kind } = last {
-                        if *kind == ParenType::Left {
-                            break;
-                        }
-                    }
-                    if let Token::Operator { kind } = last {
-                        let op2 = Operator::by_type(*kind);
-                        if !(op2.precedence > op1.precedence
-                            || (op2.precedence == op1.precedence
-                                && op1.associativity == Associativity::Left))
-                        {
-                            break;
-                        }
-                    }
-                    output.push(operator_stack.pop().unwrap());
-                }
-                operator_stack.push(*token);
-            }
-            Token::Paren { kind } => match kind {
-                ParenType::Left => operator_stack.push(*token),
-                ParenType::Right => {
-                    loop {
-                        if operator_stack.is_empty() {
-                            return Err(RMEError::MismatchingParens);
-                        }
-                        let op = operator_stack.pop().unwrap();
-                        if let Token::Paren { kind } = op {
-                            if kind == ParenType::Left {
-                                break;
-                            }
-                        }
-                        output.push(op);
-                    }
-                    if matches!(operator_stack.last(), Some(Token::Operator { .. })) {
-                        output.push(operator_stack.pop().unwrap());
-                    }
-                }
-            },
-        }
-    }
-
-    // Pop all of `operator_stack` onto `output`
-    output.extend(operator_stack.iter().rev());
-
-    Ok(output)
-}
-
-fn eval(tokens: &[Token]) -> Result<f64, RMEError> {
-    // We need a mutable copy of the tokens
-    let mut stack: Vec<Token> = tokens.iter().rev().cloned().collect();
-    let mut args: Vec<f64> = Vec::new();
-
-    while !stack.is_empty() {
-        let token = stack.pop().unwrap();
-
-        match token {
-            Token::Number { value } => {
-                args.push(value);
-            }
-            Token::Constant { kind } => {
-                let constant = Constant::by_type(kind);
-                args.push(constant.value);
-            }
-            Token::Operator { kind } => {
-                let op = Operator::by_type(kind);
-                let start = match args.len().checked_sub(op.arity) {
-                    Some(x) => x,
-                    None => return Err(RMEError::OperandError(op.kind)),
-                };
-
-                // Takes the last `op.arity` number of values from `args`
-                // `start = args.len() - op.arity`
-                let args_: Vec<f64> = args.drain(start..).collect();
-                let result = (op.doit)(&args_);
-
-                // Push the result of the evaluation
-                stack.push(Token::Number { value: result });
-            }
-            Token::Paren { .. } => {}
-        }
-    }
-
-    // Result
-    if stack.is_empty() && args.len() == 1 {
-        return Ok(args[0]);
-    }
-    Err(RMEError::EmptyStack)
-}
-
-fn doeval(string: &str) -> Result<(f64, Vec<Token>), RMEError> {
-    let tokens = tokenize(string)?;
-    let rpn = rpn(&tokens)?;
-    let result = eval(&rpn)?;
-    Ok((result, tokens))
 }
 
 fn color_cli(string: &str, token: &Token) -> ColoredString {
@@ -475,8 +227,7 @@ mod tests {
     )]
 
     use crate::{
-        doeval, stringify, tokens::ConstantType, tokens::OperatorType, tokens::ParenType, RMEError,
-        Token,
+        lib::doeval, lib::constants::*, lib::errors::Error, lib::operators::*, lib::tokens::*, stringify,
     };
 
     fn same(a: f64, b: f64) -> bool {
@@ -691,10 +442,10 @@ mod tests {
     #[test]
     fn fail() {
         vec![
-            ("1 +", RMEError::OperandError(OperatorType::Add)),
-            ("1 + 2 + 3 + h", RMEError::ParsingError(12)),
-            ("h", RMEError::ParsingError(0)),
-            ("(1", RMEError::MismatchingParens),
+            ("1 +", Error::Operand(OperatorType::Add)),
+            ("1 + 2 + 3 + h", Error::Parsing(12)),
+            ("h", Error::Parsing(0)),
+            ("(1", Error::MismatchingParens),
         ]
         .iter()
         .for_each(|(a, b)| assert_eq!(doeval(a).unwrap_err(), *b));

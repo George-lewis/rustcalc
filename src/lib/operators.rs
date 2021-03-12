@@ -1,10 +1,9 @@
-#![allow(clippy::non_ascii_literal, clippy::bind_instead_of_map)]
+#![allow(clippy::non_ascii_literal)]
 
-use core::panic;
+use super::tokens::Representable;
+use super::tokens::get_by_repr;
+
 use rand::Rng;
-
-pub const NUMBER_CHARACTERS: [char; 11] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'];
-pub const PAREN_CHARACTERS: [char; 2] = ['(', ')'];
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum OperatorType {
@@ -27,62 +26,24 @@ pub enum OperatorType {
     RandomFloat,
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
-pub enum ParenType {
-    Left,
-    Right,
-}
-#[derive(PartialEq, Clone, Copy, Debug)]
-pub enum ConstantType {
-    PI,
-    E,
-    Tau,
-}
-#[derive(Clone, Debug, Copy, PartialEq)]
-pub enum Token {
-    Number { value: f64 },
-    Operator { kind: OperatorType },
-    Paren { kind: ParenType },
-    Constant { kind: ConstantType },
-}
+const UNARY_OPERATORS: &[OperatorType] = &[
+    OperatorType::Positive,
+    OperatorType::Negative
+];
 
-impl Token {
-    pub fn paren(c: char) -> (Self, ParenType) {
-        match c {
-            '(' => (
-                Self::Paren {
-                    kind: ParenType::Left,
-                },
-                ParenType::Left,
-            ),
-            ')' => (
-                Self::Paren {
-                    kind: ParenType::Right,
-                },
-                ParenType::Right,
-            ),
-            _ => panic!("[{}] IS NOT A PAREN", c),
-        }
-    }
-    pub fn ideal_repr(&self) -> String {
-        match self {
-            Self::Number { value } => value.to_string(),
-            Self::Operator { kind } => Operator::by_type(*kind).repr[0].to_string(),
-            Self::Paren { kind } => match kind {
-                ParenType::Left => "(".to_string(),
-                ParenType::Right => ")".to_string(),
-            },
-            Self::Constant { kind } => Constant::by_type(*kind).repr[0].to_string(),
-        }
+impl Representable for OperatorType {
+    fn repr(&self) -> &'static [&'static str] {
+        Operator::by_type(*self).repr
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Copy)]
 pub enum Associativity {
     Left,
     Right,
 }
 
+#[derive(Clone, Copy)]
 pub struct Operator {
     pub kind: OperatorType,
     pub repr: &'static [&'static str],
@@ -90,6 +51,35 @@ pub struct Operator {
     pub associativity: Associativity,
     pub arity: usize,
     pub doit: fn(&[f64]) -> f64,
+}
+
+impl Representable for Operator {
+    fn repr(&self) -> &[&str] {
+        self.repr
+    }
+}
+
+impl Operator {
+    pub fn by_type(kind: OperatorType) -> &'static Self {
+        OPERATORS.iter().find(|op| op.kind == kind).unwrap()
+    }
+    pub fn by_repr(repr: &str) -> Option<(&'static Self, &'static &'static str)> {
+        get_by_repr(repr, OPERATORS)
+    }
+    pub fn is(repr: &str) -> bool {
+        Self::by_repr(repr).is_some()
+    }
+    pub fn unary(repr: &str) -> Option<(&OperatorType, &&str)> {
+        get_by_repr(repr, UNARY_OPERATORS)
+    }
+    pub fn implicit_paren(&self) -> bool {
+        ![
+            OperatorType::Positive,
+            OperatorType::Negative,
+            OperatorType::Pow,
+        ]
+        .contains(&self.kind)
+    }
 }
 
 #[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
@@ -248,80 +238,3 @@ static OPERATORS: &[Operator] = &[
         doit: |arr| arr[0],
     },
 ];
-
-impl Operator {
-    pub fn by_type(kind: OperatorType) -> &'static Self {
-        OPERATORS.iter().find(|op| op.kind == kind).unwrap()
-    }
-    pub fn by_repr(repr: &str) -> Option<(&'static Self, &'static &'static str)> {
-        OPERATORS.iter().find_map(|op| {
-            op.repr
-                .iter()
-                .find(|str| repr.to_lowercase().starts_with(&str.to_lowercase()))
-                .and_then(|sstr| Option::Some((op, sstr)))
-        })
-    }
-    pub fn is(repr: &str) -> bool {
-        Self::by_repr(repr).is_some()
-    }
-    pub fn unary(s: &str) -> Option<(&OperatorType, &&str)> {
-        [OperatorType::Positive, OperatorType::Negative]
-            .iter()
-            .map(|kind| (kind, Self::by_type(*kind)))
-            .find_map(|(kind, op)| {
-                op.repr
-                    .iter()
-                    .find(|str| s.to_lowercase().starts_with(&str.to_lowercase()))
-                    .and_then(|sstr| Option::Some((kind, sstr)))
-            })
-    }
-    pub fn implicit_paren(&self) -> bool {
-        ![
-            OperatorType::Positive,
-            OperatorType::Negative,
-            OperatorType::Pow,
-        ]
-        .contains(&self.kind)
-    }
-}
-
-pub struct Constant {
-    pub kind: ConstantType,
-    pub repr: &'static [&'static str],
-    pub value: f64,
-}
-
-static CONSTANTS: &[Constant] = &[
-    Constant {
-        kind: ConstantType::PI,
-        repr: &["π", "pi"],
-        value: std::f64::consts::PI,
-    },
-    Constant {
-        kind: ConstantType::Tau,
-        repr: &["τ", "tau"],
-        value: std::f64::consts::TAU,
-    },
-    Constant {
-        kind: ConstantType::E,
-        repr: &["e"],
-        value: std::f64::consts::E,
-    },
-];
-
-impl Constant {
-    pub fn by_type(kind: ConstantType) -> &'static Self {
-        CONSTANTS.iter().find(|c| c.kind == kind).unwrap()
-    }
-    pub fn by_repr(repr: &str) -> Option<(&'static Self, &'static &'static str)> {
-        CONSTANTS.iter().find_map(|c| {
-            c.repr
-                .iter()
-                .find(|str| repr.to_lowercase().starts_with(&str.to_lowercase()))
-                .and_then(|sstr| Option::Some((c, sstr)))
-        })
-    }
-    pub fn is(repr: &str) -> bool {
-        Self::by_repr(repr).is_some()
-    }
-}
