@@ -1,7 +1,5 @@
 #![allow(clippy::non_ascii_literal, clippy::bind_instead_of_map)]
 
-use core::panic;
-
 use super::{
     constants::{Constant, ConstantType},
     operators::{Operator, OperatorType},
@@ -41,13 +39,13 @@ pub enum Token {
 }
 
 impl Token {
-    pub fn paren(c: char) -> (Self, ParenType) {
+    pub fn paren(c: char) -> Option<(Self, ParenType)> {
         let kind = match c {
             '(' => ParenType::Left,
             ')' => ParenType::Right,
-            _ => panic!("[{}] IS NOT A PAREN", c),
+            _ => return None
         };
-        (Self::Paren { kind }, kind)
+        Some((Self::Paren { kind }, kind))
     }
     pub fn next_number(string: &str) -> String {
         string

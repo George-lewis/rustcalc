@@ -92,7 +92,7 @@ pub fn tokenize(string: &str) -> Result<Vec<Token>, Error> {
                 }
             }
             TokenType::Paren => {
-                let (t, kind) = Token::paren(c);
+                let (t, kind) = Token::paren(c).unwrap();
                 match kind {
                     ParenType::Left => {
                         // Covers cases like `sin(-x)`
