@@ -48,7 +48,8 @@ pub fn tokenize(string: &str) -> Result<Vec<Token>, Error> {
 
         if coeff {
             // No coefficient if the current character is an r-paren
-            if c != ')' {
+            let is_r_paren = Token::paren_type(c) == Some(ParenType::Right);
+            if !is_r_paren {
                 let opt = Operator::by_repr(&slice);
                 let is_left_assoc_or_pow = opt.map_or(false, |(op, _)| {
                     op.associativity == Associativity::Left || op.kind == OperatorType::Pow
@@ -79,16 +80,18 @@ pub fn tokenize(string: &str) -> Result<Vec<Token>, Error> {
                 if unary && unar.is_some() {
                     // Current token is a unary operator
                     let (a, b) = unar.unwrap();
-                    idx += b.chars().count();
+                    idx += b;
                     vec.push(Token::Operator { kind: *a });
                     unary = false;
                 } else {
                     unary = true;
 
-                    let (op, s) = Operator::by_repr(&slice).unwrap();
+                    let (operator, n) = Operator::by_repr(&slice).unwrap();
 
-                    idx += s.chars().count();
-                    vec.push(Token::Operator { kind: op.kind });
+                    idx += n;
+                    vec.push(Token::Operator {
+                        kind: operator.kind,
+                    });
                 }
             }
             TokenType::Paren => {
@@ -110,19 +113,18 @@ pub fn tokenize(string: &str) -> Result<Vec<Token>, Error> {
                 idx += 1;
             }
             TokenType::Number => {
-                let num = Token::next_number(&utils::slice(string, idx, -0));
-                let value = match num.parse::<f64>() {
-                    Ok(x) => x,
-                    Err(..) => return Err(Error::Parsing(idx)),
+                let (t, n) = match Token::number(&slice) {
+                    Some(a) => a,
+                    None => return Err(Error::Parsing(idx)),
                 };
-                idx += num.chars().count();
-                vec.push(Token::Number { value });
+                idx += n;
+                vec.push(t);
                 coeff = true;
                 unary = false;
             }
             TokenType::Constant => {
-                let (constant, s) = Constant::by_repr(&slice).unwrap();
-                idx += s.chars().count();
+                let (constant, n) = Constant::by_repr(&slice).unwrap();
+                idx += n;
                 vec.push(Token::Constant {
                     kind: constant.kind,
                 });

@@ -15,12 +15,12 @@ pub trait Representable {
 pub(super) fn get_by_repr<'a, T: Representable>(
     search: &str,
     list: &'a [T],
-) -> Option<(&'a T, &'a &'a str)> {
+) -> Option<(&'a T, usize)> {
     list.iter().find_map(|t| {
         t.repr()
             .iter()
             .find(|repr| search.to_lowercase().starts_with(&repr.to_lowercase()))
-            .and_then(|repr| Option::Some((t, repr)))
+            .and_then(|repr| Option::Some((t, repr.len())))
     })
 }
 
@@ -39,15 +39,24 @@ pub enum Token {
 }
 
 impl Token {
-    pub const fn paren(c: char) -> Option<(Self, ParenType)> {
-        let kind = match c {
-            '(' => ParenType::Left,
-            ')' => ParenType::Right,
-            _ => return None
-        };
-        Some((Self::Paren { kind }, kind))
+    pub fn paren(c: char) -> Option<(Self, ParenType)> {
+        Self::paren_type(c).map(|kind| (Self::Paren { kind }, kind))
     }
-    pub fn next_number(string: &str) -> String {
+    pub const fn paren_type(c: char) -> Option<ParenType> {
+        match c {
+            '(' => Some(ParenType::Left),
+            ')' => Some(ParenType::Right),
+            _ => None,
+        }
+    }
+    pub fn number(string: &str) -> Option<(Self, usize)> {
+        let repr = Self::next_number(string);
+        match repr.parse::<f64>() {
+            Ok(value) => Some((Self::Number { value }, repr.len())),
+            Err(..) => None,
+        }
+    }
+    fn next_number(string: &str) -> String {
         string
             .chars()
             .take_while(|c| NUMBER_CHARACTERS.contains(c))

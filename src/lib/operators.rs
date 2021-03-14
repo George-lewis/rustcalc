@@ -60,13 +60,13 @@ impl Operator {
     pub fn by_type(kind: OperatorType) -> &'static Self {
         OPERATORS.iter().find(|op| op.kind == kind).unwrap()
     }
-    pub fn by_repr(repr: &str) -> Option<(&'static Self, &'static &'static str)> {
+    pub fn by_repr(repr: &str) -> Option<(&'static Self, usize)> {
         get_by_repr(repr, OPERATORS)
     }
     pub fn is(repr: &str) -> bool {
         Self::by_repr(repr).is_some()
     }
-    pub fn unary(repr: &str) -> Option<(&OperatorType, &&str)> {
+    pub fn unary(repr: &str) -> Option<(&OperatorType, usize)> {
         get_by_repr(repr, UNARY_OPERATORS)
     }
     pub fn implicit_paren(&self) -> bool {
