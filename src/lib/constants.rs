@@ -3,6 +3,7 @@
 use super::tokens::get_by_repr;
 use super::tokens::Representable;
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum ConstantType {
     PI,

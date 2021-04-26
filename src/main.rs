@@ -1,7 +1,17 @@
 #![warn(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::wildcard_imports)]
 
-use std::{fmt::Display, io::Write, process::exit, sync::{atomic::{AtomicBool, Ordering}, mpsc::{self, Receiver}}, thread, time::Duration};
+use std::{
+    fmt::Display,
+    io::Write,
+    process::exit,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc::{self, Receiver},
+    },
+    thread,
+    time::Duration,
+};
 
 mod lib;
 
@@ -12,6 +22,7 @@ use lib::operators::*;
 use lib::tokens::*;
 
 use lib::utils;
+use mpsc::RecvTimeoutError;
 
 macro_rules! flush {
     () => {
@@ -22,10 +33,12 @@ macro_rules! flush {
 fn start_stdin() -> Receiver<String> {
     let (tx, rx) = mpsc::channel();
     thread::spawn(move || {
+        let stdin = std::io::stdin();
         loop {
             let mut input = String::new();
-            std::io::stdin().read_line(&mut input).unwrap();
-            tx.send(input).expect("Failed to send stdin over channel");
+            stdin.read_line(&mut input).expect("Couldn't read stdin");
+            tx.send(input.trim_end().to_string())
+                .expect("Failed to send stdin over channel");
         }
     });
     rx
@@ -35,29 +48,38 @@ static TERMINATE: AtomicBool = AtomicBool::new(false);
 
 fn main() -> ! {
     let stdin = start_stdin();
-    
+
     ctrlc::set_handler(move || {
         TERMINATE.store(true, Ordering::Relaxed);
-    }).expect("Failed to set CTRLC handler");
+    })
+    .expect("Failed to set CTRLC handler");
 
     loop {
         print!("> ");
         flush!();
 
-        let mut input = loop {
-            let input = stdin.recv_timeout(Duration::from_millis(100)).ok();
-            let is_quit = input.as_deref().map_or(false, |str| str.to_lowercase() == "quit");
+        let input = loop {
+            let input = match stdin.recv_timeout(Duration::from_millis(100)) {
+                Ok(s) => Some(s),
+                Err(RecvTimeoutError::Disconnected) => {
+                    TERMINATE.store(true, Ordering::Relaxed);
+                    None
+                }
+                Err(RecvTimeoutError::Timeout) => None,
+            };
+
+            let is_quit = input
+                .as_deref()
+                .map_or(false, |str| str.to_lowercase() == "quit");
+
             if TERMINATE.load(Ordering::Relaxed) || is_quit {
-                println!("{}{}", "Bye".blue(), "!".red());
                 exit(0);
             }
+
             if let Some(input) = input {
                 break input;
             }
         };
-
-        // Trailing newlines
-        input = input.trim_end().to_string();
 
         if input.is_empty() {
             continue;
