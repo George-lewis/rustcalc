@@ -8,4 +8,5 @@ license = "MIT"
 
 [dependencies]
 colored = "2"
+ctrlc = "3.1.9"
 rand = "0.8.3"
