@@ -7,6 +7,15 @@ description = "A command-line utility for evaluating mathematical statements"
 license = "MIT"
 
 [dependencies]
+
+# For colored terminal output
 colored = "2"
-ctrlc = "3.1.9"
+
+# For getting standard dirs
+dirs = "3.0.2"
+
+# For random operators
 rand = "0.8.3"
+
+# For line editing
+rustyline = "8.0.0"
