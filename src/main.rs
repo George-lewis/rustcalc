@@ -1,7 +1,7 @@
 #![warn(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::wildcard_imports)]
 
-use std::{fmt::Display, process::exit};
+use std::{fmt::Display, process};
 
 mod lib;
 
@@ -37,7 +37,7 @@ fn main() -> ! {
                 if let Some(path) = cache_file {
                     editor.save_history(path).ok();
                 }
-                exit(0)
+                process::exit(0)
             }
         };
 
