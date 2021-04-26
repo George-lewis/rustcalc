@@ -1,17 +1,7 @@
 #![warn(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::wildcard_imports)]
 
-use std::{
-    fmt::Display,
-    io::Write,
-    process::exit,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        mpsc::{self, Receiver},
-    },
-    thread,
-    time::Duration,
-};
+use std::{fmt::Display, process::exit};
 
 mod lib;
 
@@ -22,62 +12,32 @@ use lib::operators::*;
 use lib::tokens::*;
 
 use lib::utils;
-use mpsc::RecvTimeoutError;
+use rustyline::Editor;
 
-macro_rules! flush {
-    () => {
-        std::io::stdout().flush().unwrap()
-    };
-}
-
-fn start_stdin() -> Receiver<String> {
-    let (tx, rx) = mpsc::channel();
-    thread::spawn(move || {
-        let stdin = std::io::stdin();
-        loop {
-            let mut input = String::new();
-            stdin.read_line(&mut input).expect("Couldn't read stdin");
-            tx.send(input.trim_end().to_string())
-                .expect("Failed to send stdin over channel");
-        }
-    });
-    rx
-}
-
-static TERMINATE: AtomicBool = AtomicBool::new(false);
+const HISTORY_FILE: &str = "rustcalc-history.txt";
 
 fn main() -> ! {
-    let stdin = start_stdin();
+    let mut editor = Editor::<()>::new();
 
-    ctrlc::set_handler(move || {
-        TERMINATE.store(true, Ordering::Relaxed);
-    })
-    .expect("Failed to set CTRLC handler");
+    let cache_file = dirs::cache_dir().map(|mut dir| {
+        dir.push(HISTORY_FILE);
+        dir
+    });
+    let cache_file = cache_file.as_deref();
+
+    if let Some(path) = cache_file {
+        editor.load_history(path).ok();
+    }
 
     loop {
-        print!("> ");
-        flush!();
-
-        let input = loop {
-            let input = match stdin.recv_timeout(Duration::from_millis(100)) {
-                Ok(s) => Some(s),
-                Err(RecvTimeoutError::Disconnected) => {
-                    TERMINATE.store(true, Ordering::Relaxed);
-                    None
+        #[allow(clippy::single_match_else)]
+        let input = match editor.readline("> ") {
+            Ok(line) => line.trim_end().to_string(),
+            Err(_) => {
+                if let Some(path) = cache_file {
+                    editor.save_history(path).ok();
                 }
-                Err(RecvTimeoutError::Timeout) => None,
-            };
-
-            let is_quit = input
-                .as_deref()
-                .map_or(false, |str| str.to_lowercase() == "quit");
-
-            if TERMINATE.load(Ordering::Relaxed) || is_quit {
-                exit(0);
-            }
-
-            if let Some(input) = input {
-                break input;
+                exit(0)
             }
         };
 
@@ -122,6 +82,9 @@ fn main() -> ! {
                 continue;
             }
         };
+
+        // Add the line to the history
+        editor.add_history_entry(input);
 
         let formatted = stringify(&repr, color_cli);
 
