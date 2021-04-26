@@ -1,17 +1,7 @@
 #![warn(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::wildcard_imports)]
 
-use std::{
-    fmt::Display,
-    io::Write,
-    process::exit,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        mpsc::{self, Receiver},
-    },
-    thread,
-    time::Duration,
-};
+use std::{fmt::Display, process::exit};
 
 mod lib;
 
