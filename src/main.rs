@@ -63,10 +63,10 @@ fn main() -> ! {
 
         if input.contains("=") {
             let sides: Vec<&str> = input.split('=').collect();
-            if sides.len() != 2 {
-                //Error!
+            if sides.len() != 2 { //Multiple = signs
+                handle_errors(Error::Assignment, input, 0);
                 continue;
-            }// other error checking etc
+            }
             
             let user_repr: String = sides[0].trim().to_string();
             let (user_value, repr) = match doeval(&sides[1], &vars) {
@@ -117,8 +117,9 @@ fn main() -> ! {
 }
 
 fn handle_errors(e: Error, input: String, offset: usize) {
+    //Offset is added so that highlighting can be added to expressions that come after an '=' during assignment
     match e {
-        Error::Parsing(idx) => {
+        Error::Parsing(idx) => {    
             let offset_idx = idx + offset;
             let first = if offset_idx > 0 {
                 utils::slice(&input, 0, (offset_idx) as i64)
@@ -147,8 +148,32 @@ fn handle_errors(e: Error, input: String, offset: usize) {
         Error::MismatchingParens => {
             println!("Couldn't evaluate. Mismatched parens.");
         }
+        Error::Assignment => {
+            println!("Couldn't assign to variable. Malformed assignment statement.")
+        }
+        Error::AssignmentName => {//Unused at the moment, no restrictions on variable names
+            println!("Couldnt assign to variable. Invalid variable name.")
+        }
+        Error::UnknownVariable(idx) => {
+            let offset_idx = idx + offset + 1; //+1 to account for $ sign
+            let first = if offset_idx > 0 {
+                utils::slice(&input, 0, (offset_idx) as i64)
+            } else {
+                "".to_string()
+            };
+            println!(
+                "Unknown variable at index [{}]\n{}{}{}\n{}{}",
+                offset_idx.to_string().red(),
+                first,
+                input.chars().nth(offset_idx).unwrap().to_string().on_red().white(),
+                utils::slice(&input, offset_idx + 1, -0),
+                "~".repeat(offset_idx).red().bold(),
+                "^".red()
+            );
+        }
     }
 }
+
 fn color_cli(string: &str, token: &Token) -> ColoredString {
     match token {
         Token::Number { .. } => string.clear(),
