@@ -76,8 +76,17 @@ fn main() -> ! {
                     continue;
                 }
             };
-            let user_var = Variable {repr: user_repr, value: user_value};
-            vars.push(user_var);
+
+            let found_var = vars.iter_mut().find(|x| x.repr == user_repr);
+            if let Some(found_var) = found_var {
+                //Reassign
+                found_var.value = user_value;
+            }
+            else {
+                //Assign
+                let user_var = Variable {repr: user_repr, value: user_value};
+                vars.push(user_var);
+            }
 
             // Add the line to the history
             editor.add_history_entry(input);
