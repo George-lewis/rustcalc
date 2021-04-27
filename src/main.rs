@@ -56,6 +56,8 @@ fn main() -> ! {
             for v in vars.iter() {
                 println!("[ {} => {} ]", v.repr.green().bold(), v.value.to_string().blue());
             }
+            // Add the line to the history
+            editor.add_history_entry(input);
             continue;
         }
 
