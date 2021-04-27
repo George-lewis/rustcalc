@@ -49,6 +49,7 @@ pub fn tokenize<'a, 'b>(string: &'a str, vars: &'b [Variable]) -> Result<Vec<Tok
         if c =='$' {
             println!("{}", slice);
             let var_idx = idx + 1;
+            get_by_repr(search, list)
         }
 
         if coeff {
