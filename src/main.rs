@@ -31,10 +31,10 @@ fn main() -> ! {
     }
 
     let mut vars: Vec<Variable> = Vec::new();
-    let repr = "abc".to_string();
-    let value = 6.5;
-    let test_var = Variable {repr, value};
-    vars.push(test_var);
+    let ans_repr = "ans".to_string();
+    let ans_value = 0.0;
+    let ans_var = Variable {repr: ans_repr, value: ans_value};
+    vars.push(ans_var);
 
     loop {
         #[allow(clippy::single_match_else)]
