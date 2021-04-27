@@ -1,6 +1,6 @@
-use super::{
-    constants::Constant, errors::Error, operators::*, tokens::ParenType, tokens::Token, utils,
-};
+use crate::lib::tokens::get_by_repr;
+
+use super::{constants::{Constant}, errors::Error, operators::*, tokens::ParenType, tokens::Token, utils, variables::Variable};
 
 #[derive(Clone, Debug, PartialEq)]
 enum TokenType {
@@ -26,7 +26,7 @@ fn _type(s: &str) -> Result<TokenType, ()> {
 }
 
 #[allow(clippy::unnecessary_unwrap)]
-pub fn tokenize(string: &str) -> Result<Vec<Token>, Error> {
+pub fn tokenize<'a, 'b>(string: &'a str, vars: &'b [Variable]) -> Result<Vec<Token<'b>>, Error> {
     let mut vec: Vec<Token> = Vec::new();
     let mut explicit_paren = 0;
     let mut idx = 0;
@@ -45,6 +45,12 @@ pub fn tokenize(string: &str) -> Result<Vec<Token>, Error> {
 
         // Slice the input from the index until the end
         let slice = utils::slice(string, idx, -0);
+
+        if c =='$' {
+            println!("{}", slice);
+            let var_idx = idx + 1;
+            get_by_repr(search, list)
+        }
 
         if coeff {
             // No coefficient if the current character is an r-paren

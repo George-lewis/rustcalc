@@ -3,6 +3,7 @@
 use super::{
     constants::{Constant, ConstantType},
     operators::{Operator, OperatorType},
+    variables::{Variable}
 };
 
 const NUMBER_CHARACTERS: [char; 11] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'];
@@ -31,14 +32,15 @@ pub enum ParenType {
 }
 
 #[derive(Clone, Debug, Copy, PartialEq)]
-pub enum Token {
+pub enum Token<'a> {
     Number { value: f64 },
     Operator { kind: OperatorType },
     Paren { kind: ParenType },
     Constant { kind: ConstantType },
+    Variable { inner: &'a Variable }
 }
 
-impl Token {
+impl Token<'_> {
     pub fn paren(c: char) -> Option<(Self, ParenType)> {
         Self::paren_type(c).map(|kind| (Self::Paren { kind }, kind))
     }
@@ -80,6 +82,7 @@ impl Token {
                 ParenType::Right => ")".to_string(),
             },
             Self::Constant { kind } => Constant::by_type(*kind).repr[0].to_string(),
+            Self::Variable { inner } => inner.repr.to_string()
         }
     }
 }

@@ -10,6 +10,7 @@ use lib::doeval;
 use lib::errors::Error;
 use lib::operators::*;
 use lib::tokens::*;
+use lib::variables::Variable;
 
 use lib::utils;
 use rustyline::Editor;
@@ -29,6 +30,12 @@ fn main() -> ! {
         editor.load_history(path).ok();
     }
 
+    let mut vars: Vec<Variable> = Vec::new();
+    let repr = "abc".to_string();
+    let value = 6.5;
+    let test_var = Variable {repr, value};
+    vars.push(test_var);
+
     loop {
         #[allow(clippy::single_match_else)]
         let input = match editor.readline("> ") {
@@ -45,7 +52,7 @@ fn main() -> ! {
             continue;
         }
 
-        let (x, repr) = match doeval(&input) {
+        let (x, repr) = match doeval(&input, &vars) {
             Ok((a, b)) => (a, b),
             Err(e) => {
                 match e {
@@ -105,6 +112,7 @@ fn color_cli(string: &str, token: &Token) -> ColoredString {
         }
         Token::Paren { .. } => string.magenta(),
         Token::Constant { .. } => string.yellow(),
+        Token::Variable { .. } => string.green()
     }
 }
 
@@ -117,7 +125,7 @@ where
     for (idx, token) in tokens.iter().enumerate() {
         let colored: T = colorize(&token.ideal_repr(), token);
         let append = match *token {
-            Token::Number { .. } | Token::Constant { .. } => {
+            Token::Number { .. } | Token::Constant { .. } | Token::Variable { .. }=> {
                 let is_r_paren = matches!(
                     tokens.get(idx + 1),
                     Some(Token::Paren {
@@ -231,10 +239,7 @@ mod tests {
         clippy::clippy::too_many_lines
     )]
 
-    use crate::{
-        lib::constants::*, lib::doeval, lib::errors::Error, lib::operators::*, lib::tokens::*,
-        stringify,
-    };
+    use crate::{lib::constants::*, lib::doeval, lib::errors::Error, lib::operators::*, lib::{tokens::*, variables::Variable}, stringify};
 
     fn same(a: f64, b: f64) -> bool {
         (a - b).abs() < 0.000_001
@@ -435,7 +440,8 @@ mod tests {
         ]
         .iter()
         .for_each(|(a, b, c, d)| {
-            let (result, tokens) = match doeval(a) {
+            let mut test_vars: Vec<Variable> = Vec::new();
+            let (result, tokens) = match doeval(a, &test_vars) {
                 Ok((x, y)) => (x, y),
                 Err(e) => panic!("error! {:?}; {}", e, a),
             };
@@ -454,6 +460,6 @@ mod tests {
             ("(1", Error::MismatchingParens),
         ]
         .iter()
-        .for_each(|(a, b)| assert_eq!(doeval(a).unwrap_err(), *b));
+        .for_each(|(a, b)| assert_eq!(doeval(a, &Vec::new()).unwrap_err(), *b));
     }
 }
