@@ -52,6 +52,13 @@ fn main() -> ! {
             continue;
         }
 
+        if input == "$" {
+            for v in vars.iter() {
+                println!("[ {} => {} ]", v.repr.green().bold(), v.value.to_string().blue());
+            }
+            continue;
+        }
+
         let (x, repr) = match doeval(&input, &vars) {
             Ok((a, b)) => (a, b),
             Err(e) => {
