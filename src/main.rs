@@ -54,7 +54,7 @@ fn main() -> ! {
 
         if input == "$" {
             for v in vars.iter() {
-                println!("[ {} => {} ]", v.repr.green().bold(), v.value.to_string().blue());
+                println!("[ {} => {} ]", v.repr.green().bold(), format!("{:.3}", v.value).blue());
             }
             // Add the line to the history
             editor.add_history_entry(input);
