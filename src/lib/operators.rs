@@ -1,9 +1,8 @@
 #![allow(clippy::non_ascii_literal)]
 
-use super::tokens::get_by_repr;
-use super::tokens::Representable;
-
 use rand::Rng;
+
+use super::representable::{get_by_repr, Representable};
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum OperatorType {

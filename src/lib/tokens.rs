@@ -9,22 +9,6 @@ use super::{
 const NUMBER_CHARACTERS: [char; 11] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'];
 const PAREN_CHARACTERS: [char; 2] = ['(', ')'];
 
-pub trait Representable {
-    fn repr(&self) -> &[&str];
-}
-
-pub(super) fn get_by_repr<'a, T: Representable>(
-    search: &str,
-    list: &'a [T],
-) -> Option<(&'a T, usize)> {
-    list.iter().find_map(|t| {
-        t.repr()
-            .iter()
-            .find(|repr| search.to_lowercase().starts_with(&repr.to_lowercase()))
-            .and_then(|repr| Option::Some((t, repr.len())))
-    })
-}
-
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum ParenType {
     Left,
