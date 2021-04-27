@@ -97,6 +97,8 @@ fn main() -> ! {
 
         let formatted = stringify(&repr, color_cli);
 
+        vars[0].value = x; // Set ans to new value
+
         println!("[ {} ] => {}", formatted, format!("{:.3}", x).blue());
     }
 }
