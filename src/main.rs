@@ -61,6 +61,23 @@ fn main() -> ! {
             continue;
         }
 
+        if input.contains("=") {
+            let sides: Vec<&str> = input.split('=').collect();
+            if sides.len() != 2 {
+                //Error!
+                continue;
+            }// other error checking etc
+            
+            let user_repr: String = sides[0].trim().to_string();
+            let user_value = sides[1].trim().parse().unwrap();
+            let user_var = Variable {repr: user_repr, value: user_value};
+            vars.push(user_var);
+
+            // Add the line to the history
+            editor.add_history_entry(input);
+            continue;
+        }
+
         let (x, repr) = match doeval(&input, &vars) {
             Ok((a, b)) => (a, b),
             Err(e) => {
