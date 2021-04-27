@@ -69,7 +69,13 @@ fn main() -> ! {
             }// other error checking etc
             
             let user_repr: String = sides[0].trim().to_string();
-            let user_value = sides[1].trim().parse().unwrap();
+            let (user_value, _repr) = match doeval(&sides[1], &vars) {
+                Ok((a, b)) => (a, b),
+                Err(e) => {
+                    handle_errors(e, input.clone(), sides[0].len()+1);
+                    continue;
+                }
+            };
             let user_var = Variable {repr: user_repr, value: user_value};
             vars.push(user_var);
 
