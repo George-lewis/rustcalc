@@ -81,37 +81,7 @@ fn main() -> ! {
         let (x, repr) = match doeval(&input, &vars) {
             Ok((a, b)) => (a, b),
             Err(e) => {
-                match e {
-                    Error::Parsing(idx) => {
-                        let first = if idx > 0 {
-                            utils::slice(&input, 0, (idx) as i64)
-                        } else {
-                            "".to_string()
-                        };
-                        println!(
-                            "Couldn't parse the token at index [{}]\n{}{}{}\n{}{}",
-                            idx.to_string().red(),
-                            first,
-                            input.chars().nth(idx).unwrap().to_string().on_red().white(),
-                            utils::slice(&input, idx + 1, -0),
-                            "~".repeat(idx).red().bold(),
-                            "^".red()
-                        );
-                    }
-                    Error::Operand(kind) => {
-                        println!(
-                            "Couldn't evaluate. Operator [{}] requires an operand.",
-                            format!("{:?}", kind).green()
-                        );
-                    }
-                    Error::EmptyStack => {
-                        println!("Couldn't evalutate. Stack was empty?");
-                    }
-                    Error::MismatchingParens => {
-                        println!("Couldn't evaluate. Mismatched parens.");
-                    }
-                }
-
+                handle_errors(e, input, 0);
                 continue;
             }
         };
@@ -125,6 +95,39 @@ fn main() -> ! {
     }
 }
 
+fn handle_errors(e: Error, input: String, offset: usize) {
+    match e {
+        Error::Parsing(idx) => {
+            let offset_idx = idx + offset;
+            let first = if offset_idx > 0 {
+                utils::slice(&input, 0, (offset_idx) as i64)
+            } else {
+                "".to_string()
+            };
+            println!(
+                "Couldn't parse the token at index [{}]\n{}{}{}\n{}{}",
+                offset_idx.to_string().red(),
+                first,
+                input.chars().nth(offset_idx).unwrap().to_string().on_red().white(),
+                utils::slice(&input, offset_idx + 1, -0),
+                "~".repeat(offset_idx).red().bold(),
+                "^".red()
+            );
+        }
+        Error::Operand(kind) => {
+            println!(
+                "Couldn't evaluate. Operator [{}] requires an operand.",
+                format!("{:?}", kind).green()
+            );
+        }
+        Error::EmptyStack => {
+            println!("Couldn't evalutate. Stack was empty?");
+        }
+        Error::MismatchingParens => {
+            println!("Couldn't evaluate. Mismatched parens.");
+        }
+    }
+}
 fn color_cli(string: &str, token: &Token) -> ColoredString {
     match token {
         Token::Number { .. } => string.clear(),
