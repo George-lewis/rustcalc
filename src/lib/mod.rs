@@ -2,6 +2,7 @@ pub mod constants;
 pub mod errors;
 mod eval;
 pub mod operators;
+mod representable;
 mod rpn;
 mod tokenize;
 pub mod tokens;
