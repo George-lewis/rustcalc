@@ -1,5 +1,3 @@
-use crate::lib::tokens::get_by_repr;
-
 use super::{constants::{Constant}, errors::Error, operators::*, tokens::ParenType, tokens::Token, utils, variables::Variable};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -8,6 +6,7 @@ enum TokenType {
     Operator,
     Paren,
     Constant,
+    Variable
 }
 
 #[allow(clippy::clippy::iter_nth_zero)]
@@ -46,10 +45,17 @@ pub fn tokenize<'a, 'b>(string: &'a str, vars: &'b [Variable]) -> Result<Vec<Tok
         // Slice the input from the index until the end
         let slice = utils::slice(string, idx, -0);
 
+        let kind;
+
         if c =='$' {
-            println!("{}", slice);
-            let var_idx = idx + 1;
-            get_by_repr(search, list)
+            kind = TokenType::Variable;
+        } else {
+            kind = match _type(&slice) {
+                Ok(k) => k,
+                Err(..) => {
+                    return Err(Error::Parsing(idx));
+                }
+            };
         }
 
         if coeff {
@@ -72,12 +78,7 @@ pub fn tokenize<'a, 'b>(string: &'a str, vars: &'b [Variable]) -> Result<Vec<Tok
             coeff = false;
         }
 
-        let kind = match _type(&slice) {
-            Ok(k) => k,
-            Err(..) => {
-                return Err(Error::Parsing(idx));
-            }
-        };
+        
 
         match kind {
             TokenType::Operator => {
@@ -133,6 +134,18 @@ pub fn tokenize<'a, 'b>(string: &'a str, vars: &'b [Variable]) -> Result<Vec<Tok
                 idx += n;
                 vec.push(Token::Constant {
                     kind: constant.kind,
+                });
+                coeff = true;
+                unary = false;
+            }
+            TokenType::Variable => {
+                let (variable, n) = match Variable::next_variable(&slice, vars) {
+                    Some(a) => a,
+                    None => return Err(Error::Parsing(idx)),
+                };
+                idx += n+1; //+1 to account for '$'
+                vec.push(Token::Variable {
+                    inner: variable,
                 });
                 coeff = true;
                 unary = false;
