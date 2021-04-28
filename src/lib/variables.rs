@@ -1,5 +1,3 @@
-#![allow(clippy::non_ascii_literal)]
-
 use super::{
     representable::{get_by_repr, Searchable},
     utils,
