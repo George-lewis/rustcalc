@@ -136,7 +136,8 @@ pub fn tokenize<'a, 'b>(string: &'a str, vars: &'b [Variable]) -> Result<Vec<Tok
                 unary = false;
             }
             TokenType::Variable => {
-                let (variable, n) = match Variable::next_variable(&slice, vars) {
+                let (variable, n) = match Variable::next_variable(&slice[1..], vars) {
+                    // [1..] to ignore the $ prefix
                     Some(a) => a,
                     None => return Err(Error::UnknownVariable(idx)),
                 };

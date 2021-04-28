@@ -1,7 +1,4 @@
-use super::{
-    representable::{get_by_repr, Searchable},
-    utils,
-};
+use super::representable::{get_by_repr, Searchable};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Variable {
@@ -12,8 +9,7 @@ pub struct Variable {
 impl Searchable for Variable {
     fn search<'a, 'b>(&'a self, search: &'b str) -> Option<(&'a Self, usize)> {
         // Case sensitive
-        let search_str = utils::slice(search, 1, -0); //to ignore $
-        if search_str.starts_with(&self.repr) {
+        if search.starts_with(&self.repr) {
             Some((self, self.repr.len()))
         } else {
             None
