@@ -326,6 +326,17 @@ mod tests {
 
     #[test]
     fn test() {
+        let mut test_vars: Vec<Variable> = Vec::new();
+        let test_var_repr_a = "v".to_string();
+        let test_var_value_a = 5.0;
+        let test_var_a = Variable {repr: test_var_repr_a, value: test_var_value_a};
+        test_vars.push(test_var_a);
+
+        let test_var_repr_b = "pi".to_string();
+        let test_var_value_b = 7.0;
+        let test_var_b = Variable {repr: test_var_repr_b, value: test_var_value_b};
+        test_vars.push(test_var_b);
+
         [
             (
                 "1 + 1",
@@ -516,10 +527,67 @@ mod tests {
                     },
                 ],
             ),
+            (
+                "$v",
+                "$v",
+                5.0,
+                vec![
+                    Token::Variable {
+                        inner: &test_vars[0]
+                    }
+                ]
+            ),
+            (
+                "$v + 5",
+                "$v + 5",
+                10.0,
+                vec![
+                    Token::Variable {
+                        inner: &test_vars[0]
+                    },
+                    Token::Operator {
+                        kind: OperatorType::Add
+                    },
+                    Token::Number {
+                        value: 5.0
+                    }
+                ]
+            ),
+            (
+                "  5 +    $v    ",
+                "5 + $v",
+                10.0,
+                vec![
+                    Token::Number {
+                        value: 5.0
+                    },
+                    Token::Operator {
+                        kind: OperatorType::Add
+                    },
+                    Token::Variable {
+                        inner: &test_vars[0]
+                    },
+                ]
+            ),
+            (
+                "pi + $pi",
+                "π + $pi",
+                std::f64::consts::PI + 7.0,
+                vec![
+                    Token::Constant {
+                        kind: ConstantType::PI
+                    },
+                    Token::Operator {
+                        kind: OperatorType::Add
+                    },
+                    Token::Variable {
+                        inner: &test_vars[1]
+                    },
+                ]
+            ),
         ]
         .iter()
         .for_each(|(a, b, c, d)| {
-            let mut test_vars: Vec<Variable> = Vec::new();
             let (result, tokens) = match doeval(a, &test_vars) {
                 Ok((x, y)) => (x, y),
                 Err(e) => panic!("error! {:?}; {}", e, a),
@@ -537,6 +605,7 @@ mod tests {
             ("1 + 2 + 3 + h", Error::Parsing(12)),
             ("h", Error::Parsing(0)),
             ("(1", Error::MismatchingParens),
+            ("3 + $a", Error::UnknownVariable(4)),
         ]
         .iter()
         .for_each(|(a, b)| assert_eq!(doeval(a, &Vec::new()).unwrap_err(), *b));
