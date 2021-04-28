@@ -56,7 +56,7 @@ fn main() -> ! {
         }
 
         if input == "$" {
-            //Variable list command
+            // Variable list command
             for v in vars.iter() {
                 println!(
                     "[ {} => {} ]",
@@ -70,10 +70,10 @@ fn main() -> ! {
         }
 
         if input.contains("=") {
-            //Variable assignment/reassignment
+            // Variable assignment/reassignment
             let sides: Vec<&str> = input.split('=').collect();
             if sides.len() != 2 {
-                //Multiple = signs
+                // Multiple = signs
                 handle_errors(Error::Assignment, input, 0);
                 continue;
             } else if !sides[0].trim().starts_with("$") {
@@ -85,12 +85,12 @@ fn main() -> ! {
             let (user_value, repr) = match doeval(&sides[1], &vars) {
                 Ok((a, b)) => (a, b),
                 Err(e) => {
-                    handle_errors(e, input.clone(), sides[0].len() + 1); //+1 to account for equals sign when doing error highlighting
+                    handle_errors(e, input.clone(), sides[0].len() + 1); // +1 to account for equals sign when doing error highlighting
                     continue;
                 }
             };
 
-            //Print assignment confimation
+            // Print assignment confimation
             let formatted = stringify(&repr, color_cli);
             println!(
                 "[ {}{} {} {} => {} ]",
@@ -103,10 +103,10 @@ fn main() -> ! {
 
             let found_var = vars.iter_mut().find(|x| x.repr == user_repr);
             if let Some(found_var) = found_var {
-                //Reassign
+                // Reassign
                 found_var.value = user_value;
             } else {
-                //Assign
+                // Assign
                 let user_var = Variable {
                     repr: user_repr,
                     value: user_value,
@@ -139,7 +139,7 @@ fn main() -> ! {
 }
 
 fn handle_errors(e: Error, input: String, offset: usize) {
-    //Offset is added so that highlighting can be added to expressions that come after an '=' during assignment
+    // Offset is added so that highlighting can be added to expressions that come after an '=' during assignment
     match e {
         Error::Parsing(idx) => {
             let offset_idx = idx + offset;
