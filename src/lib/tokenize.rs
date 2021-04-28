@@ -22,6 +22,8 @@ fn _type(s: &str) -> Result<TokenType, ()> {
         TokenType::Paren
     } else if Constant::is(s) {
         TokenType::Constant
+    } else if Variable::is(s) {
+        TokenType::Variable
     } else {
         return Err(());
     })
@@ -48,17 +50,6 @@ pub fn tokenize<'a, 'b>(string: &'a str, vars: &'b [Variable]) -> Result<Vec<Tok
         // Slice the input from the index until the end
         let slice = utils::slice(string, idx, -0);
 
-        let kind: TokenType = if c == '$' {
-            TokenType::Variable
-        } else {
-            match _type(&slice) {
-                Ok(k) => k,
-                Err(..) => {
-                    return Err(Error::Parsing(idx));
-                }
-            }
-        };
-
         if coeff {
             // No coefficient if the current character is an r-paren
             let is_r_paren = Token::paren_type(c) == Some(ParenType::Right);
@@ -78,6 +69,13 @@ pub fn tokenize<'a, 'b>(string: &'a str, vars: &'b [Variable]) -> Result<Vec<Tok
             }
             coeff = false;
         }
+
+        let kind: TokenType = match _type(&slice) {
+            Ok(k) => k,
+            Err(..) => {
+                return Err(Error::Parsing(idx));
+            }
+        };
 
         match kind {
             TokenType::Operator => {

@@ -30,4 +30,7 @@ impl Variable {
     ) -> Option<(&'b Variable, usize)> {
         get_by_repr(text, vars)
     }
+    pub fn is(repr: &str) -> bool {
+        repr.starts_with("$")
+    }
 }
