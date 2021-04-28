@@ -1,6 +1,6 @@
 #![allow(clippy::non_ascii_literal)]
 
-use super::{representable::{Representable, Searchable, get_by_repr}, utils};
+use super::{representable::{Searchable, get_by_repr}, utils};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Variable {
