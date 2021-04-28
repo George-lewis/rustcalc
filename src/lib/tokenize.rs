@@ -142,7 +142,7 @@ pub fn tokenize<'a, 'b>(string: &'a str, vars: &'b [Variable]) -> Result<Vec<Tok
                     Some(a) => a,
                     None => return Err(Error::UnknownVariable(idx)),
                 };
-                idx += n + 1; //+1 to account for '$'
+                idx += n + 1; // +1 to account for '$'
                 vec.push(Token::Variable { inner: variable });
                 coeff = true;
                 unary = false;
