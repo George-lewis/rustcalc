@@ -52,7 +52,7 @@ fn main() -> ! {
             continue;
         }
 
-        if input == "$" {
+        if input == "$" {//Variable list command
             for v in vars.iter() {
                 println!("[ {} => {} ]", ("$".to_owned() + &v.repr).green().bold(), format!("{:.3}", v.value).blue());
             }
@@ -61,7 +61,7 @@ fn main() -> ! {
             continue;
         }
 
-        if input.contains("=") {
+        if input.contains("=") {//Variable assignment/reassignment
             let sides: Vec<&str> = input.split('=').collect();
             if sides.len() != 2 { //Multiple = signs
                 handle_errors(Error::Assignment, input, 0);
