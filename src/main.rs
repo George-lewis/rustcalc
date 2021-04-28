@@ -61,7 +61,7 @@ fn main() -> ! {
 
         match handle_input(&input, &mut vars) {
             Ok(formatted) => println!("{}", formatted),
-            Err(error) => handle_errors(error, input),
+            Err(error) => handle_errors(error, &input),
         }
         
     }
@@ -153,8 +153,8 @@ fn handle_input (input: &str, vars: &mut Vec<Variable>) -> Result<String, Error>
     }
 }
 
-fn handle_errors(e: Error, input: String) {
-    match e {
+fn handle_errors(error: Error, input: &str) {
+    match error {
         Error::Parsing(idx) => {
             let first = if idx > 0 {
                 utils::slice(&input, 0, (idx) as i64)
