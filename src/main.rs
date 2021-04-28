@@ -101,7 +101,8 @@ fn handle_input (input: &str, vars: &mut Vec<Variable>) -> Result<String, Error>
     } else if input.contains("=") {
             // Variable assignment/reassignment
             let mut sides: Vec<&str> = input.split('=').collect();
-            sides[0] = sides[0].trim();
+            sides[0] = sides[0].trim(); // Trim here to remove space between end of variable name and = sign
+            
             if sides.len() != 2 {
                 // Multiple = signs
                 return Err(Error::Assignment);
