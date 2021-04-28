@@ -54,7 +54,7 @@ fn main() -> ! {
 
         if input == "$" {
             for v in vars.iter() {
-                println!("[ {} => {} ]", v.repr.green().bold(), format!("{:.3}", v.value).blue());
+                println!("[ {} => {} ]", ("$".to_owned() + &v.repr).green().bold(), format!("{:.3}", v.value).blue());
             }
             // Add the line to the history
             editor.add_history_entry(input);
@@ -67,8 +67,12 @@ fn main() -> ! {
                 handle_errors(Error::Assignment, input, 0);
                 continue;
             }
+            else if !sides[0].trim().starts_with("$") {
+                handle_errors(Error::Assignment, input, 0);
+                continue;
+            }
             
-            let user_repr: String = sides[0].trim().to_string();
+            let user_repr: String = sides[0].trim()[1..].to_string();
             let (user_value, repr) = match doeval(&sides[1], &vars) {
                 Ok((a, b)) => (a, b),
                 Err(e) => {
@@ -79,7 +83,7 @@ fn main() -> ! {
 
             //Print assignment confimation
             let formatted = stringify(&repr, color_cli);
-            println!("[ {} {} {} => {} ]",user_repr.green(), "=".cyan(), formatted, format!("{:.3}", user_value).blue());
+            println!("[ {}{} {} {} => {} ]", "$".green(), user_repr.green(), "=".cyan(), formatted, format!("{:.3}", user_value).blue());
 
             let found_var = vars.iter_mut().find(|x| x.repr == user_repr);
             if let Some(found_var) = found_var {
