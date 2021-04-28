@@ -1,4 +1,7 @@
-use super::{constants::{Constant}, errors::Error, operators::*, tokens::ParenType, tokens::Token, utils, variables::Variable};
+use super::{
+    constants::Constant, errors::Error, operators::*, tokens::ParenType, tokens::Token, utils,
+    variables::Variable,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 enum TokenType {
@@ -6,7 +9,7 @@ enum TokenType {
     Operator,
     Paren,
     Constant,
-    Variable
+    Variable,
 }
 
 #[allow(clippy::clippy::iter_nth_zero)]
@@ -47,7 +50,7 @@ pub fn tokenize<'a, 'b>(string: &'a str, vars: &'b [Variable]) -> Result<Vec<Tok
 
         let kind;
 
-        if c =='$' {
+        if c == '$' {
             kind = TokenType::Variable;
         } else {
             kind = match _type(&slice) {
@@ -77,8 +80,6 @@ pub fn tokenize<'a, 'b>(string: &'a str, vars: &'b [Variable]) -> Result<Vec<Tok
             }
             coeff = false;
         }
-
-        
 
         match kind {
             TokenType::Operator => {
@@ -143,10 +144,8 @@ pub fn tokenize<'a, 'b>(string: &'a str, vars: &'b [Variable]) -> Result<Vec<Tok
                     Some(a) => a,
                     None => return Err(Error::UnknownVariable(idx)),
                 };
-                idx += n+1; //+1 to account for '$'
-                vec.push(Token::Variable {
-                    inner: variable,
-                });
+                idx += n + 1; //+1 to account for '$'
+                vec.push(Token::Variable { inner: variable });
                 coeff = true;
                 unary = false;
             }

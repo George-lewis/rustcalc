@@ -7,5 +7,5 @@ pub enum Error {
     EmptyStack,
     MismatchingParens,
     Assignment,
-    UnknownVariable(usize)
+    UnknownVariable(usize),
 }

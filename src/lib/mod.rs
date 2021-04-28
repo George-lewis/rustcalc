@@ -16,7 +16,10 @@ use tokenize::tokenize;
 use tokens::Token;
 use variables::Variable;
 
-pub fn doeval<'a, 'b>(string: &'a str, vars: &'b [Variable]) -> Result<(f64, Vec<Token<'b>>), Error> {
+pub fn doeval<'a, 'b>(
+    string: &'a str,
+    vars: &'b [Variable],
+) -> Result<(f64, Vec<Token<'b>>), Error> {
     let tokens = tokenize(string, vars)?;
     let rpn = rpn(&tokens)?;
     let result = eval(&rpn)?;

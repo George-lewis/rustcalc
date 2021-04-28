@@ -10,7 +10,9 @@ pub fn rpn<'a>(tokens: &'a [Token]) -> Result<Vec<Token<'a>>, Error> {
 
     for token in tokens {
         match token {
-            Token::Number { .. } | Token::Constant { .. } | Token::Variable { .. } => output.push(*token),
+            Token::Number { .. } | Token::Constant { .. } | Token::Variable { .. } => {
+                output.push(*token)
+            }
             Token::Operator { kind } => {
                 let op1 = Operator::by_type(*kind);
                 while !operator_stack.is_empty() {

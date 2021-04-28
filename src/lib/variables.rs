@@ -1,11 +1,14 @@
 #![allow(clippy::non_ascii_literal)]
 
-use super::{representable::{Searchable, get_by_repr}, utils};
+use super::{
+    representable::{get_by_repr, Searchable},
+    utils,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Variable {
     pub repr: String,
-    pub value: f64
+    pub value: f64,
 }
 
 impl Searchable for Variable {
@@ -21,7 +24,10 @@ impl Searchable for Variable {
 }
 
 impl Variable {
-    pub fn next_variable<'a, 'b>(text: &'a str, vars: &'b [Variable]) -> Option<(&'b Variable, usize)> {
+    pub fn next_variable<'a, 'b>(
+        text: &'a str,
+        vars: &'b [Variable],
+    ) -> Option<(&'b Variable, usize)> {
         get_by_repr(text, vars)
-      }
+    }
 }

@@ -33,7 +33,10 @@ fn main() -> ! {
     let mut vars: Vec<Variable> = Vec::new();
     let ans_repr = "ans".to_string();
     let ans_value = 0.0;
-    let ans_var = Variable {repr: ans_repr, value: ans_value};
+    let ans_var = Variable {
+        repr: ans_repr,
+        value: ans_value,
+    };
     vars.push(ans_var);
 
     loop {
@@ -52,47 +55,62 @@ fn main() -> ! {
             continue;
         }
 
-        if input == "$" {//Variable list command
+        if input == "$" {
+            //Variable list command
             for v in vars.iter() {
-                println!("[ {} => {} ]", ("$".to_owned() + &v.repr).green().bold(), format!("{:.3}", v.value).blue());
+                println!(
+                    "[ {} => {} ]",
+                    ("$".to_owned() + &v.repr).green().bold(),
+                    format!("{:.3}", v.value).blue()
+                );
             }
             // Add the line to the history
             editor.add_history_entry(input);
             continue;
         }
 
-        if input.contains("=") {//Variable assignment/reassignment
+        if input.contains("=") {
+            //Variable assignment/reassignment
             let sides: Vec<&str> = input.split('=').collect();
-            if sides.len() != 2 { //Multiple = signs
+            if sides.len() != 2 {
+                //Multiple = signs
+                handle_errors(Error::Assignment, input, 0);
+                continue;
+            } else if !sides[0].trim().starts_with("$") {
                 handle_errors(Error::Assignment, input, 0);
                 continue;
             }
-            else if !sides[0].trim().starts_with("$") {
-                handle_errors(Error::Assignment, input, 0);
-                continue;
-            }
-            
+
             let user_repr: String = sides[0].trim()[1..].to_string();
             let (user_value, repr) = match doeval(&sides[1], &vars) {
                 Ok((a, b)) => (a, b),
                 Err(e) => {
-                    handle_errors(e, input.clone(), sides[0].len()+1);
+                    handle_errors(e, input.clone(), sides[0].len() + 1);
                     continue;
                 }
             };
 
             //Print assignment confimation
             let formatted = stringify(&repr, color_cli);
-            println!("[ {}{} {} {} => {} ]", "$".green(), user_repr.green(), "=".cyan(), formatted, format!("{:.3}", user_value).blue());
+            println!(
+                "[ {}{} {} {} => {} ]",
+                "$".green(),
+                user_repr.green(),
+                "=".cyan(),
+                formatted,
+                format!("{:.3}", user_value).blue()
+            );
 
             let found_var = vars.iter_mut().find(|x| x.repr == user_repr);
             if let Some(found_var) = found_var {
                 //Reassign
                 found_var.value = user_value;
-            }
-            else {
+            } else {
                 //Assign
-                let user_var = Variable {repr: user_repr, value: user_value};
+                let user_var = Variable {
+                    repr: user_repr,
+                    value: user_value,
+                };
                 vars.push(user_var);
             }
 
@@ -123,7 +141,7 @@ fn main() -> ! {
 fn handle_errors(e: Error, input: String, offset: usize) {
     //Offset is added so that highlighting can be added to expressions that come after an '=' during assignment
     match e {
-        Error::Parsing(idx) => {    
+        Error::Parsing(idx) => {
             let offset_idx = idx + offset;
             let first = if offset_idx > 0 {
                 utils::slice(&input, 0, (offset_idx) as i64)
@@ -134,7 +152,13 @@ fn handle_errors(e: Error, input: String, offset: usize) {
                 "Couldn't parse the token at index [{}]\n{}{}{}\n{}{}",
                 offset_idx.to_string().red(),
                 first,
-                input.chars().nth(offset_idx).unwrap().to_string().on_red().white(),
+                input
+                    .chars()
+                    .nth(offset_idx)
+                    .unwrap()
+                    .to_string()
+                    .on_red()
+                    .white(),
                 utils::slice(&input, offset_idx + 1, -0),
                 "~".repeat(offset_idx).red().bold(),
                 "^".red()
@@ -166,7 +190,13 @@ fn handle_errors(e: Error, input: String, offset: usize) {
                 "Unknown variable at index [{}]\n{}{}{}\n{}{}",
                 offset_idx.to_string().red(),
                 first,
-                input.chars().nth(offset_idx).unwrap().to_string().on_red().white(),
+                input
+                    .chars()
+                    .nth(offset_idx)
+                    .unwrap()
+                    .to_string()
+                    .on_red()
+                    .white(),
                 utils::slice(&input, offset_idx + 1, -0),
                 "~".repeat(offset_idx).red().bold(),
                 "^".red()
@@ -188,7 +218,7 @@ fn color_cli(string: &str, token: &Token) -> ColoredString {
         }
         Token::Paren { .. } => string.magenta(),
         Token::Constant { .. } => string.yellow(),
-        Token::Variable { .. } => string.green()
+        Token::Variable { .. } => string.green(),
     }
 }
 
@@ -201,7 +231,7 @@ where
     for (idx, token) in tokens.iter().enumerate() {
         let colored: T = colorize(&token.ideal_repr(), token);
         let append = match *token {
-            Token::Number { .. } | Token::Constant { .. } | Token::Variable { .. }=> {
+            Token::Number { .. } | Token::Constant { .. } | Token::Variable { .. } => {
                 let is_r_paren = matches!(
                     tokens.get(idx + 1),
                     Some(Token::Paren {
@@ -315,7 +345,14 @@ mod tests {
         clippy::clippy::too_many_lines
     )]
 
-    use crate::{lib::constants::*, lib::doeval, lib::errors::Error, lib::operators::*, lib::{tokens::*, variables::Variable}, stringify};
+    use crate::{
+        lib::constants::*,
+        lib::doeval,
+        lib::errors::Error,
+        lib::operators::*,
+        lib::{tokens::*, variables::Variable},
+        stringify,
+    };
 
     fn same(a: f64, b: f64) -> bool {
         (a - b).abs() < 0.000_001
@@ -326,12 +363,18 @@ mod tests {
         let mut test_vars: Vec<Variable> = Vec::new();
         let test_var_repr_a = "v".to_string();
         let test_var_value_a = 5.0;
-        let test_var_a = Variable {repr: test_var_repr_a, value: test_var_value_a};
+        let test_var_a = Variable {
+            repr: test_var_repr_a,
+            value: test_var_value_a,
+        };
         test_vars.push(test_var_a);
 
         let test_var_repr_b = "pi".to_string();
         let test_var_value_b = 7.0;
-        let test_var_b = Variable {repr: test_var_repr_b, value: test_var_value_b};
+        let test_var_b = Variable {
+            repr: test_var_repr_b,
+            value: test_var_value_b,
+        };
         test_vars.push(test_var_b);
 
         [
@@ -528,11 +571,9 @@ mod tests {
                 "$v",
                 "$v",
                 5.0,
-                vec![
-                    Token::Variable {
-                        inner: &test_vars[0]
-                    }
-                ]
+                vec![Token::Variable {
+                    inner: &test_vars[0],
+                }],
             ),
             (
                 "$v + 5",
@@ -540,31 +581,27 @@ mod tests {
                 10.0,
                 vec![
                     Token::Variable {
-                        inner: &test_vars[0]
+                        inner: &test_vars[0],
                     },
                     Token::Operator {
-                        kind: OperatorType::Add
+                        kind: OperatorType::Add,
                     },
-                    Token::Number {
-                        value: 5.0
-                    }
-                ]
+                    Token::Number { value: 5.0 },
+                ],
             ),
             (
                 "  5 +    $v    ",
                 "5 + $v",
                 10.0,
                 vec![
-                    Token::Number {
-                        value: 5.0
-                    },
+                    Token::Number { value: 5.0 },
                     Token::Operator {
-                        kind: OperatorType::Add
+                        kind: OperatorType::Add,
                     },
                     Token::Variable {
-                        inner: &test_vars[0]
+                        inner: &test_vars[0],
                     },
-                ]
+                ],
             ),
             (
                 "pi + $pi",
@@ -572,15 +609,15 @@ mod tests {
                 std::f64::consts::PI + 7.0,
                 vec![
                     Token::Constant {
-                        kind: ConstantType::PI
+                        kind: ConstantType::PI,
                     },
                     Token::Operator {
-                        kind: OperatorType::Add
+                        kind: OperatorType::Add,
                     },
                     Token::Variable {
-                        inner: &test_vars[1]
+                        inner: &test_vars[1],
                     },
-                ]
+                ],
             ),
         ]
         .iter()
