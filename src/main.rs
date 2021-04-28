@@ -32,12 +32,10 @@ fn main() -> ! {
         editor.load_history(path).ok();
     }
 
-    let mut vars = vec![
-        Variable {
-            repr: String::from("ans"),
-            value: 0.0
-        }
-    ];
+    let mut vars = vec![Variable {
+        repr: String::from("ans"),
+        value: 0.0,
+    }];
 
     loop {
         #[allow(clippy::single_match_else)]
@@ -58,27 +56,26 @@ fn main() -> ! {
         // Add the line to the history
         editor.add_history_entry(&input);
 
-
         match handle_input(&input, &mut vars) {
             Ok(formatted) => println!("{}", formatted),
             Err(error) => handle_errors(error, &input),
         }
-        
     }
 }
 
 fn list_vars_command(vars: &[Variable]) -> String {
     vars.iter()
         .map(|var| {
-          format!(
-            "[ ${} => {} ]",
-            var.repr.green().bold(),
-            format!("{:.3}", var.value).blue()
-          )
-        }).join("\n")
-  }
+            format!(
+                "[ ${} => {} ]",
+                var.repr.green().bold(),
+                format!("{:.3}", var.value).blue()
+            )
+        })
+        .join("\n")
+}
 
-  fn assign_var(vars: &mut Vec<Variable>, user_value: f64, user_repr: String) {
+fn assign_var(vars: &mut Vec<Variable>, user_value: f64, user_repr: String) {
     // Search to see if given representation exists
     let found_var = vars.iter_mut().find(|x| x.repr == user_repr);
     if let Some(found_var) = found_var {
@@ -92,51 +89,50 @@ fn list_vars_command(vars: &[Variable]) -> String {
         };
         vars.push(user_var);
     }
-  }
+}
 
-fn handle_input (input: &str, vars: &mut Vec<Variable>) -> Result<String, Error> {
+fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, Error> {
     if input == "$" {
         // Variable list command
         Ok(list_vars_command(&vars))
     } else if input.contains("=") {
-            // Variable assignment/reassignment
-            let mut sides: Vec<&str> = input.split('=').collect();
-            sides[0] = sides[0].trim(); // Trim here to remove space between end of variable name and = sign
-            
-            if sides.len() != 2 {
-                // Multiple = signs
-                return Err(Error::Assignment);
-            } else if !sides[0].starts_with("$") {
-                // Assigning without using a $ prefix
-                return Err(Error::Assignment);
-            }
-            
-            let user_repr: String = sides[0][1..].to_string(); // Trim again to remove whitespace between end of variable name and = sign
+        // Variable assignment/reassignment
+        let mut sides: Vec<&str> = input.split('=').collect();
+        sides[0] = sides[0].trim(); // Trim here to remove space between end of variable name and = sign
 
-            // Get value for variable
-            let result = doeval(sides[1], vars);
-            if let Err(Error::Parsing(idx)) = result {
-                return Err(Error::Parsing(idx + sides[0].len() + 1));
-                // Offset is added so that highlighting can be added to expressions that come after an '=' during assignment
-            } 
-            let (user_value, repr) = result?;
-
-            // Format assignment confirmation
-            let formatted = stringify(&repr, color_cli);
-            let assign_confirmation = format!(
-                "[ {}{} {} {} => {} ]",
-                "$".green(),
-                user_repr.green(),
-                "=".cyan(),
-                formatted,
-                format!("{:.3}", user_value).blue()
-            );
-
-            assign_var(vars, user_value, user_repr);
-            
-            Ok(assign_confirmation)
+        if sides.len() != 2 {
+            // Multiple = signs
+            return Err(Error::Assignment);
+        } else if !sides[0].starts_with("$") {
+            // Assigning without using a $ prefix
+            return Err(Error::Assignment);
         }
-    else {
+
+        let user_repr: String = sides[0][1..].to_string(); // Trim again to remove whitespace between end of variable name and = sign
+
+        // Get value for variable
+        let result = doeval(sides[1], vars);
+        if let Err(Error::Parsing(idx)) = result {
+            return Err(Error::Parsing(idx + sides[0].len() + 1));
+            // Offset is added so that highlighting can be added to expressions that come after an '=' during assignment
+        }
+        let (user_value, repr) = result?;
+
+        // Format assignment confirmation
+        let formatted = stringify(&repr, color_cli);
+        let assign_confirmation = format!(
+            "[ {}{} {} {} => {} ]",
+            "$".green(),
+            user_repr.green(),
+            "=".cyan(),
+            formatted,
+            format!("{:.3}", user_value).blue()
+        );
+
+        assign_var(vars, user_value, user_repr);
+
+        Ok(assign_confirmation)
+    } else {
         // Evaluate as normal
         let result = doeval(&input, &vars);
         if let Err(Error::Parsing(idx)) = result {
@@ -165,13 +161,7 @@ fn handle_errors(error: Error, input: &str) {
                 "Couldn't parse the token at index [{}]\n{}{}{}\n{}{}",
                 idx.to_string().red(),
                 first,
-                input
-                    .chars()
-                    .nth(idx)
-                    .unwrap()
-                    .to_string()
-                    .on_red()
-                    .white(),
+                input.chars().nth(idx).unwrap().to_string().on_red().white(),
                 utils::slice(&input, idx + 1, -0),
                 "~".repeat(idx).red().bold(),
                 "^".red()
@@ -202,13 +192,7 @@ fn handle_errors(error: Error, input: &str) {
                 "Unknown variable at index [{}]\n{}{}{}\n{}{}",
                 idx.to_string().red(),
                 first,
-                input
-                    .chars()
-                    .nth(idx)
-                    .unwrap()
-                    .to_string()
-                    .on_red()
-                    .white(),
+                input.chars().nth(idx).unwrap().to_string().on_red().white(),
                 utils::slice(&input, idx + 1, -0),
                 "~".repeat(idx).red().bold(),
                 "^".red()
@@ -593,11 +577,11 @@ mod tests {
         let test_vars = vec![
             Variable {
                 repr: String::from("v"),
-                value: 5.0
+                value: 5.0,
             },
             Variable {
                 repr: String::from("pi"),
-                value: 7.0
+                value: 7.0,
             },
         ];
 
@@ -665,15 +649,12 @@ mod tests {
             assert!(same(result, *c), "Checking evaluation of [{}]", a);
             assert_eq!(stringify(&tokens, |a, _| a.to_string()), *b);
         });
-
     }
-    
+
     #[test]
     fn fail_vars() {
-        vec![
-            ("3 + $a", Error::UnknownVariable(4)),
-        ]
-        .iter()
-        .for_each(|(a, b)| assert_eq!(doeval(a, &[]).unwrap_err(), *b));
+        vec![("3 + $a", Error::UnknownVariable(4))]
+            .iter()
+            .for_each(|(a, b)| assert_eq!(doeval(a, &[]).unwrap_err(), *b));
     }
 }
