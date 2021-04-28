@@ -155,9 +155,6 @@ fn handle_errors(e: Error, input: String, offset: usize) {
         Error::Assignment => {
             println!("Couldn't assign to variable. Malformed assignment statement.")
         }
-        Error::AssignmentName => {//Unused at the moment, no restrictions on variable names
-            println!("Couldnt assign to variable. Invalid variable name.")
-        }
         Error::UnknownVariable(idx) => {
             let offset_idx = idx + offset + 1; //+1 to account for $ sign
             let first = if offset_idx > 0 {
