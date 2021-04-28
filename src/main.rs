@@ -108,6 +108,7 @@ fn color_cli(string: &str, token: &Token) -> ColoredString {
     }
 }
 
+#[allow(clippy::too_many_lines)]
 fn stringify<F, T: Display>(tokens: &[Token], colorize: F) -> String
 where
     F: Fn(&str, &Token) -> T,
@@ -127,17 +128,19 @@ where
 
                 let is_op = matches!(tokens.get(idx + 1), Some(Token::Operator { .. }));
 
-                let is_pow = matches!(
+                let no_space = matches!(
                     tokens.get(idx + 1),
                     Some(Token::Operator {
                         kind: OperatorType::Pow
+                    }) | Some(Token::Operator {
+                        kind: OperatorType::Factorial
                     })
                 );
 
                 let last = idx == tokens.len() - 1;
 
                 let appendix = if implicit_paren > 0 {
-                    let space = if last || is_pow { "" } else { " " };
+                    let space = if last || no_space { "" } else { " " };
                     let r_paren: T = colorize(
                         &")".repeat(implicit_paren),
                         &Token::Paren {
@@ -149,7 +152,7 @@ where
                     "".to_string()
                 } else if !(is_r_paren || is_op) {
                     ", ".to_string()
-                } else if is_op && !is_pow {
+                } else if is_op && !no_space {
                     " ".to_string()
                 } else {
                     "".to_string()
@@ -163,7 +166,10 @@ where
                 let op = Operator::by_type(kind);
 
                 match op.associativity {
-                    Associativity::Left => format!("{} ", colored),
+                    Associativity::Left => {
+                        let space = if idx == tokens.len() - 1 { "" } else { " " };
+                        format!("{}{}", colored, space)
+                    }
                     Associativity::Right => {
                         let is_l_paren = matches!(
                             tokens.get(idx + 1),
@@ -172,7 +178,14 @@ where
                             })
                         );
 
-                        if op.implicit_paren() && !is_l_paren {
+                        let wants_implicit_paren = ![
+                            OperatorType::Positive,
+                            OperatorType::Negative,
+                            OperatorType::Pow,
+                        ]
+                        .contains(&op.kind);
+
+                        if wants_implicit_paren && !is_l_paren {
                             implicit_paren += 1;
                             let l_paren: T = colorize(
                                 "(",
