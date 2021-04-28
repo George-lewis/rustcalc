@@ -372,23 +372,6 @@ mod tests {
 
     #[test]
     fn test() {
-        let mut test_vars: Vec<Variable> = Vec::new();
-        let test_var_repr_a = "v".to_string();
-        let test_var_value_a = 5.0;
-        let test_var_a = Variable {
-            repr: test_var_repr_a,
-            value: test_var_value_a,
-        };
-        test_vars.push(test_var_a);
-
-        let test_var_repr_b = "pi".to_string();
-        let test_var_value_b = 7.0;
-        let test_var_b = Variable {
-            repr: test_var_repr_b,
-            value: test_var_value_b,
-        };
-        test_vars.push(test_var_b);
-
         [
             (
                 "1 + 1",
@@ -579,6 +562,46 @@ mod tests {
                     },
                 ],
             ),
+        ]
+        .iter()
+        .for_each(|(a, b, c, d)| {
+            let (result, tokens) = match doeval(a, &[]) {
+                Ok((x, y)) => (x, y),
+                Err(e) => panic!("error! {:?}; {}", e, a),
+            };
+            assert_eq!(tokens, *d, "Checking tokenization of [{}]", a);
+            assert!(same(result, *c), "Checking evaluation of [{}]", a);
+            assert_eq!(stringify(&tokens, |a, _| a.to_string()), *b);
+        });
+    }
+
+    #[test]
+    fn fail() {
+        vec![
+            ("1 +", Error::Operand(OperatorType::Add)),
+            ("1 + 2 + 3 + h", Error::Parsing(12)),
+            ("h", Error::Parsing(0)),
+            ("(1", Error::MismatchingParens),
+            ("3 + $a", Error::UnknownVariable(4)),
+        ]
+        .iter()
+        .for_each(|(a, b)| assert_eq!(doeval(a, &[]).unwrap_err(), *b));
+    }
+
+    #[test]
+    fn test_vars() {
+        let test_vars = vec![
+            Variable {
+                repr: String::from("v"),
+                value: 5.0
+            },
+            Variable {
+                repr: String::from("pi"),
+                value: 7.0
+            },
+        ];
+
+        [
             (
                 "$v",
                 "$v",
@@ -642,18 +665,15 @@ mod tests {
             assert!(same(result, *c), "Checking evaluation of [{}]", a);
             assert_eq!(stringify(&tokens, |a, _| a.to_string()), *b);
         });
-    }
 
+    }
+    
     #[test]
-    fn fail() {
+    fn fail_vars() {
         vec![
-            ("1 +", Error::Operand(OperatorType::Add)),
-            ("1 + 2 + 3 + h", Error::Parsing(12)),
-            ("h", Error::Parsing(0)),
-            ("(1", Error::MismatchingParens),
             ("3 + $a", Error::UnknownVariable(4)),
         ]
         .iter()
-        .for_each(|(a, b)| assert_eq!(doeval(a, &Vec::new()).unwrap_err(), *b));
+        .for_each(|(a, b)| assert_eq!(doeval(a, &[]).unwrap_err(), *b));
     }
 }
