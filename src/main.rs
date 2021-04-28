@@ -53,6 +53,9 @@ fn main() -> ! {
             continue;
         }
 
+        // Add the line to the history
+        editor.add_history_entry(&input);
+
         if input == "$" {
             // Variable list command
             for v in vars.iter() {
@@ -62,8 +65,6 @@ fn main() -> ! {
                     format!("{:.3}", v.value).blue()
                 );
             }
-            // Add the line to the history
-            editor.add_history_entry(input);
             continue;
         }
 
@@ -112,8 +113,6 @@ fn main() -> ! {
                 vars.push(user_var);
             }
 
-            // Add the line to the history
-            editor.add_history_entry(input);
             continue;
         }
 
@@ -124,9 +123,6 @@ fn main() -> ! {
                 continue;
             }
         };
-
-        // Add the line to the history
-        editor.add_history_entry(input);
 
         let formatted = stringify(&repr, color_cli);
 
