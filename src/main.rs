@@ -60,7 +60,7 @@ fn main() -> ! {
             for v in vars.iter() {
                 println!(
                     "[ {} => {} ]",
-                    ("$".to_owned() + &v.repr).green().bold(),
+                    format!("${}", v.repr).green().bold(),
                     format!("{:.3}", v.value).blue()
                 );
             }
