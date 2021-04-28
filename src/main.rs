@@ -30,14 +30,12 @@ fn main() -> ! {
         editor.load_history(path).ok();
     }
 
-    let mut vars: Vec<Variable> = Vec::new();
-    let ans_repr = "ans".to_string();
-    let ans_value = 0.0;
-    let ans_var = Variable {
-        repr: ans_repr,
-        value: ans_value,
-    };
-    vars.push(ans_var);
+    let mut vars = vec![
+        Variable {
+            repr: String::from("ans"),
+            value: 0.0
+        }
+    ];
 
     loop {
         #[allow(clippy::single_match_else)]
