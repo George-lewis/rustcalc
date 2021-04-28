@@ -78,6 +78,22 @@ fn list_vars_command(vars: &[Variable]) -> String {
         }).join("\n")
   }
 
+  fn assign_var(vars: &mut Vec<Variable>, user_value: f64, user_repr: String) {
+    // Search to see if given representation exists
+    let found_var = vars.iter_mut().find(|x| x.repr == user_repr);
+    if let Some(found_var) = found_var {
+        // Reassign
+        found_var.value = user_value;
+    } else {
+        // Assign
+        let user_var = Variable {
+            repr: user_repr,
+            value: user_value,
+        };
+        vars.push(user_var);
+    }
+  }
+
 fn handle_input (input: &str, vars: &mut Vec<Variable>) -> Result<String, Error> {
     if input == "$" {
         // Variable list command
@@ -114,18 +130,7 @@ fn handle_input (input: &str, vars: &mut Vec<Variable>) -> Result<String, Error>
                 format!("{:.3}", user_value).blue()
             );
 
-            let found_var = vars.iter_mut().find(|x| x.repr == user_repr);
-            if let Some(found_var) = found_var {
-                // Reassign
-                found_var.value = user_value;
-            } else {
-                // Assign
-                let user_var = Variable {
-                    repr: user_repr,
-                    value: user_value,
-                };
-                vars.push(user_var);
-            }
+            assign_var(vars, user_value, user_repr);
             
             Ok(assign_confirmation)
         }
@@ -136,7 +141,7 @@ fn handle_input (input: &str, vars: &mut Vec<Variable>) -> Result<String, Error>
             return Err(Error::Parsing(idx));
         }
         let (x, repr) = result?;
-        
+
         let formatted = stringify(&repr, color_cli);
         let eval_string = format!("[ {} ] => {}", formatted, format!("{:.3}", x).blue());
 
