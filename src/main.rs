@@ -15,6 +15,8 @@ use lib::variables::Variable;
 use lib::utils;
 use rustyline::Editor;
 
+use itertools::{self, Itertools};
+
 const HISTORY_FILE: &str = "rustcalc-history.txt";
 
 fn main() -> ! {
@@ -56,42 +58,54 @@ fn main() -> ! {
         // Add the line to the history
         editor.add_history_entry(&input);
 
-        if input == "$" {
-            // Variable list command
-            for v in vars.iter() {
-                println!(
-                    "[ {} => {} ]",
-                    format!("${}", v.repr).green().bold(),
-                    format!("{:.3}", v.value).blue()
-                );
-            }
-            continue;
-        }
 
-        if input.contains("=") {
+        match handle_input(&input, &mut vars) {
+            Ok(formatted) => println!("{}", formatted),
+            Err(error) => handle_errors(error, input),
+        }
+        
+    }
+}
+
+fn list_vars_command(vars: &[Variable]) -> String {
+    vars.iter()
+        .map(|var| {
+          format!(
+            "[ ${} => {} ]",
+            var.repr.green().bold(),
+            format!("{:.3}", var.value).blue()
+          )
+        }).join("\n")
+  }
+
+fn handle_input (input: &str, vars: &mut Vec<Variable>) -> Result<String, Error> {
+    if input == "$" {
+        // Variable list command
+        Ok(list_vars_command(&vars))
+    } else if input.contains("=") {
             // Variable assignment/reassignment
             let sides: Vec<&str> = input.split('=').collect();
             if sides.len() != 2 {
                 // Multiple = signs
-                handle_errors(Error::Assignment, input, 0);
-                continue;
+                return Err(Error::Assignment);
             } else if !sides[0].trim().starts_with("$") {
-                handle_errors(Error::Assignment, input, 0);
-                continue;
+                // Assigning without using a $ prefix
+                return Err(Error::Assignment);
             }
 
             let user_repr: String = sides[0].trim()[1..].to_string();
-            let (user_value, repr) = match doeval(&sides[1], &vars) {
-                Ok((a, b)) => (a, b),
-                Err(e) => {
-                    handle_errors(e, input.clone(), sides[0].len() + 1); // +1 to account for equals sign when doing error highlighting
-                    continue;
-                }
-            };
 
-            // Print assignment confimation
+            // Get value for variable
+            let result = doeval(sides[1], vars);
+            if let Err(Error::Parsing(idx)) = result {
+                return Err(Error::Parsing(idx + sides[0].len() + 1));
+                // Offset is added so that highlighting can be added to expressions that come after an '=' during assignment
+            } 
+            let (user_value, repr) = result?;
+
+            // Format assignment confirmation
             let formatted = stringify(&repr, color_cli);
-            println!(
+            let assign_confirmation = format!(
                 "[ {}{} {} {} => {} ]",
                 "$".green(),
                 user_repr.green(),
@@ -112,49 +126,47 @@ fn main() -> ! {
                 };
                 vars.push(user_var);
             }
-
-            continue;
+            
+            Ok(assign_confirmation)
         }
-
-        let (x, repr) = match doeval(&input, &vars) {
-            Ok((a, b)) => (a, b),
-            Err(e) => {
-                handle_errors(e, input, 0);
-                continue;
-            }
-        };
-
+    else {
+        // Evaluate as normal
+        let result = doeval(&input, &vars);
+        if let Err(Error::Parsing(idx)) = result {
+            return Err(Error::Parsing(idx));
+        }
+        let (x, repr) = result?;
+        
         let formatted = stringify(&repr, color_cli);
+        let eval_string = format!("[ {} ] => {}", formatted, format!("{:.3}", x).blue());
 
         vars[0].value = x; // Set ans to new value
 
-        println!("[ {} ] => {}", formatted, format!("{:.3}", x).blue());
+        Ok(eval_string)
     }
 }
 
-fn handle_errors(e: Error, input: String, offset: usize) {
-    // Offset is added so that highlighting can be added to expressions that come after an '=' during assignment
+fn handle_errors(e: Error, input: String) {
     match e {
         Error::Parsing(idx) => {
-            let offset_idx = idx + offset;
-            let first = if offset_idx > 0 {
-                utils::slice(&input, 0, (offset_idx) as i64)
+            let first = if idx > 0 {
+                utils::slice(&input, 0, (idx) as i64)
             } else {
                 "".to_string()
             };
             println!(
                 "Couldn't parse the token at index [{}]\n{}{}{}\n{}{}",
-                offset_idx.to_string().red(),
+                idx.to_string().red(),
                 first,
                 input
                     .chars()
-                    .nth(offset_idx)
+                    .nth(idx)
                     .unwrap()
                     .to_string()
                     .on_red()
                     .white(),
-                utils::slice(&input, offset_idx + 1, -0),
-                "~".repeat(offset_idx).red().bold(),
+                utils::slice(&input, idx + 1, -0),
+                "~".repeat(idx).red().bold(),
                 "^".red()
             );
         }
@@ -174,25 +186,24 @@ fn handle_errors(e: Error, input: String, offset: usize) {
             println!("Couldn't assign to variable. Malformed assignment statement.")
         }
         Error::UnknownVariable(idx) => {
-            let offset_idx = idx + offset + 1; //+1 to account for $ sign
-            let first = if offset_idx > 0 {
-                utils::slice(&input, 0, (offset_idx) as i64)
+            let first = if idx > 0 {
+                utils::slice(&input, 0, (idx) as i64)
             } else {
                 "".to_string()
             };
             println!(
                 "Unknown variable at index [{}]\n{}{}{}\n{}{}",
-                offset_idx.to_string().red(),
+                idx.to_string().red(),
                 first,
                 input
                     .chars()
-                    .nth(offset_idx)
+                    .nth(idx)
                     .unwrap()
                     .to_string()
                     .on_red()
                     .white(),
-                utils::slice(&input, offset_idx + 1, -0),
-                "~".repeat(offset_idx).red().bold(),
+                utils::slice(&input, idx + 1, -0),
+                "~".repeat(idx).red().bold(),
                 "^".red()
             );
         }
