@@ -7,7 +7,7 @@ mod rpn;
 mod tokenize;
 pub mod tokens;
 pub mod utils;
-pub(crate) mod variables;
+pub mod variables;
 
 use errors::Error;
 use eval::eval;
