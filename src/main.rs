@@ -85,7 +85,7 @@ fn main() -> ! {
             let (user_value, repr) = match doeval(&sides[1], &vars) {
                 Ok((a, b)) => (a, b),
                 Err(e) => {
-                    handle_errors(e, input.clone(), sides[0].len() + 1);
+                    handle_errors(e, input.clone(), sides[0].len() + 1); //+1 to account for equals sign when doing error highlighting
                     continue;
                 }
             };
