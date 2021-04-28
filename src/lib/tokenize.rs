@@ -48,18 +48,16 @@ pub fn tokenize<'a, 'b>(string: &'a str, vars: &'b [Variable]) -> Result<Vec<Tok
         // Slice the input from the index until the end
         let slice = utils::slice(string, idx, -0);
 
-        let kind;
-
-        if c == '$' {
-            kind = TokenType::Variable;
+        let kind = if c == '$' {
+            TokenType::Variable;
         } else {
-            kind = match _type(&slice) {
+            match _type(&slice) {
                 Ok(k) => k,
                 Err(..) => {
                     return Err(Error::Parsing(idx));
                 }
             };
-        }
+        };
 
         if coeff {
             // No coefficient if the current character is an r-paren
