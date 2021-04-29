@@ -19,7 +19,10 @@ impl Searchable for Variable {
 }
 
 impl Variable {
-    /// Searches for the first variable in `vars` that matches the representation given by `text`
+    /// Searches for the first variable in `vars` that matches the representation given by the start of `text`
+    /// * `text` - The string to search. Must start with the name of a variable (not a '$') but can
+    /// be arbitrarily long. Matches are case sensitive.
+    /// * `vars` - A slice of [Variable]s to check for
     pub fn next_variable<'a, 'b>(
         text: &'a str,
         vars: &'b [Variable],
