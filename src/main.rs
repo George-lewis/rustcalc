@@ -44,10 +44,7 @@ fn main() -> ! {
         editor.load_history(path).ok();
     }
 
-    let mut vars = vec![Variable {
-        repr: String::from("ans"),
-        value: 0.0,
-    }];
+    let mut vars = vec![];
 
     loop {
         #[allow(clippy::single_match_else)]
@@ -167,7 +164,7 @@ fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, CliErro
         let formatted = stringify(&repr, color_cli);
         let eval_string = format!("[ {} ] => {}", formatted, format!("{:.3}", x).blue());
 
-        vars[0].value = x; // Set ans to new value
+        assign_var(vars, x, "ans".to_string()); // Set ans to new value
 
         Ok(eval_string)
     }
