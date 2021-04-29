@@ -86,6 +86,38 @@ fn list_vars_command(vars: &[Variable]) -> String {
         .join("\n")
 }
 
+fn assign_var_command(input: &str, vars: &mut Vec<Variable>) -> Result<String, CliError> {
+     // Variable assignment/reassignment
+
+     let mut sides: Vec<&str> = input.split('=').collect();
+     sides[0] = sides[0].trim(); // Trim here to remove space between end of variable name and = sign
+
+     if sides.len() != 2 {
+         // Multiple = signs
+         return Err(CliError::Assignment);
+     } else if !sides[0].starts_with('$') {
+         // Assigning without using a $ prefix
+         return Err(CliError::Assignment);
+     }
+
+     let user_repr: String = sides[0][1..].to_string(); // Trim again to remove whitespace between end of variable name and = sign
+
+     // Get value for variable
+     let result = doeval(sides[1], vars);
+     if let Err(Error::Parsing(idx)) = result {
+         return Err(CliError::Library(Error::Parsing(idx + sides[0].len() + 1)));
+         // Offset is added so that highlighting can be added to expressions that come after an '=' during assignment
+     }
+     let (user_value, repr) = result?;
+
+     // Get printable confirmation string
+     let conf_string = assign_var_conf_string(repr, &user_repr, user_value);
+
+     assign_var(vars, user_value, user_repr);
+
+     Ok(conf_string)
+}
+
 fn assign_var(vars: &mut Vec<Variable>, user_value: f64, user_repr: String) {
     // Search to see if given representation exists
     let found_var = vars.iter_mut().find(|x| x.repr == user_repr);
@@ -120,34 +152,11 @@ fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, CliErro
         // Variable list command
         Ok(list_vars_command(&vars))
     } else if input.contains('=') {
-        // Variable assignment/reassignment
-        let mut sides: Vec<&str> = input.split('=').collect();
-        sides[0] = sides[0].trim(); // Trim here to remove space between end of variable name and = sign
-
-        if sides.len() != 2 {
-            // Multiple = signs
-            return Err(CliError::Assignment);
-        } else if !sides[0].starts_with('$') {
-            // Assigning without using a $ prefix
-            return Err(CliError::Assignment);
+        // Assign / Reassign variable command
+        match assign_var_command(&input, vars) {
+            Ok(conf_str) => Ok(conf_str),
+            Err(error) => Err(error),
         }
-
-        let user_repr: String = sides[0][1..].to_string(); // Trim again to remove whitespace between end of variable name and = sign
-
-        // Get value for variable
-        let result = doeval(sides[1], vars);
-        if let Err(Error::Parsing(idx)) = result {
-            return Err(CliError::Library(Error::Parsing(idx + sides[0].len() + 1)));
-            // Offset is added so that highlighting can be added to expressions that come after an '=' during assignment
-        }
-        let (user_value, repr) = result?;
-
-        // Get printable confirmation string
-        let conf_string = assign_var_conf_string(repr, &user_repr, user_value);
-
-        assign_var(vars, user_value, user_repr);
-
-        Ok(conf_string)
     } else {
         // Evaluate as normal
         let result = doeval(&input, &vars);
