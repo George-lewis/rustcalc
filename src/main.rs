@@ -226,8 +226,8 @@ fn handle_errors(error: CliError, input: &str) {
             Error::UnknownVariable(idx) => {
                 println!(
                     "{}",
-                    make_highlighted_error("Unknown variable at index", input, idx + 1)
-                ); // +1 to highlight first letter of variable and not the $
+                    make_highlighted_error("Unknown variable at index", input, idx)
+                );
             }
         },
     }
