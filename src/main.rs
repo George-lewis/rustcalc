@@ -102,6 +102,19 @@ fn assign_var(vars: &mut Vec<Variable>, user_value: f64, user_repr: String) {
     }
 }
 
+fn assign_var_conf_string(token_repr: Vec<Token>, user_repr: &String, user_value: f64) -> String {
+    // Format assignment confirmation
+    let formatted = stringify(&token_repr, color_cli);
+    format!(
+        "[ {}{} {} {} => {} ]",
+        "$".green(),
+        user_repr.green(),
+        "=".cyan(),
+        formatted,
+        format!("{:.3}", user_value).blue()
+    )
+}
+
 fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, CliError> {
     if input == "$" {
         // Variable list command
@@ -129,20 +142,12 @@ fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, CliErro
         }
         let (user_value, repr) = result?;
 
-        // Format assignment confirmation
-        let formatted = stringify(&repr, color_cli);
-        let assign_confirmation = format!(
-            "[ {}{} {} {} => {} ]",
-            "$".green(),
-            user_repr.green(),
-            "=".cyan(),
-            formatted,
-            format!("{:.3}", user_value).blue()
-        );
+        // Get printable confirmation string
+        let conf_string = assign_var_conf_string(repr, &user_repr, user_value);
 
         assign_var(vars, user_value, user_repr);
 
-        Ok(assign_confirmation)
+        Ok(conf_string)
     } else {
         // Evaluate as normal
         let result = doeval(&input, &vars);
