@@ -19,6 +19,17 @@ use itertools::{self, Itertools};
 
 const HISTORY_FILE: &str = "rustcalc-history.txt";
 
+enum CliError {
+    Assignment,
+    Library(Error),
+}
+
+impl From<Error> for CliError {
+    fn from(error: Error) -> Self {
+        Self::Library(error)
+    }
+}
+
 fn main() -> ! {
     let mut editor = Editor::<()>::new();
 
@@ -91,7 +102,7 @@ fn assign_var(vars: &mut Vec<Variable>, user_value: f64, user_repr: String) {
     }
 }
 
-fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, Error> {
+fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, CliError> {
     if input == "$" {
         // Variable list command
         Ok(list_vars_command(&vars))
@@ -102,10 +113,10 @@ fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, Error> 
 
         if sides.len() != 2 {
             // Multiple = signs
-            return Err(Error::Assignment);
+            return Err(CliError::Assignment);
         } else if !sides[0].starts_with('$') {
             // Assigning without using a $ prefix
-            return Err(Error::Assignment);
+            return Err(CliError::Assignment);
         }
 
         let user_repr: String = sides[0][1..].to_string(); // Trim again to remove whitespace between end of variable name and = sign
@@ -113,7 +124,7 @@ fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, Error> 
         // Get value for variable
         let result = doeval(sides[1], vars);
         if let Err(Error::Parsing(idx)) = result {
-            return Err(Error::Parsing(idx + sides[0].len() + 1));
+            return Err(CliError::Library(Error::Parsing(idx + sides[0].len() + 1)));
             // Offset is added so that highlighting can be added to expressions that come after an '=' during assignment
         }
         let (user_value, repr) = result?;
@@ -136,7 +147,7 @@ fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, Error> 
         // Evaluate as normal
         let result = doeval(&input, &vars);
         if let Err(Error::Parsing(idx)) = result {
-            return Err(Error::Parsing(idx));
+            return Err(CliError::Library(Error::Parsing(idx)));
         }
         let (x, repr) = result?;
 
@@ -149,55 +160,57 @@ fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, Error> 
     }
 }
 
-fn handle_errors(error: Error, input: &str) {
+fn handle_errors(error: CliError, input: &str) {
     match error {
-        Error::Parsing(idx) => {
-            let first = if idx > 0 {
-                utils::slice(&input, 0, (idx) as i64)
-            } else {
-                "".to_string()
-            };
-            println!(
-                "Couldn't parse the token at index [{}]\n{}{}{}\n{}{}",
-                idx.to_string().red(),
-                first,
-                input.chars().nth(idx).unwrap().to_string().on_red().white(),
-                utils::slice(&input, idx + 1, -0),
-                "~".repeat(idx).red().bold(),
-                "^".red()
-            );
-        }
-        Error::Operand(kind) => {
-            println!(
-                "Couldn't evaluate. Operator [{}] requires an operand.",
-                format!("{:?}", kind).green()
-            );
-        }
-        Error::EmptyStack => {
-            println!("Couldn't evalutate. Stack was empty?");
-        }
-        Error::MismatchingParens => {
-            println!("Couldn't evaluate. Mismatched parens.");
-        }
-        Error::Assignment => {
+        CliError::Assignment => {
             println!("Couldn't assign to variable. Malformed assignment statement.")
         }
-        Error::UnknownVariable(idx) => {
-            let first = if idx > 0 {
-                utils::slice(&input, 0, (idx) as i64)
-            } else {
-                "".to_string()
-            };
-            println!(
-                "Unknown variable at index [{}]\n{}{}{}\n{}{}",
-                idx.to_string().red(),
-                first,
-                input.chars().nth(idx).unwrap().to_string().on_red().white(),
-                utils::slice(&input, idx + 1, -0),
-                "~".repeat(idx).red().bold(),
-                "^".red()
-            );
-        }
+        CliError::Library(inner) => match inner {
+            Error::Parsing(idx) => {
+                let first = if idx > 0 {
+                    utils::slice(&input, 0, (idx) as i64)
+                } else {
+                    "".to_string()
+                };
+                println!(
+                    "Couldn't parse the token at index [{}]\n{}{}{}\n{}{}",
+                    idx.to_string().red(),
+                    first,
+                    input.chars().nth(idx).unwrap().to_string().on_red().white(),
+                    utils::slice(&input, idx + 1, -0),
+                    "~".repeat(idx).red().bold(),
+                    "^".red()
+                );
+            }
+            Error::Operand(kind) => {
+                println!(
+                    "Couldn't evaluate. Operator [{}] requires an operand.",
+                    format!("{:?}", kind).green()
+                );
+            }
+            Error::EmptyStack => {
+                println!("Couldn't evalutate. Stack was empty?");
+            }
+            Error::MismatchingParens => {
+                println!("Couldn't evaluate. Mismatched parens.");
+            }
+            Error::UnknownVariable(idx) => {
+                let first = if idx > 0 {
+                    utils::slice(&input, 0, (idx) as i64)
+                } else {
+                    "".to_string()
+                };
+                println!(
+                    "Unknown variable at index [{}]\n{}{}{}\n{}{}",
+                    idx.to_string().red(),
+                    first,
+                    input.chars().nth(idx).unwrap().to_string().on_red().white(),
+                    utils::slice(&input, idx + 1, -0),
+                    "~".repeat(idx).red().bold(),
+                    "^".red()
+                );
+            }
+        },
     }
 }
 
