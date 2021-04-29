@@ -115,7 +115,14 @@ fn assign_var_command(input: &str, vars: &mut Vec<Variable>) -> Result<String, C
     let (user_value, repr) = result?;
 
     // Get printable confirmation string
-    let conf_string = assign_var_conf_string(repr, &user_repr, user_value);
+    let conf_string = format!(
+        "[ {}{} {} {} => {} ]",
+        "$".green(),
+        user_repr.green(),
+        "=".cyan(),
+        stringify(&repr, color_cli),
+        format!("{:.3}", user_value).blue()
+    );
 
     assign_var(vars, user_value, user_repr);
 
@@ -137,21 +144,6 @@ fn assign_var(vars: &mut Vec<Variable>, user_value: f64, user_repr: String) {
         };
         vars.push(user_var);
     }
-}
-
-/// Formats a printable string detailing the variable assignment described by the given `user_repr` and user `user_value`,
-/// and how it was calculated with the Vector of [Token]s `token_repr`
-fn assign_var_conf_string(token_repr: Vec<Token>, user_repr: &String, user_value: f64) -> String {
-    // Format assignment confirmation
-    let formatted = stringify(&token_repr, color_cli);
-    format!(
-        "[ {}{} {} {} => {} ]",
-        "$".green(),
-        user_repr.green(),
-        "=".cyan(),
-        formatted,
-        format!("{:.3}", user_value).blue()
-    )
 }
 
 /// Interprets a given user `input` and executes the given command or evaluates the given expression.
