@@ -153,10 +153,7 @@ fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, CliErro
         Ok(list_vars_command(&vars))
     } else if input.contains('=') {
         // Assign / Reassign variable command
-        match assign_var_command(&input, vars) {
-            Ok(conf_str) => Ok(conf_str),
-            Err(error) => Err(error),
-        }
+        assign_var_command(&input, vars) 
     } else {
         // Evaluate as normal
         let result = doeval(&input, &vars);
