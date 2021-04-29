@@ -68,14 +68,6 @@ impl Operator {
     pub fn unary(repr: &str) -> Option<(&OperatorType, usize)> {
         get_by_repr(repr, UNARY_OPERATORS)
     }
-    pub fn implicit_paren(&self) -> bool {
-        ![
-            OperatorType::Positive,
-            OperatorType::Negative,
-            OperatorType::Pow,
-        ]
-        .contains(&self.kind)
-    }
 }
 
 #[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
@@ -197,7 +189,7 @@ static OPERATORS: &[Operator] = &[
         kind: OperatorType::Factorial,
         repr: &["!", "factorial", "fact"],
         precedence: 4,
-        associativity: Associativity::Right,
+        associativity: Associativity::Left,
         arity: 1,
         doit: |arr| factorial(arr[0]),
     },
