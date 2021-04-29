@@ -19,6 +19,7 @@ use itertools::{self, Itertools};
 
 const HISTORY_FILE: &str = "rustcalc-history.txt";
 
+/// Error type for errors stemming from cli code, which includes [Error]s thrown by the library
 enum CliError {
     Assignment,
     Library(Error),
@@ -74,6 +75,7 @@ fn main() -> ! {
     }
 }
 
+/// Formats a printable string listing all the [Variable]s in the given slice `vars`
 fn list_vars_command(vars: &[Variable]) -> String {
     vars.iter()
         .map(|var| {
@@ -86,6 +88,7 @@ fn list_vars_command(vars: &[Variable]) -> String {
         .join("\n")
 }
 
+/// Takes the given user `input` and splits it up into a name and value to be assigned or reassigned to a [Variable] in `vars`
 fn assign_var_command(input: &str, vars: &mut Vec<Variable>) -> Result<String, CliError> {
     // Variable assignment/reassignment
 
@@ -119,6 +122,7 @@ fn assign_var_command(input: &str, vars: &mut Vec<Variable>) -> Result<String, C
     Ok(conf_string)
 }
 
+/// Searches `vars` for the given `user_repr` to find if a [Variable] exists, and either reassigns it to, or creates it with, the given `user_value`
 fn assign_var(vars: &mut Vec<Variable>, user_value: f64, user_repr: String) {
     // Search to see if given representation exists
     let found_var = vars.iter_mut().find(|x| x.repr == user_repr);
@@ -135,6 +139,8 @@ fn assign_var(vars: &mut Vec<Variable>, user_value: f64, user_repr: String) {
     }
 }
 
+/// Formats a printable string detailing the variable assignment described by the given `user_repr` and user `user_value`,
+/// and how it was calculated with the Vector of [Token]s `token_repr`
 fn assign_var_conf_string(token_repr: Vec<Token>, user_repr: &String, user_value: f64) -> String {
     // Format assignment confirmation
     let formatted = stringify(&token_repr, color_cli);
@@ -148,6 +154,9 @@ fn assign_var_conf_string(token_repr: Vec<Token>, user_repr: &String, user_value
     )
 }
 
+/// Interprets a given user `input` and executes the given command or evaluates the given expression.
+/// * `input` - The user submitted string to be interpreted
+/// * `vars` - The vector of [Variable]s the user has already entered / will add to
 fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, CliError> {
     if input == "$" {
         // Variable list command
@@ -172,6 +181,7 @@ fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, CliErro
     }
 }
 
+/// Makes a highlighted error message for use with [Error::Parsing] and [Error::UnknownVariable]
 fn make_highlighted_error(msg: &str, input_str: &str, idx: usize) -> String {
     let first = if idx > 0 {
         utils::slice(&input_str, 0, (idx) as i64)
@@ -196,6 +206,7 @@ fn make_highlighted_error(msg: &str, input_str: &str, idx: usize) -> String {
     )
 }
 
+/// Prints error messages for the given [CliError], referencing the `input` that caused them for clarity
 fn handle_errors(error: CliError, input: &str) {
     match error {
         CliError::Assignment => {
