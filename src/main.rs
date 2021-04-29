@@ -95,7 +95,7 @@ fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, Error> 
     if input == "$" {
         // Variable list command
         Ok(list_vars_command(&vars))
-    } else if input.contains("=") {
+    } else if input.contains('=') {
         // Variable assignment/reassignment
         let mut sides: Vec<&str> = input.split('=').collect();
         sides[0] = sides[0].trim(); // Trim here to remove space between end of variable name and = sign
@@ -103,7 +103,7 @@ fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, Error> 
         if sides.len() != 2 {
             // Multiple = signs
             return Err(Error::Assignment);
-        } else if !sides[0].starts_with("$") {
+        } else if !sides[0].starts_with('$') {
             // Assigning without using a $ prefix
             return Err(Error::Assignment);
         }
@@ -260,7 +260,7 @@ where
                 } else if !(is_r_paren || is_op) {
                     ", ".to_string()
                 } else if is_op && !is_pow {
-                    " ".to_string()
+                    ' '.to_string()
                 } else {
                     "".to_string()
                 };
@@ -576,7 +576,7 @@ mod tests {
     fn test_vars() {
         let test_vars = vec![
             Variable {
-                repr: String::from("v"),
+                repr: String::from('v'),
                 value: 5.0,
             },
             Variable {

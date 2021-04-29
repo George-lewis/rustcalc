@@ -62,8 +62,8 @@ impl Token<'_> {
             Self::Number { value } => value.to_string(),
             Self::Operator { kind } => Operator::by_type(*kind).repr[0].to_string(),
             Self::Paren { kind } => match kind {
-                ParenType::Left => "(".to_string(),
-                ParenType::Right => ")".to_string(),
+                ParenType::Left => '('.to_string(),
+                ParenType::Right => ')'.to_string(),
             },
             Self::Constant { kind } => Constant::by_type(*kind).repr[0].to_string(),
             Self::Variable { inner } => format!("${}", inner.repr),

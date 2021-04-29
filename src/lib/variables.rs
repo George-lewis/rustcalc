@@ -25,6 +25,6 @@ impl Variable {
         get_by_repr(text, vars)
     }
     pub fn is(repr: &str) -> bool {
-        repr.starts_with("$")
+        repr.starts_with('$')
     }
 }
