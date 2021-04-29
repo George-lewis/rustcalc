@@ -165,6 +165,24 @@ fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, CliErro
     }
 }
 
+fn make_highlighted_error(msg: &str, input_str: &str,  idx:usize) -> String{
+    let first = if idx > 0 {
+        utils::slice(&input_str, 0, (idx) as i64)
+    } else {
+        "".to_string()
+    };
+    format!(
+        "{} [{}]\n{}{}{}\n{}{}",
+        msg,
+        idx.to_string().red(),
+        first,
+        input_str.chars().nth(idx).unwrap().to_string().on_red().white(),
+        utils::slice(&input_str, idx + 1, -0),
+        "~".repeat(idx).red().bold(),
+        "^".red()
+    )
+}
+
 fn handle_errors(error: CliError, input: &str) {
     match error {
         CliError::Assignment => {
@@ -172,20 +190,7 @@ fn handle_errors(error: CliError, input: &str) {
         }
         CliError::Library(inner) => match inner {
             Error::Parsing(idx) => {
-                let first = if idx > 0 {
-                    utils::slice(&input, 0, (idx) as i64)
-                } else {
-                    "".to_string()
-                };
-                println!(
-                    "Couldn't parse the token at index [{}]\n{}{}{}\n{}{}",
-                    idx.to_string().red(),
-                    first,
-                    input.chars().nth(idx).unwrap().to_string().on_red().white(),
-                    utils::slice(&input, idx + 1, -0),
-                    "~".repeat(idx).red().bold(),
-                    "^".red()
-                );
+                println!("{}", make_highlighted_error("Couldn't parse the token at index", input, idx));
             }
             Error::Operand(kind) => {
                 println!(
@@ -200,20 +205,7 @@ fn handle_errors(error: CliError, input: &str) {
                 println!("Couldn't evaluate. Mismatched parens.");
             }
             Error::UnknownVariable(idx) => {
-                let first = if idx > 0 {
-                    utils::slice(&input, 0, (idx) as i64)
-                } else {
-                    "".to_string()
-                };
-                println!(
-                    "Unknown variable at index [{}]\n{}{}{}\n{}{}",
-                    idx.to_string().red(),
-                    first,
-                    input.chars().nth(idx).unwrap().to_string().on_red().white(),
-                    utils::slice(&input, idx + 1, -0),
-                    "~".repeat(idx).red().bold(),
-                    "^".red()
-                );
+                println!("{}", make_highlighted_error("Unknown variable at index", input, idx+1)); // +1 to highlight first letter of variable and not the $
             }
         },
     }
