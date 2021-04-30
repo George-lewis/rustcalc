@@ -92,11 +92,8 @@ fn assign_var_command(input: &str, vars: &mut Vec<Variable>) -> Result<String, C
     let sides: Vec<&str> = input.split('=').collect();
     let trimmed_left = sides[0].trim(); // Trim here to remove space between end of variable name and = sign
 
-    if sides.len() != 2 {
-        // Multiple = signs
-        return Err(CliError::Assignment);
-    } else if !trimmed_left.starts_with('$') {
-        // Assigning without using a $ prefix
+    if sides.len() != 2 || !trimmed_left.starts_with('$') {
+        // Multiple = signs || Assigning without using a $ prefix
         return Err(CliError::Assignment);
     }
 
@@ -121,13 +118,13 @@ fn assign_var_command(input: &str, vars: &mut Vec<Variable>) -> Result<String, C
         format!("{:.3}", user_value).blue()
     );
 
-    assign_var(vars, user_value, user_repr);
+    assign_var(vars, user_value, &user_repr);
 
     Ok(conf_string)
 }
 
 /// Searches `vars` for the given `user_repr` to find if a [Variable] exists, and either reassigns it to, or creates it with, the given `user_value`
-fn assign_var(vars: &mut Vec<Variable>, user_value: f64, user_repr: String) {
+fn assign_var(vars: &mut Vec<Variable>, user_value: f64, user_repr: &str) {
     // Search to see if given representation exists
     let found_var = vars.iter_mut().find(|x| x.repr == user_repr);
     if let Some(found_var) = found_var {
@@ -136,7 +133,7 @@ fn assign_var(vars: &mut Vec<Variable>, user_value: f64, user_repr: String) {
     } else {
         // Assign
         let user_var = Variable {
-            repr: user_repr,
+            repr: user_repr.to_string(),
             value: user_value,
         };
         
@@ -152,13 +149,13 @@ fn assign_var(vars: &mut Vec<Variable>, user_value: f64, user_repr: String) {
 fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, CliError> {
     if input == "$" {
         // Variable list command
-        Ok(list_vars_command(&vars))
+        Ok(list_vars_command(vars))
     } else if input.contains('=') {
         // Assign / Reassign variable command
-        assign_var_command(&input, vars)
+        assign_var_command(input, vars)
     } else {
         // Evaluate as normal
-        let result = doeval(&input, &vars);
+        let result = doeval(input, vars);
         if let Err(Error::Parsing(idx)) = result {
             return Err(CliError::Library(Error::Parsing(idx)));
         }
@@ -167,16 +164,16 @@ fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, CliErro
         let formatted = stringify(&repr, color_cli);
         let eval_string = format!("[ {} ] => {}", formatted, format!("{:.3}", x).blue());
 
-        assign_var(vars, x, "ans".to_string()); // Set ans to new value
+        assign_var(vars, x, "ans"); // Set ans to new value
 
         Ok(eval_string)
     }
 }
 
-/// Makes a highlighted error message for use with [Error::Parsing] and [Error::UnknownVariable]
+/// Makes a highlighted error message for use with `Error::Parsing` and `Error::UnknownVariable`
 fn make_highlighted_error(msg: &str, input_str: &str, idx: usize) -> String {
     let first = if idx > 0 {
-        utils::slice(&input_str, 0, (idx) as i64)
+        utils::slice(input_str, 0, (idx) as i64)
     } else {
         "".to_string()
     };
@@ -192,13 +189,13 @@ fn make_highlighted_error(msg: &str, input_str: &str, idx: usize) -> String {
             .to_string()
             .on_red()
             .white(),
-        utils::slice(&input_str, idx + 1, -0),
+        utils::slice(input_str, idx + 1, -0),
         "~".repeat(idx).red().bold(),
         "^".red()
     )
 }
 
-/// Prints error messages for the given [CliError], referencing the `input` that caused them for clarity
+/// Prints error messages for the given `CliError`, referencing the `input` that caused them for clarity
 fn handle_errors(error: CliError, input: &str) {
     match error {
         CliError::Assignment => {
