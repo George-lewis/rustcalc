@@ -35,6 +35,8 @@ lazy_static! {
     });
 }
 
+const DEFAULT_RCFILE: &str = include_str!("../res/rustcalc.rc");
+
 /// Error type for errors stemming from cli code, which includes `Errors` thrown by the library
 enum CliError {
     Assignment,
@@ -54,16 +56,39 @@ impl From<io::Error> for CliError {
     }
 }
 
+/// Load Rustcalc's rcfile from the default location, `RCFILE`.
+/// This function has side effects:
+/// * Files may be created
+/// * May write to stdout
+///
+/// ## Input
+/// * `vars` - A mutable reference to the applications variables. Executing the rcfile may create variables.
+///
+/// ## Output
+/// Returns an empty `Result` on success, or a `CliError` from io operations 
 fn load_rcfile(vars: &mut Vec<Variable>) -> Result<(), CliError> {
     let path = match RCFILE.as_deref() {
         Some(path) => path,
         None => return Err(io::Error::new(NotFound, "Couldn't get path for RCFile").into()),
     };
+
+    // If RCFile doesn't exist, create it and write the default contents
+    if !path.exists() {
+        println!("RCFile doesn't exist. Creating default at [{}]", path.to_string_lossy());
+        fs::write(path, DEFAULT_RCFILE)?;
+    }
+
+    // Read
     let lines = fs::read_to_string(path)?;
+
+    // Filter out empty and comment lines
     let lines = lines
         .lines()
         .enumerate()
         .filter(|(_, l)| !(l.trim().is_empty() || l.starts_with("//")));
+
+    // Feed each line through `handle_input` and make use of `handle_errors`
+    // Succesfully executing statements are silent
     for (n, line) in lines {
         if let Err(inner) = handle_input(line, vars) {
             let message = handle_errors(inner, line);
@@ -89,7 +114,6 @@ fn main() -> ! {
     if let Err(inner) = load_rcfile(&mut vars) {
         match inner {
             CliError::Io(inner) => {
-                println!("{:?}", RCFILE.as_deref());
                 println!("Error loading RCFile: {:#?}", inner)
             }
             _ => unreachable!(),
