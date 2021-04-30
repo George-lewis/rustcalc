@@ -548,14 +548,20 @@ mod tests {
                 vec![Token::Number { value: 345.67 }],
             ),
             (
-                "sin 66 pow 2 plus cos(66)^2",
+                "sin (66) pow 2 plus cos(66)^2",
                 "sin(66)^2 + cos(66)^2",
                 1.0,
                 vec![
                     Token::Operator {
                         kind: OperatorType::Sin,
                     },
+                    Token::Paren {
+                        kind: ParenType::Left,
+                    },
                     Token::Number { value: 66.0 },
+                    Token::Paren {
+                        kind: ParenType::Right,
+                    },
                     Token::Operator {
                         kind: OperatorType::Pow,
                     },
