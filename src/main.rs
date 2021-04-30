@@ -139,7 +139,10 @@ fn assign_var(vars: &mut Vec<Variable>, user_value: f64, user_repr: String) {
             repr: user_repr,
             value: user_value,
         };
+        
         vars.push(user_var);
+        vars.sort_by(|a, b| b.repr.len().cmp(&a.repr.len()));
+
     }
 }
 
