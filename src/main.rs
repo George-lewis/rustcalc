@@ -73,7 +73,7 @@ fn main() -> ! {
 }
 
 /// Formats a printable string listing all the `Variables` in the given slice `vars`
-fn list_vars_command(vars: &[Variable]) -> String {
+fn format_vars(vars: &[Variable]) -> String {
     vars.iter()
         .map(|var| {
             format!(
@@ -147,7 +147,11 @@ fn assign_var(vars: &mut Vec<Variable>, repr: &str, value: f64) {
 fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, CliError> {
     if input == "$" {
         // Variable list command
-        Ok(list_vars_command(vars))
+        if vars.is_empty() {
+            Ok("No vars".to_string())
+        } else {
+            Ok(format_vars(vars))
+        }
     } else if input.contains('=') {
         // Assign / Reassign variable command
         assign_var_command(input, vars)
