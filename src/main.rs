@@ -60,20 +60,13 @@ fn load_rcfile(vars: &mut Vec<Variable>) -> Result<(), CliError> {
         None => return Err(io::Error::new(NotFound, "Couldn't get path for RCFile").into()),
     };
     let lines = fs::read_to_string(path)?;
-    let lines = lines.lines().filter(|l| !(l.trim().is_empty() || l.starts_with("//")));
-    for (n, line) in lines.enumerate() {
+    let lines = lines
+        .lines()
+        .enumerate()
+        .filter(|(_, l)| !(l.trim().is_empty() || l.starts_with("//")));
+    for (n, line) in lines {
         if let Err(inner) = handle_input(line, vars) {
-            let message = match inner {
-                CliError::Assignment => "Couldn't assign variable",
-                CliError::Library(inner) => match inner {
-                    Error::Parsing(_) => "Couldn't parse",
-                    Error::Operand(_) => "Operand expected an argument",
-                    Error::EmptyStack => "Stack was empty",
-                    Error::MismatchingParens => "Mismatched parentheses",
-                    Error::UnknownVariable(_) => "Unknown variable",
-                },
-                CliError::Io(..) => unreachable!(),
-            };
+            let message = handle_errors(inner, line);
             println!(
                 "Error in RCFile on line [{}]: {}",
                 format!("{}", n).red(),
@@ -124,7 +117,10 @@ fn main() -> ! {
 
         match handle_input(&input, &mut vars) {
             Ok(formatted) => println!("{}", formatted),
-            Err(error) => handle_errors(error, &input),
+            Err(error) => {
+                let msg = handle_errors(error, &input);
+                println!("{}", msg);
+            }
         }
     }
 }
@@ -254,35 +250,25 @@ fn make_highlighted_error(msg: &str, input_str: &str, idx: usize) -> String {
 }
 
 /// Prints error messages for the given `CliError`, referencing the `input` that caused them for clarity
-fn handle_errors(error: CliError, input: &str) {
+fn handle_errors(error: CliError, input: &str) -> String {
     match error {
         CliError::Assignment => {
-            println!("Couldn't assign to variable. Malformed assignment statement.")
+            "Couldn't assign to variable. Malformed assignment statement.".to_string()
         }
         CliError::Library(inner) => match inner {
             Error::Parsing(idx) => {
-                println!(
-                    "{}",
-                    make_highlighted_error("Couldn't parse the token at index", input, idx)
-                );
+                make_highlighted_error("Couldn't parse the token at index", input, idx)
             }
             Error::Operand(kind) => {
-                println!(
+                format!(
                     "Couldn't evaluate. Operator [{}] requires an operand.",
                     format!("{:?}", kind).green()
-                );
+                )
             }
-            Error::EmptyStack => {
-                println!("Couldn't evalutate. Stack was empty?");
-            }
-            Error::MismatchingParens => {
-                println!("Couldn't evaluate. Mismatched parens.");
-            }
+            Error::EmptyStack => "Couldn't evalutate. Stack was empty?".to_string(),
+            Error::MismatchingParens => "Couldn't evaluate. Mismatched parens.".to_string(),
             Error::UnknownVariable(idx) => {
-                println!(
-                    "{}",
-                    make_highlighted_error("Unknown variable at index", input, idx)
-                );
+                make_highlighted_error("Unknown variable at index", input, idx)
             }
         },
         CliError::Io(..) => unreachable!(),
