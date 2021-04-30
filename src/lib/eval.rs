@@ -16,6 +16,7 @@ pub fn eval(tokens: &[Token]) -> Result<f64, Error> {
                 let constant = Constant::by_type(kind);
                 args.push(constant.value);
             }
+            Token::Variable { inner } => args.push(inner.value),
             Token::Operator { kind } => {
                 let op = Operator::by_type(kind);
                 let start = match args.len().checked_sub(op.arity) {

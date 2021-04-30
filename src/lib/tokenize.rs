@@ -1,5 +1,6 @@
 use super::{
     constants::Constant, errors::Error, operators::*, tokens::ParenType, tokens::Token, utils,
+    variables::Variable,
 };
 
 #[derive(Clone, Debug, PartialEq)]
@@ -8,6 +9,7 @@ enum TokenType {
     Operator,
     Paren,
     Constant,
+    Variable,
 }
 
 #[allow(clippy::clippy::iter_nth_zero)]
@@ -20,13 +22,15 @@ fn _type(s: &str) -> Result<TokenType, ()> {
         TokenType::Paren
     } else if Constant::is(s) {
         TokenType::Constant
+    } else if Variable::is(s) {
+        TokenType::Variable
     } else {
         return Err(());
     })
 }
 
-#[allow(clippy::unnecessary_unwrap)]
-pub fn tokenize(string: &str) -> Result<Vec<Token>, Error> {
+#[allow(clippy::unnecessary_unwrap, clippy::too_many_lines)]
+pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>, Error> {
     let mut vec: Vec<Token> = Vec::new();
     let mut explicit_paren = 0;
     let mut idx = 0;
@@ -66,7 +70,7 @@ pub fn tokenize(string: &str) -> Result<Vec<Token>, Error> {
             coeff = false;
         }
 
-        let kind = match _type(&slice) {
+        let kind: TokenType = match _type(&slice) {
             Ok(k) => k,
             Err(..) => {
                 return Err(Error::Parsing(idx));
@@ -128,6 +132,17 @@ pub fn tokenize(string: &str) -> Result<Vec<Token>, Error> {
                 vec.push(Token::Constant {
                     kind: constant.kind,
                 });
+                coeff = true;
+                unary = false;
+            }
+            TokenType::Variable => {
+                let (variable, n) = match Variable::next_variable(&slice[1..], vars) {
+                    // [1..] to ignore the $ prefix
+                    Some(a) => a,
+                    None => return Err(Error::UnknownVariable(idx)),
+                };
+                idx += n + 1; // +1 to account for '$'
+                vec.push(Token::Variable { inner: variable });
                 coeff = true;
                 unary = false;
             }

@@ -6,4 +6,5 @@ pub enum Error {
     Operand(OperatorType),
     EmptyStack,
     MismatchingParens,
+    UnknownVariable(usize),
 }

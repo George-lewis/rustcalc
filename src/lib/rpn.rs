@@ -4,13 +4,15 @@ use super::{
     tokens::{ParenType, Token},
 };
 
-pub fn rpn(tokens: &[Token]) -> Result<Vec<Token>, Error> {
+pub fn rpn<'a>(tokens: &'a [Token]) -> Result<Vec<Token<'a>>, Error> {
     let mut operator_stack: Vec<Token> = Vec::new();
     let mut output: Vec<Token> = Vec::with_capacity(tokens.len());
 
     for token in tokens {
         match token {
-            Token::Number { .. } | Token::Constant { .. } => output.push(*token),
+            Token::Number { .. } | Token::Constant { .. } | Token::Variable { .. } => {
+                output.push(*token)
+            }
             Token::Operator { kind } => {
                 let op1 = Operator::by_type(*kind);
                 while !operator_stack.is_empty() {

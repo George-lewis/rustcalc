@@ -3,11 +3,11 @@ pub trait Representable {
 }
 
 pub trait Searchable {
-    fn search<'a, 'b>(&'a self, search: &'b str) -> Option<(&'a Self, usize)>;
+    fn search<'a>(&'a self, search: &str) -> Option<(&'a Self, usize)>;
 }
 
 impl<Repr: Representable> Searchable for Repr {
-    fn search<'a, 'b>(&'a self, search: &'b str) -> Option<(&'a Self, usize)> {
+    fn search<'a>(&'a self, search: &str) -> Option<(&'a Self, usize)> {
         self.repr()
             .iter()
             .find(|repr| search.to_lowercase().starts_with(&repr.to_lowercase()))
