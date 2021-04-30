@@ -69,7 +69,9 @@ impl From<io::Error> for CliError {
 fn load_rcfile(vars: &mut Vec<Variable>) -> Result<(), CliError> {
     let path = match RCFILE.as_deref() {
         Some(path) => path,
-        None => return Err(io::Error::new(NotFound, "Couldn't get path for config directory").into()),
+        None => {
+            return Err(io::Error::new(NotFound, "Couldn't get path for config directory").into())
+        }
     };
 
     // If RCFile doesn't exist, create it and write the default contents
