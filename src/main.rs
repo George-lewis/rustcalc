@@ -60,7 +60,8 @@ fn load_rcfile(vars: &mut Vec<Variable>) -> Result<(), CliError> {
         None => return Err(io::Error::new(NotFound, "Couldn't get path for RCFile").into()),
     };
     let lines = fs::read_to_string(path)?;
-    for (n, line) in lines.lines().enumerate() {
+    let lines = lines.lines().filter(|l| !(l.trim().is_empty() || l.starts_with("//")));
+    for (n, line) in lines.enumerate() {
         if let Err(inner) = handle_input(line, vars) {
             let message = match inner {
                 CliError::Assignment => "Couldn't assign variable",
