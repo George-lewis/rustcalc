@@ -156,7 +156,7 @@ fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, CliErro
         // Evaluate as normal
         let result = doeval(input, vars);
         if let Err(Error::Parsing(idx)) = result {
-            return Err(CliError::Library(Error::Parsing(idx)));
+            return Err(Error::Parsing(idx).into())
         }
         let (x, repr) = result?;
 
