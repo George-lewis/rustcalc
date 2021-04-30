@@ -29,8 +29,8 @@ fn _type(s: &str) -> Result<TokenType, ()> {
     })
 }
 
-#[allow(clippy::unnecessary_unwrap)]
-pub fn tokenize<'a, 'b>(string: &'a str, vars: &'b [Variable]) -> Result<Vec<Token<'b>>, Error> {
+#[allow(clippy::unnecessary_unwrap, clippy::too_many_lines)]
+pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>, Error> {
     let mut vec: Vec<Token> = Vec::new();
     let mut explicit_paren = 0;
     let mut idx = 0;
