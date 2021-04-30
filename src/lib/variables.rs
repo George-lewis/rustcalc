@@ -23,10 +23,7 @@ impl Variable {
     /// * `text` - The string to search. Must start with the name of a variable (not a '$') but can
     /// be arbitrarily long. Matches are case sensitive.
     /// * `vars` - A slice of [Variable]s to check for
-    pub fn next_variable<'a>(
-        text: &str,
-        vars: &'a [Self],
-    ) -> Option<(&'a Self, usize)> {
+    pub fn next_variable<'a>(text: &str, vars: &'a [Self]) -> Option<(&'a Self, usize)> {
         get_by_repr(text, vars)
     }
 
