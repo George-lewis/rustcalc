@@ -19,7 +19,7 @@ use itertools::{self, Itertools};
 
 const HISTORY_FILE: &str = "rustcalc-history.txt";
 
-/// Error type for errors stemming from cli code, which includes [Error]s thrown by the library
+/// Error type for errors stemming from cli code, which includes `Errors` thrown by the library
 enum CliError {
     Assignment,
     Library(Error),
@@ -72,7 +72,7 @@ fn main() -> ! {
     }
 }
 
-/// Formats a printable string listing all the [Variable]s in the given slice `vars`
+/// Formats a printable string listing all the `Variables` in the given slice `vars`
 fn list_vars_command(vars: &[Variable]) -> String {
     vars.iter()
         .map(|var| {
@@ -143,7 +143,7 @@ fn assign_var(vars: &mut Vec<Variable>, repr: &str, value: f64) {
 
 /// Interprets a given user `input` and executes the given command or evaluates the given expression.
 /// * `input` - The user submitted string to be interpreted
-/// * `vars` - The vector of [Variable]s the user has already entered / will add to
+/// * `vars` - The vector of `Variables` the user has already entered / will add to
 fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, CliError> {
     if input == "$" {
         // Variable list command
