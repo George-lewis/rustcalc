@@ -262,6 +262,7 @@ dependencies = [
  "colored",
  "dirs",
  "itertools",
+ "lazy_static",
  "rand",
  "rustyline",
 ]
