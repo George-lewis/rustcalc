@@ -110,7 +110,7 @@ fn assign_var_command(input: &str, vars: &mut Vec<Variable>) -> Result<String, C
 
     // Get printable confirmation string
     let conf_string = format!(
-        "[ ${} {} {} => {} ]",
+        "[ ${} {} {} ] => {}",
         user_repr.green().bold(),
         "=".cyan(),
         stringify(&repr, color_cli),
