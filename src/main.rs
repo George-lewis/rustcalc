@@ -65,7 +65,7 @@ impl From<io::Error> for CliError {
 /// * `vars` - A mutable reference to the applications variables. Executing the rcfile may create variables.
 ///
 /// ## Output
-/// Returns an empty `Result` on success, or a `CliError` from io operations 
+/// Returns an empty `Result` on success, or a `CliError` from io operations
 fn load_rcfile(vars: &mut Vec<Variable>) -> Result<(), CliError> {
     let path = match RCFILE.as_deref() {
         Some(path) => path,
@@ -74,7 +74,10 @@ fn load_rcfile(vars: &mut Vec<Variable>) -> Result<(), CliError> {
 
     // If RCFile doesn't exist, create it and write the default contents
     if !path.exists() {
-        println!("RCFile doesn't exist. Creating default at [{}]", path.to_string_lossy());
+        println!(
+            "RCFile doesn't exist. Creating default at [{}]",
+            path.to_string_lossy()
+        );
         fs::write(path, DEFAULT_RCFILE)?;
     }
 
