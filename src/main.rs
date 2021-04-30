@@ -118,23 +118,23 @@ fn assign_var_command(input: &str, vars: &mut Vec<Variable>) -> Result<String, C
         format!("{:.3}", user_value).blue()
     );
 
-    assign_var(vars, user_value, &user_repr);
+    assign_var(vars, &user_repr, user_value);
 
     Ok(conf_string)
 }
 
 /// Searches `vars` for the given `user_repr` to find if a [Variable] exists, and either reassigns it to, or creates it with, the given `user_value`
-fn assign_var(vars: &mut Vec<Variable>, user_value: f64, user_repr: &str) {
-    let cmp = |var: &Variable| user_repr.len().cmp(&var.repr.len());
+fn assign_var(vars: &mut Vec<Variable>, repr: &str, value: f64) {
+    let cmp = |var: &Variable| repr.len().cmp(&var.repr.len());
     let search = vars.binary_search_by(cmp);
     match search {
         Ok(idx) => {
-            vars[idx].value = user_value;
+            vars[idx].value = value;
         }
         Err(idx) => {
             let var = Variable {
-                repr: user_repr.to_string(),
-                value: user_value,
+                repr: repr.to_string(),
+                value,
             };
             vars.insert(idx, var);
         }
@@ -162,7 +162,7 @@ fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, CliErro
         let formatted = stringify(&repr, color_cli);
         let eval_string = format!("[ {} ] => {}", formatted, format!("{:.3}", x).blue());
 
-        assign_var(vars, x, "ans"); // Set ans to new value
+        assign_var(vars, "ans", x); // Set ans to new value
 
         Ok(eval_string)
     }
