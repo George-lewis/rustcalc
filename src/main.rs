@@ -1,11 +1,18 @@
 #![warn(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::wildcard_imports)]
 
-use std::{fmt::Display, process};
+use std::{
+    fmt::Display,
+    fs,
+    io::{self, ErrorKind::NotFound},
+    path::PathBuf,
+    process,
+};
 
 mod lib;
 
 use colored::*;
+use lazy_static::lazy_static;
 use lib::doeval;
 use lib::errors::Error;
 use lib::operators::*;
@@ -17,11 +24,21 @@ use rustyline::Editor;
 
 use itertools::{self, Itertools};
 
-const HISTORY_FILE: &str = "rustcalc-history.txt";
+lazy_static! {
+    static ref HISTORY_FILE: Option<PathBuf> = dirs::cache_dir().map(|mut dir| {
+        dir.push("rustcalc-history.txt");
+        dir
+    });
+    static ref RCFILE: Option<PathBuf> = dirs::config_dir().map(|mut dir| {
+        dir.push("rustcalc.rc");
+        dir
+    });
+}
 
 /// Error type for errors stemming from cli code, which includes `Errors` thrown by the library
 enum CliError {
     Assignment,
+    Io(io::Error),
     Library(Error),
 }
 
@@ -31,28 +48,67 @@ impl From<Error> for CliError {
     }
 }
 
+impl From<io::Error> for CliError {
+    fn from(error: std::io::Error) -> Self {
+        Self::Io(error)
+    }
+}
+
+fn load_rcfile(vars: &mut Vec<Variable>) -> Result<(), CliError> {
+    let path = match RCFILE.as_deref() {
+        Some(path) => path,
+        None => return Err(io::Error::new(NotFound, "Couldn't get path for RCFile").into()),
+    };
+    let lines = fs::read_to_string(path)?;
+    for (n, line) in lines.lines().enumerate() {
+        if let Err(inner) = handle_input(line, vars) {
+            let message = match inner {
+                CliError::Assignment => "Couldn't assign variable",
+                CliError::Library(inner) => match inner {
+                    Error::Parsing(_) => "Couldn't parse",
+                    Error::Operand(_) => "Operand expected an argument",
+                    Error::EmptyStack => "Stack was empty",
+                    Error::MismatchingParens => "Mismatched parentheses",
+                    Error::UnknownVariable(_) => "Unknown variable",
+                },
+                CliError::Io(..) => unreachable!(),
+            };
+            println!(
+                "Error in RCFile on line [{}]: {}",
+                format!("{}", n).red(),
+                message
+            );
+        }
+    }
+    Ok(())
+}
+
 fn main() -> ! {
     let mut editor = Editor::<()>::new();
 
-    let cache_file = dirs::cache_dir().map(|mut dir| {
-        dir.push(HISTORY_FILE);
-        dir
-    });
-    let cache_file = cache_file.as_deref();
-
-    if let Some(path) = cache_file {
+    if let Some(path) = HISTORY_FILE.as_deref() {
         editor.load_history(path).ok();
     }
 
     let mut vars = vec![];
+
+    if let Err(inner) = load_rcfile(&mut vars) {
+        match inner {
+            CliError::Io(inner) => {
+                println!("{:?}", RCFILE.as_deref());
+                println!("Error loading RCFile: {:#?}", inner)
+            }
+            _ => unreachable!(),
+        }
+    };
 
     loop {
         #[allow(clippy::single_match_else)]
         let input = match editor.readline("> ") {
             Ok(line) => line.trim_end().to_string(),
             Err(_) => {
-                if let Some(path) = cache_file {
-                    editor.save_history(path).ok();
+                if let Some(path) = HISTORY_FILE.as_deref() {
+                    editor.save_history(&path).ok();
                 }
                 process::exit(0)
             }
@@ -228,6 +284,7 @@ fn handle_errors(error: CliError, input: &str) {
                 );
             }
         },
+        CliError::Io(..) => unreachable!(),
     }
 }
 
