@@ -1,7 +1,7 @@
 #![warn(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::wildcard_imports)]
 
-use std::{cmp::Ordering, fmt::Display, process};
+use std::{fmt::Display, process};
 
 mod lib;
 
@@ -124,14 +124,7 @@ fn assign_var_command(input: &str, vars: &mut Vec<Variable>) -> Result<String, C
 
 /// Searches `vars` for the given `user_repr` to find if a [Variable] exists, and either reassigns it to, or creates it with, the given `user_value`
 fn assign_var(vars: &mut Vec<Variable>, repr: &str, value: f64) {
-    let cmp = |var: &Variable| {
-        let cmp = repr.len().cmp(&var.repr.len());
-        if Ordering::Equal == cmp {
-            repr.cmp(&var.repr)
-        } else {
-            cmp
-        }
-    };
+    let cmp = |var: &Variable| repr.cmp(&var.repr);
     let search = vars.binary_search_by(cmp);
     match search {
         Ok(idx) => {
