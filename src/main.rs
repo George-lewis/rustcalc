@@ -125,20 +125,19 @@ fn assign_var_command(input: &str, vars: &mut Vec<Variable>) -> Result<String, C
 
 /// Searches `vars` for the given `user_repr` to find if a [Variable] exists, and either reassigns it to, or creates it with, the given `user_value`
 fn assign_var(vars: &mut Vec<Variable>, user_value: f64, user_repr: &str) {
-    // Search to see if given representation exists
-    let found_var = vars.iter_mut().find(|x| x.repr == user_repr);
-    if let Some(found_var) = found_var {
-        // Reassign
-        found_var.value = user_value;
-    } else {
-        // Assign
-        let user_var = Variable {
-            repr: user_repr.to_string(),
-            value: user_value,
-        };
-
-        vars.push(user_var);
-        vars.sort_by(|a, b| b.repr.len().cmp(&a.repr.len()));
+    let cmp = |var: &Variable| user_repr.len().cmp(&var.repr.len());
+    let search = vars.binary_search_by(cmp);
+    match search {
+        Ok(idx) => {
+            vars[idx].value = user_value;
+        }
+        Err(idx) => {
+            let var = Variable {
+                repr: user_repr.to_string(),
+                value: user_value,
+            };
+            vars.insert(idx, var);
+        }
     }
 }
 
@@ -156,7 +155,7 @@ fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, CliErro
         // Evaluate as normal
         let result = doeval(input, vars);
         if let Err(Error::Parsing(idx)) = result {
-            return Err(Error::Parsing(idx).into())
+            return Err(Error::Parsing(idx).into());
         }
         let (x, repr) = result?;
 
