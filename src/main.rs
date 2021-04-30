@@ -1,11 +1,18 @@
 #![warn(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::wildcard_imports)]
 
-use std::{fmt::Display, process};
+use std::{
+    fmt::Display,
+    fs,
+    io::{self, ErrorKind::NotFound},
+    path::PathBuf,
+    process,
+};
 
 mod lib;
 
 use colored::*;
+use lazy_static::lazy_static;
 use lib::doeval;
 use lib::errors::Error;
 use lib::operators::*;
@@ -17,11 +24,23 @@ use rustyline::Editor;
 
 use itertools::{self, Itertools};
 
-const HISTORY_FILE: &str = "rustcalc-history.txt";
+lazy_static! {
+    static ref HISTORY_FILE: Option<PathBuf> = dirs::cache_dir().map(|mut dir| {
+        dir.push("rustcalc-history.txt");
+        dir
+    });
+    static ref RCFILE: Option<PathBuf> = dirs::config_dir().map(|mut dir| {
+        dir.push("rustcalc.rc");
+        dir
+    });
+}
+
+const DEFAULT_RCFILE: &str = include_str!("../res/rustcalc.rc");
 
 /// Error type for errors stemming from cli code, which includes `Errors` thrown by the library
 enum CliError {
     Assignment,
+    Io(io::Error),
     Library(Error),
 }
 
@@ -31,28 +50,86 @@ impl From<Error> for CliError {
     }
 }
 
+impl From<io::Error> for CliError {
+    fn from(error: std::io::Error) -> Self {
+        Self::Io(error)
+    }
+}
+
+/// Load Rustcalc's rcfile from the default location, `RCFILE`.
+/// This function has side effects:
+/// * Files may be created
+/// * May write to stdout
+///
+/// ## Input
+/// * `vars` - A mutable reference to the applications variables. Executing the rcfile may create variables.
+///
+/// ## Output
+/// Returns an empty `Result` on success, or a `CliError` from io operations
+fn load_rcfile(vars: &mut Vec<Variable>) -> Result<(), CliError> {
+    let path = match RCFILE.as_deref() {
+        Some(path) => path,
+        None => return Err(io::Error::new(NotFound, "Couldn't get path for RCFile").into()),
+    };
+
+    // If RCFile doesn't exist, create it and write the default contents
+    if !path.exists() {
+        println!(
+            "RCFile doesn't exist. Creating default at [{}]",
+            path.to_string_lossy()
+        );
+        fs::write(path, DEFAULT_RCFILE)?;
+    }
+
+    // Read
+    let lines = fs::read_to_string(path)?;
+
+    // Filter out empty and comment lines
+    let lines = lines
+        .lines()
+        .enumerate()
+        .filter(|(_, l)| !(l.trim().is_empty() || l.starts_with("//")));
+
+    // Feed each line through `handle_input` and make use of `handle_errors`
+    // Succesfully executing statements are silent
+    for (n, line) in lines {
+        if let Err(inner) = handle_input(line, vars) {
+            let message = handle_errors(inner, line);
+            println!(
+                "Error in RCFile on line [{}]: {}",
+                format!("{}", n).red(),
+                message
+            );
+        }
+    }
+    Ok(())
+}
+
 fn main() -> ! {
     let mut editor = Editor::<()>::new();
 
-    let cache_file = dirs::cache_dir().map(|mut dir| {
-        dir.push(HISTORY_FILE);
-        dir
-    });
-    let cache_file = cache_file.as_deref();
-
-    if let Some(path) = cache_file {
+    if let Some(path) = HISTORY_FILE.as_deref() {
         editor.load_history(path).ok();
     }
 
     let mut vars = vec![];
+
+    if let Err(inner) = load_rcfile(&mut vars) {
+        match inner {
+            CliError::Io(inner) => {
+                println!("Error loading RCFile: {:#?}", inner)
+            }
+            _ => unreachable!(),
+        }
+    };
 
     loop {
         #[allow(clippy::single_match_else)]
         let input = match editor.readline("> ") {
             Ok(line) => line.trim_end().to_string(),
             Err(_) => {
-                if let Some(path) = cache_file {
-                    editor.save_history(path).ok();
+                if let Some(path) = HISTORY_FILE.as_deref() {
+                    editor.save_history(&path).ok();
                 }
                 process::exit(0)
             }
@@ -67,7 +144,10 @@ fn main() -> ! {
 
         match handle_input(&input, &mut vars) {
             Ok(formatted) => println!("{}", formatted),
-            Err(error) => handle_errors(error, &input),
+            Err(error) => {
+                let msg = handle_errors(error, &input);
+                println!("{}", msg);
+            }
         }
     }
 }
@@ -197,37 +277,28 @@ fn make_highlighted_error(msg: &str, input_str: &str, idx: usize) -> String {
 }
 
 /// Prints error messages for the given `CliError`, referencing the `input` that caused them for clarity
-fn handle_errors(error: CliError, input: &str) {
+fn handle_errors(error: CliError, input: &str) -> String {
     match error {
         CliError::Assignment => {
-            println!("Couldn't assign to variable. Malformed assignment statement.")
+            "Couldn't assign to variable. Malformed assignment statement.".to_string()
         }
         CliError::Library(inner) => match inner {
             Error::Parsing(idx) => {
-                println!(
-                    "{}",
-                    make_highlighted_error("Couldn't parse the token at index", input, idx)
-                );
+                make_highlighted_error("Couldn't parse the token at index", input, idx)
             }
             Error::Operand(kind) => {
-                println!(
+                format!(
                     "Couldn't evaluate. Operator [{}] requires an operand.",
                     format!("{:?}", kind).green()
-                );
+                )
             }
-            Error::EmptyStack => {
-                println!("Couldn't evalutate. Stack was empty?");
-            }
-            Error::MismatchingParens => {
-                println!("Couldn't evaluate. Mismatched parens.");
-            }
+            Error::EmptyStack => "Couldn't evalutate. Stack was empty?".to_string(),
+            Error::MismatchingParens => "Couldn't evaluate. Mismatched parens.".to_string(),
             Error::UnknownVariable(idx) => {
-                println!(
-                    "{}",
-                    make_highlighted_error("Unknown variable at index", input, idx)
-                );
+                make_highlighted_error("Unknown variable at index", input, idx)
             }
         },
+        CliError::Io(..) => unreachable!(),
     }
 }
 
@@ -477,14 +548,20 @@ mod tests {
                 vec![Token::Number { value: 345.67 }],
             ),
             (
-                "sin 66 pow 2 plus cos(66)^2",
+                "sin (66) pow 2 plus cos(66)^2",
                 "sin(66)^2 + cos(66)^2",
                 1.0,
                 vec![
                     Token::Operator {
                         kind: OperatorType::Sin,
                     },
+                    Token::Paren {
+                        kind: ParenType::Left,
+                    },
                     Token::Number { value: 66.0 },
+                    Token::Paren {
+                        kind: ParenType::Right,
+                    },
                     Token::Operator {
                         kind: OperatorType::Pow,
                     },

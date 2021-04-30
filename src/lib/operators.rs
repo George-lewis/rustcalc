@@ -124,7 +124,7 @@ static OPERATORS: &[Operator] = &[
     Operator {
         kind: OperatorType::Pow,
         repr: &["^", "exp", "pow"],
-        precedence: 3,
+        precedence: 4,
         associativity: Associativity::Right,
         arity: 2,
         doit: |arr| arr[0].powf(arr[1]),
