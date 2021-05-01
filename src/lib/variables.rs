@@ -5,7 +5,6 @@ use super::representable::{get_by_repr, Searchable};
 #[derive(Searchable, Clone, Debug, PartialEq)]
 /// Represents a user definable variable
 pub struct Variable {
-
     #[representation]
     pub repr: String,
     pub value: f64,

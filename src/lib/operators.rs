@@ -2,8 +2,8 @@
 
 use rand::Rng;
 
-use macros::Searchable;
 use super::representable::Searchable;
+use macros::Searchable;
 
 use super::representable::get_by_repr;
 

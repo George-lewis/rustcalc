@@ -1,7 +1,7 @@
 #![allow(clippy::non_ascii_literal)]
 
-use macros::Searchable;
 use super::representable::Searchable;
+use macros::Searchable;
 
 use super::representable::get_by_repr;
 
