@@ -1,21 +1,14 @@
+use macros::Searchable;
+
 use super::representable::{get_by_repr, Searchable};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Searchable, Clone, Debug, PartialEq)]
 /// Represents a user definable variable
 pub struct Variable {
+
+    #[representation]
     pub repr: String,
     pub value: f64,
-}
-
-impl Searchable for Variable {
-    fn search<'a>(&'a self, search: &str) -> Option<(&'a Self, usize)> {
-        // Case sensitive
-        if search.starts_with(&self.repr) {
-            Some((self, self.repr.len()))
-        } else {
-            None
-        }
-    }
 }
 
 impl Variable {

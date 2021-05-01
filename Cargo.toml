@@ -8,6 +8,9 @@ license = "MIT"
 
 [dependencies]
 
+# Proc macros
+macros = { path = "./macros" }
+
 # For colored terminal output
 colored = "2"
 

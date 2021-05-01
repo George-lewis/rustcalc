@@ -1,6 +1,9 @@
 #![allow(clippy::non_ascii_literal)]
 
-use super::representable::{get_by_repr, Representable};
+use macros::Searchable;
+use super::representable::Searchable;
+
+use super::representable::get_by_repr;
 
 #[allow(clippy::upper_case_acronyms)]
 #[derive(PartialEq, Clone, Copy, Debug)]
@@ -10,16 +13,13 @@ pub enum ConstantType {
     Tau,
 }
 
+#[derive(Searchable)]
 pub struct Constant {
     pub kind: ConstantType,
+
+    #[representation]
     pub repr: &'static [&'static str],
     pub value: f64,
-}
-
-impl Representable for Constant {
-    fn repr(&self) -> &[&str] {
-        self.repr
-    }
 }
 
 static CONSTANTS: &[Constant] = &[
