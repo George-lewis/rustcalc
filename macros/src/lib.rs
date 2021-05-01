@@ -52,9 +52,10 @@ fn searchable_impl(ast: &DeriveInput) -> TokenStream {
         _ => return error!(ast.span(), "`Searchable` can only derive structs.")
     };
 
-    let field = match field {
-        Some(f) => f,
-        None => return error!(ast.span(), "No `#[representable]` annotated member.")
+    let field = if let Some(field) = field {
+        field
+    } else {
+        return error!(ast.span(), "No `#[representable]` annotated member.")
     };
 
     let ty_span = field.ty.span();
