@@ -160,7 +160,7 @@ fn format_vars(vars: &[Variable]) -> String {
         .map(|var| {
             format!(
                 "[ ${} => {} ]",
-                var.repr.green().bold(),
+                var.name.green().bold(),
                 format!("{:.3}", var.value).blue()
             )
         })
@@ -206,7 +206,7 @@ fn assign_var_command(input: &str, vars: &mut Vec<Variable>) -> Result<String, C
 
 /// Searches `vars` for the given `user_repr` to find if a [Variable] exists, and either reassigns it to, or creates it with, the given `user_value`
 fn assign_var(vars: &mut Vec<Variable>, repr: &str, value: f64) {
-    let cmp = |var: &Variable| repr.cmp(&var.repr);
+    let cmp = |var: &Variable| repr.cmp(&var.name);
     let search = vars.binary_search_by(cmp);
     match search {
         Ok(idx) => {
@@ -214,7 +214,7 @@ fn assign_var(vars: &mut Vec<Variable>, repr: &str, value: f64) {
         }
         Err(idx) => {
             let var = Variable {
-                repr: repr.to_string(),
+                name: repr.to_string(),
                 value,
             };
             vars.insert(idx, var);
@@ -698,11 +698,11 @@ mod tests {
     fn test_vars() {
         let test_vars = vec![
             Variable {
-                repr: String::from('v'),
+                name: String::from('v'),
                 value: 5.0,
             },
             Variable {
-                repr: String::from("pi"),
+                name: String::from("pi"),
                 value: 7.0,
             },
         ];

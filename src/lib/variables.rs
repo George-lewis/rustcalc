@@ -6,7 +6,7 @@ use super::searchable::{get_by_repr, Searchable};
 /// Represents a user definable variable
 pub struct Variable {
     #[representation]
-    pub repr: String,
+    pub name: String,
     pub value: f64,
 }
 

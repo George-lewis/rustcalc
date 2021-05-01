@@ -66,7 +66,7 @@ impl Token<'_> {
                 ParenType::Right => ')'.to_string(),
             },
             Self::Constant { kind } => Constant::by_type(*kind).repr[0].to_string(),
-            Self::Variable { inner } => format!("${}", inner.repr),
+            Self::Variable { inner } => format!("${}", inner.name),
         }
     }
 }
