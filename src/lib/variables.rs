@@ -1,6 +1,6 @@
 use macros::Searchable;
 
-use super::representable::{get_by_repr, Searchable};
+use super::searchable::{get_by_repr, Searchable};
 
 #[derive(Searchable, Clone, Debug, PartialEq)]
 /// Represents a user definable variable

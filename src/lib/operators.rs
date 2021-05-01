@@ -2,10 +2,10 @@
 
 use rand::Rng;
 
-use super::representable::Searchable;
+use super::searchable::Searchable;
 use macros::Searchable;
 
-use super::representable::get_by_repr;
+use super::searchable::get_by_repr;
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum OperatorType {
