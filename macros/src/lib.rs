@@ -45,8 +45,8 @@ fn searchable_impl(ast: &DeriveInput) -> TokenStream {
     // Find tagged field
     let field = match &ast.data {
         Data::Struct(struc) => {
-            struc.fields.iter().find(|f| {
-                f.attrs.iter().any(|a| a.path.is_ident("representation"))
+            struc.fields.iter().find(|fields| {
+                fields.attrs.iter().any(|attr| attr.path.is_ident("representation"))
             })
         },
         _ => return error!(ast.span(), "`Searchable` can only derive structs.")
