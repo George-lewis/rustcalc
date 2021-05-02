@@ -40,7 +40,6 @@ pub fn searchable_derive(ts: TokenStream) -> TokenStream {
 }
 
 fn searchable_impl(ast: &DeriveInput) -> TokenStream {
-    let name = &ast.ident;
 
     // Find tagged field
     let field = match &ast.data {
@@ -65,6 +64,8 @@ fn searchable_impl(ast: &DeriveInput) -> TokenStream {
         Ok(a) => a,
         Err(ts) => return ts
     };
+
+    let name = &ast.ident;
 
     // Enforce that the representation type has to be `AsRef<str>`
     let assert_ident = format_ident!("{}AssertAsRefStr", name);
@@ -99,5 +100,5 @@ fn searchable_impl(ast: &DeriveInput) -> TokenStream {
         }
     };
     
-    TokenStream::from(gen)
+    gen.into()
 }
