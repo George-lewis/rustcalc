@@ -1,4 +1,4 @@
-use super::{constants::Constant, errors::Error, operators::Operator, tokens::Token};
+use super::model::{constants::Constant, errors::Error, operators::Operator, tokens::Token};
 
 pub fn eval(tokens: &[Token]) -> Result<f64, Error> {
     // We need a mutable copy of the tokens

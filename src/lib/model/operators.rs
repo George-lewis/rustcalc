@@ -2,7 +2,10 @@
 
 use rand::Rng;
 
-use super::representable::{get_by_repr, Representable};
+use super::searchable::Searchable;
+use macros::Searchable;
+
+use super::searchable::get_by_repr;
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum OperatorType {
@@ -27,21 +30,17 @@ pub enum OperatorType {
 
 const UNARY_OPERATORS: &[OperatorType] = &[OperatorType::Positive, OperatorType::Negative];
 
-impl Representable for OperatorType {
-    fn repr(&self) -> &'static [&'static str] {
-        Operator::by_type(*self).repr
-    }
-}
-
 #[derive(Clone, PartialEq, Copy)]
 pub enum Associativity {
     Left,
     Right,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Searchable)]
 pub struct Operator {
     pub kind: OperatorType,
+
+    #[representation]
     pub repr: &'static [&'static str],
     pub precedence: u8,
     pub associativity: Associativity,
@@ -49,24 +48,19 @@ pub struct Operator {
     pub doit: fn(&[f64]) -> f64,
 }
 
-impl Representable for Operator {
-    fn repr(&self) -> &[&str] {
-        self.repr
-    }
-}
-
 impl Operator {
     pub fn by_type(kind: OperatorType) -> &'static Self {
         OPERATORS.iter().find(|op| op.kind == kind).unwrap()
     }
-    pub fn by_repr(repr: &str) -> Option<(&'static Self, usize)> {
+    pub fn by_repr(repr: &str) -> Option<(&Self, usize)> {
         get_by_repr(repr, OPERATORS)
     }
     pub fn is(repr: &str) -> bool {
         Self::by_repr(repr).is_some()
     }
     pub fn unary(repr: &str) -> Option<(&OperatorType, usize)> {
-        get_by_repr(repr, UNARY_OPERATORS)
+        let ops = UNARY_OPERATORS.iter().map(|&uop| Self::by_type(uop));
+        get_by_repr(repr, ops).map(|(op, idx)| (&op.kind, idx))
     }
 }
 

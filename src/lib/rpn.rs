@@ -1,4 +1,4 @@
-use super::{
+use super::model::{
     errors::Error,
     operators::{Associativity, Operator},
     tokens::{ParenType, Token},
