@@ -13,11 +13,16 @@ mod lib;
 
 use colored::*;
 use lazy_static::lazy_static;
-use lib::doeval;
-use lib::errors::Error;
-use lib::operators::*;
-use lib::tokens::*;
-use lib::variables::Variable;
+use lib::model::errors::Error;
+use lib::{
+    doeval,
+    model::{
+        operators::{Associativity, Operator, OperatorType},
+        tokens::{ParenType, Token},
+    },
+};
+
+use lib::model::variables::Variable;
 
 use lib::utils;
 use rustyline::Editor;
@@ -458,11 +463,11 @@ mod tests {
     )]
 
     use crate::{
-        lib::constants::*,
         lib::doeval,
-        lib::errors::Error,
-        lib::operators::*,
-        lib::{tokens::*, variables::Variable},
+        lib::model::constants::*,
+        lib::model::errors::Error,
+        lib::model::operators::*,
+        lib::model::{tokens::*, variables::Variable},
         stringify,
     };
 
