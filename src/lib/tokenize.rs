@@ -1,6 +1,9 @@
 use super::{
-    constants::Constant, errors::Error, operators::*, tokens::ParenType, tokens::Token, utils,
-    variables::Variable,
+    model::{
+        constants::Constant, errors::Error, operators::*, tokens::ParenType, tokens::Token,
+        variables::Variable,
+    },
+    utils,
 };
 
 #[derive(Clone, Debug, PartialEq)]
