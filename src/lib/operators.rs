@@ -52,7 +52,7 @@ impl Operator {
     pub fn by_type(kind: OperatorType) -> &'static Self {
         OPERATORS.iter().find(|op| op.kind == kind).unwrap()
     }
-    pub fn by_repr(repr: &str) -> Option<(&'static Self, usize)> {
+    pub fn by_repr(repr: &str) -> Option<(&Self, usize)> {
         get_by_repr(repr, OPERATORS)
     }
     pub fn is(repr: &str) -> bool {

@@ -44,7 +44,7 @@ impl Constant {
     pub fn by_type(kind: ConstantType) -> &'static Self {
         CONSTANTS.iter().find(|c| c.kind == kind).unwrap()
     }
-    pub fn by_repr(repr: &str) -> Option<(&'static Self, usize)> {
+    pub fn by_repr(repr: &str) -> Option<(&Self, usize)> {
         get_by_repr(repr, CONSTANTS)
     }
     pub fn is(repr: &str) -> bool {
