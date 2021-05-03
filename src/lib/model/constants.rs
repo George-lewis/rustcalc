@@ -10,6 +10,7 @@ pub enum ConstantType {
     Tau,
 }
 
+/// Represents a constant
 pub struct Constant {
     pub kind: ConstantType,
     pub repr: &'static [&'static str],
@@ -41,12 +42,17 @@ static CONSTANTS: &[Constant] = &[
 ];
 
 impl Constant {
+    /// Get a `Constant` by its `ConstantType`
     pub fn by_type(kind: ConstantType) -> &'static Self {
         CONSTANTS.iter().find(|c| c.kind == kind).unwrap()
     }
+
+    /// Get a `Constant` by one of its string representations
     pub fn by_repr(repr: &str) -> Option<(&'static Self, usize)> {
         get_by_repr(repr, CONSTANTS)
     }
+
+    /// Determines if the next sequence is a `Constant`
     pub fn is(repr: &str) -> bool {
         Self::by_repr(repr).is_some()
     }

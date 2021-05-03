@@ -1,7 +1,7 @@
 use super::representable::{get_by_repr, Searchable};
 
 #[derive(Clone, Debug, PartialEq)]
-/// Represents a user definable variable
+/// Represents a variable, a value with a name
 pub struct Variable {
     pub repr: String,
     pub value: f64,

@@ -1,9 +1,13 @@
 use super::{
     model::{
-        constants::Constant, errors::Error, operators::*, tokens::ParenType, tokens::Token,
+        constants::Constant,
+        errors::Error,
+        operators::{Associativity, Operator, OperatorType},
+        tokens::ParenType,
+        tokens::Token,
         variables::Variable,
     },
-    utils,
+    utils::{self, Pos},
 };
 
 #[derive(Clone, Debug, PartialEq)]
@@ -32,6 +36,11 @@ fn _type(s: &str) -> Result<TokenType, ()> {
     })
 }
 
+/// Tokenize an input string
+/// * `string` - A string containing a mathematical expression
+/// * `vars` - The available `Variable`s
+///
+/// Returns a list of tokens or an error
 #[allow(clippy::unnecessary_unwrap, clippy::too_many_lines)]
 pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>, Error> {
     let mut vec: Vec<Token> = Vec::new();
@@ -50,8 +59,7 @@ pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>
             continue;
         }
 
-        // Slice the input from the index until the end
-        let slice = utils::slice(string, idx, -0);
+        let slice = utils::slice(string, idx, &Pos::End);
 
         if coeff {
             // No coefficient if the current character is an r-paren

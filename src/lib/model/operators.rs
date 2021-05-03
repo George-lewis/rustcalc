@@ -25,6 +25,7 @@ pub enum OperatorType {
     RandomFloat,
 }
 
+/// Unary operators
 const UNARY_OPERATORS: &[OperatorType] = &[OperatorType::Positive, OperatorType::Negative];
 
 impl Representable for OperatorType {
@@ -56,15 +57,22 @@ impl Representable for Operator {
 }
 
 impl Operator {
+    /// Get an `Operator` by its `OperatorType`
     pub fn by_type(kind: OperatorType) -> &'static Self {
         OPERATORS.iter().find(|op| op.kind == kind).unwrap()
     }
+
+    /// get an `Operator` by one of its string representations
     pub fn by_repr(repr: &str) -> Option<(&'static Self, usize)> {
         get_by_repr(repr, OPERATORS)
     }
+
+    /// Determines if the next sequence is an `Operator`
     pub fn is(repr: &str) -> bool {
         Self::by_repr(repr).is_some()
     }
+
+    // Determines if the next sequence is a unary `Operator`
     pub fn unary(repr: &str) -> Option<(&OperatorType, usize)> {
         get_by_repr(repr, UNARY_OPERATORS)
     }
@@ -79,6 +87,7 @@ fn _factorial(x: f64) -> f64 {
     out
 }
 
+/// Compute `x!`. must be a positive number.
 fn factorial(x: f64) -> f64 {
     if x >= 1000.0 {
         f64::INFINITY

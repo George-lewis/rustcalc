@@ -4,6 +4,10 @@ use super::model::{
     tokens::{ParenType, Token},
 };
 
+/// Convert a list of tokens into Reverse-Polish-Notation
+/// * `tokens` - The tokens
+///
+/// Returns a `Vec` of token in RPN or an `Error`
 pub fn rpn<'a>(tokens: &'a [Token]) -> Result<Vec<Token<'a>>, Error> {
     let mut operator_stack: Vec<Token> = Vec::new();
     let mut output: Vec<Token> = Vec::with_capacity(tokens.len());
