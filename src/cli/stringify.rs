@@ -7,10 +7,12 @@ use super::lib::model::{
     tokens::{ParenType, Token},
 };
 
+/// Creates a colored string representation of the input tokens
 pub fn stringify(tokens: &[Token]) -> String {
     _stringify(tokens, color_cli)
 }
 
+/// Color
 fn color_cli(string: &str, token: &Token) -> ColoredString {
     match token {
         Token::Number { .. } => string.clear(),
@@ -28,6 +30,9 @@ fn color_cli(string: &str, token: &Token) -> ColoredString {
     }
 }
 
+/// Convert a list of `Token`s into a string representation
+/// * `tokens` - The tokens
+/// * `colorize` - A function that colors tokens
 #[allow(clippy::too_many_lines)]
 fn _stringify<F, T: Display>(tokens: &[Token], colorize: F) -> String
 where

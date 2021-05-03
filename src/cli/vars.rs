@@ -2,9 +2,9 @@ use colored::Colorize;
 use itertools::Itertools;
 
 use super::error::{Error, LibError};
-use super::stringify::stringify;
 use super::lib::doeval;
 use super::lib::model::variables::Variable;
+use super::stringify::stringify;
 
 #[allow(clippy::module_name_repetitions)]
 /// Formats a printable string listing all the `Variables` in the given slice `vars`
