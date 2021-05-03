@@ -97,9 +97,7 @@ pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>
                     let (a, b) = unar.unwrap();
                     idx += b;
                     vec.push(Token::Operator { kind: *a });
-                    unary = false;
                 } else {
-                    unary = true;
 
                     let (operator, n) = Operator::by_repr(&slice).unwrap();
 
@@ -108,6 +106,7 @@ pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>
                         kind: operator.kind,
                     });
                 }
+                unary = true;
             }
             TokenType::Paren => {
                 let (t, kind) = Token::paren(c).unwrap();
@@ -164,4 +163,195 @@ pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>
     } else {
         Err(Error::MismatchingParens)
     }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::{tokenize, Token, OperatorType, ParenType, Variable, Error};
+
+    #[test]
+    fn test_tokenize_simple_ok() {
+        let tokens = tokenize("1 + 1", &[]);
+        assert_eq!(tokens.unwrap(), [
+            Token::Number {
+                value: 1.0
+            },
+            Token::Operator {
+                kind: OperatorType::Add
+            },
+            Token::Number {
+                value: 1.0
+            }
+        ]);
+
+        let tokens = tokenize("(1 + 1)", &[]);
+        assert_eq!(tokens.unwrap(), [
+            Token::Paren {
+                kind: ParenType::Left
+            },
+            Token::Number {
+                value: 1.0
+            },
+            Token::Operator {
+                kind: OperatorType::Add
+            },
+            Token::Number {
+                value: 1.0
+            },
+            Token::Paren {
+                kind: ParenType::Right
+            },
+        ]);
+
+
+    }
+
+    #[test]
+    fn test_tokenize_unary() {
+        let tokens = tokenize("1 + -1", &[]).unwrap();
+        assert_eq!(tokens[2], Token::Operator {
+            kind: OperatorType::Negative
+        });
+        let tokens = tokenize("1 + +1", &[]).unwrap();
+        assert_eq!(tokens[2], Token::Operator {
+            kind: OperatorType::Positive
+        });
+        let tokens = tokenize("1 + +-", &[]).unwrap();
+        assert_eq!(tokens[2], Token::Operator {
+            kind: OperatorType::Positive
+        });
+        assert_eq!(tokens[3], Token::Operator {
+            kind: OperatorType::Negative
+        });
+        let tokens = tokenize("(+-1)", &[]).unwrap();
+        assert_eq!(tokens[1], Token::Operator {
+            kind: OperatorType::Positive
+        });
+        assert_eq!(tokens[2], Token::Operator {
+            kind: OperatorType::Negative
+        });
+        let tokens = tokenize("-(1)", &[]).unwrap();
+        assert_eq!(tokens[0], Token::Operator {
+            kind: OperatorType::Negative
+        });
+    }
+
+    #[test]
+    fn test_tokenize_mismatched_parens() {
+        let result = tokenize("((1)) + (1))", &[]);
+        match result {
+            Err(Error::MismatchingParens) => {},
+            _ => panic!("Expected mismatched parens")
+        }
+
+        let result = tokenize("(()", &[]);
+        match result {
+            Err(Error::MismatchingParens) => {},
+            _ => panic!("Expected mismatched parens")
+        }
+    }
+
+    #[test]
+    fn test_tokenize_parse_error() {
+        let result = tokenize("1 + 2 + h", &[]);
+        assert!(matches!(result, Err(Error::Parsing(8))));
+        let result = tokenize("1 + 2eq + 6", &[]);
+        assert!(matches!(result, Err(Error::Parsing(6))));
+    }
+
+    #[test]
+    fn test_tokenize_unknown_variable() {
+        let vars = [
+            Variable {
+                repr: "q".to_string(),
+                value: 1.0,
+            }
+        ];
+        let result = tokenize("$x", &vars);
+        assert!(matches!(result, Err(Error::UnknownVariable(0))));
+        let result = tokenize("1 * $x", &vars);
+        assert!(matches!(result, Err(Error::UnknownVariable(4))));
+    }
+
+    #[test]
+    fn test_tokenize_implicit_coeff() {
+        let vars = [
+            Variable {
+                repr: "q".to_string(),
+                value: 1.0,
+            }
+        ];
+
+        let mul = Token::Operator {
+            kind: OperatorType::Mul
+        };
+
+        let tokens = tokenize("1 2 3", &vars).unwrap();
+        assert_eq!(tokens[1], mul);
+        assert_eq!(tokens[3], mul);
+
+        let tokens = tokenize("1 $q sin(pi) e", &vars).unwrap();
+        assert_eq!(tokens[1], mul);
+        assert_eq!(tokens[3], mul);
+        assert_eq!(tokens[8], mul);
+    }
+
+    #[test]
+    fn test_tokenize_variables_ok() {
+        let vars = [
+            Variable {
+                repr: "x".to_string(),
+                value: 3.0
+            },
+            Variable {
+                repr: "xx".to_string(),
+                value: 10.0,
+            }
+        ];
+        let tokens = tokenize("1 + $x", &vars);
+        assert_eq!(tokens.unwrap(), [
+            Token::Number {
+                value: 1.0
+            },
+            Token::Operator {
+                kind: OperatorType::Add
+            },
+            Token::Variable {
+                inner: &vars[0]
+            }
+        ]);
+
+        let tokens = tokenize("sin $xx pow 5 + cos(6.54)", &vars);
+        assert_eq!(tokens.unwrap(), [
+            Token::Operator {
+                kind: OperatorType::Sin
+            },
+            Token::Variable {
+                inner: &vars[1]
+            },
+            Token::Operator {
+                kind: OperatorType::Pow
+            },
+            Token::Number {
+                value: 5.0
+            },
+            Token::Operator {
+                kind: OperatorType::Add
+            },
+            Token::Operator {
+                kind: OperatorType::Cos
+            },
+            Token::Paren {
+                kind: ParenType::Left
+            },
+            Token::Number {
+                value: 6.54
+            },
+            Token::Paren {
+                kind: ParenType::Right
+            }
+        ]);
+    }
+
 }

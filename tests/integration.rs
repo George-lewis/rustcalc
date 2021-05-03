@@ -13,8 +13,10 @@
 // //     stringify,
 // // };
 
+// use rustmatheval::{doeval, model::{tokens::{Token, ParenType}, errors::Error, operators::OperatorType, constants::ConstantType}};
+
 // fn same(a: f64, b: f64) -> bool {
-//     (a - b).abs() < 0.000_001
+//     (a - b).abs() < f64::EPSILON
 // }
 
 // #[test]
@@ -224,7 +226,7 @@
 //         };
 //         assert_eq!(tokens, *d, "Checking tokenization of [{}]", a);
 //         assert!(same(result, *c), "Checking evaluation of [{}]", a);
-//         assert_eq!(stringify(&tokens, |a, _| a.to_string()), *b);
+//         // assert_eq!(stringify(&tokens, |a, _| a.to_string()), *b);
 //     });
 // }
 

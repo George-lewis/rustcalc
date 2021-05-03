@@ -77,10 +77,6 @@ mod tests {
 
     use super::{Token, ParenType};
 
-    fn same(a: f64, b: f64) -> bool {
-        (a - b).abs() < f64::EPSILON
-    }
-
     #[test]
     fn test_paren() {
         let l_paren = Token::paren('(').unwrap();

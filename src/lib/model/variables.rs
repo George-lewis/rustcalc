@@ -48,6 +48,7 @@ mod tests {
         assert!(Variable::is("$1234"));
     }
 
+    #[allow(clippy::shadow_unrelated)]
     #[test]
     fn test_next_variable() {
         let vars = [

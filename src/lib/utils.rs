@@ -52,6 +52,14 @@ pub fn slice(string: &str, start: usize, end: &Pos) -> String {
     string.chars().skip(start).take(end).collect()
 }
 
+#[allow(clippy::module_name_repetitions)]
+#[cfg(test)]
+pub(crate) mod test_utils {
+    pub fn same(a: f64, b: f64) -> bool {
+        (a - b).abs() < f64::EPSILON * a.max(b)
+    }
+}
+
 #[cfg(test)]
 mod tests {
 

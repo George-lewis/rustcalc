@@ -241,10 +241,6 @@ mod tests {
 
     use super::{factorial, Operator, OperatorType};
 
-    fn same(a: f64, b: f64) -> bool {
-        (a - b).abs() < f64::EPSILON
-    }
-
     #[test]
     fn test_factorial_normal() {
         [
