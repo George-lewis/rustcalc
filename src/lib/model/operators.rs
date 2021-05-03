@@ -87,7 +87,7 @@ fn _factorial(x: f64) -> f64 {
     out
 }
 
-/// Compute `x!`. must be a positive number.
+/// Compute `x!`
 fn factorial(x: f64) -> f64 {
     if x >= 1000.0 {
         f64::INFINITY
@@ -235,3 +235,68 @@ static OPERATORS: &[Operator] = &[
         doit: |arr| arr[0],
     },
 ];
+
+#[cfg(test)]
+mod tests {
+
+    use super::{factorial, Operator, OperatorType};
+
+    fn same(a: f64, b: f64) -> bool {
+        (a - b).abs() < f64::EPSILON
+    }
+
+    #[test]
+    fn test_factorial_normal() {
+        [
+            (1.0, 1.0),
+            (0.0, 1.0),
+            (2.0, 2.0),
+            (3.0, 6.0),
+            (5.0, 120.0),
+            (10.0, 3_628_800.0)
+        ]
+        .iter()
+        .for_each(|&(a, b)| {
+            let result = factorial(a);
+            let cmp = same(b, result);
+            assert!(cmp);
+        })
+    }
+
+    #[test]
+    #[allow(clippy::shadow_unrelated)]
+    fn test_factorial_infinite() {
+        let result = factorial(1000.0);
+        let cmp = result.is_infinite();
+        assert!(cmp);
+        let result = factorial(5050.5);
+        let cmp = result.is_infinite();
+        assert!(cmp);
+    }
+
+    #[test]
+    fn test_factorial_negative() {
+        let result = factorial(-1.0);
+        let cmp = same(result, 1.0);
+        assert!(cmp);
+    }
+
+    #[test]
+    fn test_by_type() {
+        let cons = Operator::by_type(OperatorType::Add);
+        assert!(cons.repr.contains(&"+"))
+    }
+
+    #[test]
+    fn test_by_repr() {
+        let cons = Operator::by_repr("pow").unwrap();
+        assert_eq!(cons.0.kind, OperatorType::Pow);
+        assert_eq!(cons.1, 3);
+    }
+
+    #[test]
+    fn test_is() {
+        assert!(Operator::is("sin"));
+        assert!(!Operator::is("qqq"));
+    }
+}

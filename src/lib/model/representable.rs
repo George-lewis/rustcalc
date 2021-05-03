@@ -11,7 +11,7 @@ impl<Repr: Representable> Searchable for Repr {
         self.repr()
             .iter()
             .find(|repr| search.to_lowercase().starts_with(&repr.to_lowercase()))
-            .map(|repr| (self, repr.len()))
+            .map(|repr| (self, repr.chars().count()))
     }
 }
 
