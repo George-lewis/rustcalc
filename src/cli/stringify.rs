@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use colored::{ColoredString, Colorize};
 
-use crate::lib::model::{
+use super::lib::model::{
     operators::{Associativity, Operator, OperatorType},
     tokens::{ParenType, Token},
 };

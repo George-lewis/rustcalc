@@ -1,6 +1,6 @@
 use super::config::{DEFAULT_RCFILE, RCFILE};
 use super::error::{Error, IoError};
-use crate::lib::model::variables::Variable;
+use super::lib::model::variables::Variable;
 use colored::Colorize;
 use std::{fs, io::ErrorKind::NotFound};
 

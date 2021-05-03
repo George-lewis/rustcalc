@@ -1,5 +1,5 @@
-use crate::lib::model::variables::Variable;
-use crate::lib::utils;
+use super::lib::model::variables::Variable;
+use super::lib::utils;
 
 use colored::Colorize;
 use utils::Pos;
@@ -8,7 +8,7 @@ use super::error::{Error, LibError};
 
 use super::vars::{assign_var, assign_var_command, format_vars};
 
-use crate::lib::doeval;
+use super::lib::doeval;
 
 use super::stringify::stringify;
 

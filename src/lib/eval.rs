@@ -10,7 +10,6 @@ pub fn eval(tokens: &[Token]) -> Result<f64, Error> {
     let mut args: Vec<f64> = Vec::new();
 
     while let Some(token) = stack.pop() {
-
         match token {
             Token::Number { value } => {
                 args.push(value);
