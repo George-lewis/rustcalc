@@ -45,23 +45,15 @@ pub fn eval(tokens: &[Token]) -> Result<f64, Error> {
     Err(Error::EmptyStack)
 }
 
-
 #[cfg(test)]
 mod tests {
 
-    // These tests rely on `tokenize` working correctly
-
-    use super::{eval, Token, Error, Constant, Operator};
-    use crate::model::{constants::ConstantType, operators::OperatorType};
-    use crate::tokenize;
-    use crate::utils::test_utils::same;
+    use super::{eval, Token};
 
     #[test]
     fn test_eval_ok() {
-        // Empty
-        let tokens = tokenize("1", &[]).unwrap();
+        let tokens = [Token::Number { value: 4.67 }];
         let result = eval(&tokens).unwrap();
-        assert!(same(result, 1.0));
+        same!(result, 4.67);
     }
-
 }

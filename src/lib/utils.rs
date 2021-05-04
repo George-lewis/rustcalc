@@ -54,9 +54,20 @@ pub fn slice(string: &str, start: usize, end: &Pos) -> String {
 
 #[allow(clippy::module_name_repetitions)]
 #[cfg(test)]
-pub(crate) mod test_utils {
-    pub fn same(a: f64, b: f64) -> bool {
-        (a - b).abs() < f64::EPSILON * a.max(b)
+#[macro_use]
+pub mod test_utils {
+    macro_rules! _same {
+        ($a:expr, $b:expr) => {
+            ($a - $b).abs() <= f64::EPSILON * $a.max($b).abs()
+        };
+    }
+    macro_rules! same {
+        ($a:expr, $b:expr) => {
+            assert!(_same!($a, $b), "{} != {}", $a, $b)
+        };
+        ($a:expr, $b:expr, $msg:expr, $($args:expr),*) => {
+            assert!(_same!($a, $b), $msg, $($args),*)
+        }
     }
 }
 

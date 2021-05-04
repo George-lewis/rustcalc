@@ -72,51 +72,45 @@ pub fn rpn<'a>(tokens: &'a [Token]) -> Result<Vec<Token<'a>>, Error> {
 #[cfg(test)]
 mod tests {
 
-    use super::{rpn, Token, ParenType, Error};
+    use super::{rpn, Error, ParenType, Token};
     use crate::model::operators::OperatorType;
 
     #[test]
     fn test_rpn() {
         let tokens = [
-            Token::Number {
-                value: 1.0
-            },
+            Token::Number { value: 1.0 },
             Token::Operator {
-                kind: OperatorType::Add
+                kind: OperatorType::Add,
             },
-            Token::Number {
-                value: 3.0
-            }
+            Token::Number { value: 3.0 },
         ];
         let tokens = rpn(&tokens).unwrap();
-        assert_eq!(tokens, [
-            Token::Number {
-                value: 1.0
-            },
-            Token::Number {
-                value: 3.0
-            },
-            Token::Operator {
-                kind: OperatorType::Add
-            }
-        ]);
+        assert_eq!(
+            tokens,
+            [
+                Token::Number { value: 1.0 },
+                Token::Number { value: 3.0 },
+                Token::Operator {
+                    kind: OperatorType::Add
+                }
+            ]
+        );
     }
 
     #[test]
     fn test_rpn_mismatched_parens() {
         let tokens = [
             Token::Paren {
-                kind: ParenType::Left
+                kind: ParenType::Left,
             },
             Token::Paren {
-                kind: ParenType::Right
+                kind: ParenType::Right,
             },
             Token::Paren {
-                kind: ParenType::Right
+                kind: ParenType::Right,
             },
         ];
         let result = rpn(&tokens);
         assert!(matches!(result, Err(Error::MismatchingParens)));
     }
-
 }

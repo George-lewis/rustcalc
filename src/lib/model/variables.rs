@@ -59,7 +59,7 @@ mod tests {
             Variable {
                 repr: "😂❤😂".to_string(),
                 value: 5.5,
-            }
+            },
         ];
         let search = Variable::next_variable("abc", &vars).unwrap();
         assert_eq!(*search.0, vars[0]);

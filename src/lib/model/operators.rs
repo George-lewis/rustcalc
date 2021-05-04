@@ -249,13 +249,12 @@ mod tests {
             (2.0, 2.0),
             (3.0, 6.0),
             (5.0, 120.0),
-            (10.0, 3_628_800.0)
+            (10.0, 3_628_800.0),
         ]
         .iter()
         .for_each(|&(a, b)| {
             let result = factorial(a);
-            let cmp = same(b, result);
-            assert!(cmp);
+            same!(b, result);
         })
     }
 
@@ -273,8 +272,7 @@ mod tests {
     #[test]
     fn test_factorial_negative() {
         let result = factorial(-1.0);
-        let cmp = same(result, 1.0);
-        assert!(cmp);
+        same!(result, 1.0);
     }
 
     #[test]
