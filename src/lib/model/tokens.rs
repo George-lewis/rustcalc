@@ -70,3 +70,69 @@ impl Token<'_> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #![allow(clippy::shadow_unrelated)]
+
+    use super::{ParenType, Token};
+
+    #[test]
+    fn test_paren() {
+        let l_paren = Token::paren('(').unwrap();
+        assert!(matches!(
+            l_paren.0,
+            Token::Paren {
+                kind: ParenType::Left
+            }
+        ));
+        assert_eq!(l_paren.1, ParenType::Left);
+        let r_paren = Token::paren(')').unwrap();
+        assert!(matches!(
+            r_paren.0,
+            Token::Paren {
+                kind: ParenType::Right
+            }
+        ));
+        assert_eq!(r_paren.1, ParenType::Right);
+
+        let none = Token::paren('a');
+        assert!(matches!(none, None));
+    }
+
+    #[test]
+    fn test_next_number() {
+        assert_eq!(Token::next_number("1234567890"), "1234567890");
+        assert_eq!(Token::next_number("1.234"), "1.234");
+        assert_eq!(Token::next_number("555"), "555");
+    }
+
+    #[test]
+    fn test_number() {
+        let result = Token::number("123").unwrap();
+        assert_eq!(result.1, 3);
+        // let result = match result.0 {
+        //     Token::Number { value } => same(value, 123.0),
+        //     _ => panic!("Expected a number")
+        // };
+        // assert!(result);
+
+        let result = Token::number("999.544").unwrap();
+        assert_eq!(result.1, 7);
+        // let result = match result.0 {
+        //     Token::Number { value } => same(value, 999.544),
+        //     _ => panic!("Expected a number")
+        // };
+        // assert!(result);
+    }
+
+    #[test]
+    fn text_is_next_t() {
+        let result = Token::is_next_t("a", &['a']);
+        assert!(result);
+        let result = Token::is_next_t("b", &['a']);
+        assert!(!result);
+        let result = Token::is_next_t("4b4bab4bb", &['b', 'a', '4']);
+        assert!(result);
+    }
+}

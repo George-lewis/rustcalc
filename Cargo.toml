@@ -6,6 +6,14 @@ edition = "2018"
 description = "A command-line utility for evaluating mathematical statements"
 license = "MIT"
 
+[lib]
+name = "rustmatheval"
+path = "src/lib/lib.rs"
+
+[[bin]]
+name = "rustcalc"
+path = "src/cli/main.rs"
+
 [dependencies]
 
 # For colored terminal output

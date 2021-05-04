@@ -1,9 +1,14 @@
-use super::{
+use super::model::{
     errors::Error,
     operators::{Associativity, Operator},
     tokens::{ParenType, Token},
 };
 
+/// Convert a list of tokens into Reverse-Polish-Notation
+/// * `tokens` - The tokens
+///
+/// Returns a `Vec` of token in RPN or an `Error::MismatchingParens`. This function will catch
+/// some instances of parentheses-mismatch, but not all.
 pub fn rpn<'a>(tokens: &'a [Token]) -> Result<Vec<Token<'a>>, Error> {
     let mut operator_stack: Vec<Token> = Vec::new();
     let mut output: Vec<Token> = Vec::with_capacity(tokens.len());
@@ -62,4 +67,50 @@ pub fn rpn<'a>(tokens: &'a [Token]) -> Result<Vec<Token<'a>>, Error> {
     output.extend(operator_stack.iter().rev());
 
     Ok(output)
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::{rpn, Error, ParenType, Token};
+    use crate::model::operators::OperatorType;
+
+    #[test]
+    fn test_rpn() {
+        let tokens = [
+            Token::Number { value: 1.0 },
+            Token::Operator {
+                kind: OperatorType::Add,
+            },
+            Token::Number { value: 3.0 },
+        ];
+        let tokens = rpn(&tokens).unwrap();
+        assert_eq!(
+            tokens,
+            [
+                Token::Number { value: 1.0 },
+                Token::Number { value: 3.0 },
+                Token::Operator {
+                    kind: OperatorType::Add
+                }
+            ]
+        );
+    }
+
+    #[test]
+    fn test_rpn_mismatched_parens() {
+        let tokens = [
+            Token::Paren {
+                kind: ParenType::Left,
+            },
+            Token::Paren {
+                kind: ParenType::Right,
+            },
+            Token::Paren {
+                kind: ParenType::Right,
+            },
+        ];
+        let result = rpn(&tokens);
+        assert!(matches!(result, Err(Error::MismatchingParens)));
+    }
 }

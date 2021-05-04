@@ -1,13 +1,15 @@
-use super::{constants::Constant, errors::Error, operators::Operator, tokens::Token};
+use super::model::{constants::Constant, errors::Error, operators::Operator, tokens::Token};
 
+/// Evaluate a list of tokens
+/// * `tokens` - The tokens
+///
+/// Returns the result as a 64-bit float or an `Error`
 pub fn eval(tokens: &[Token]) -> Result<f64, Error> {
     // We need a mutable copy of the tokens
     let mut stack: Vec<Token> = tokens.iter().rev().cloned().collect();
     let mut args: Vec<f64> = Vec::new();
 
-    while !stack.is_empty() {
-        let token = stack.pop().unwrap();
-
+    while let Some(token) = stack.pop() {
         match token {
             Token::Number { value } => {
                 args.push(value);
@@ -37,8 +39,21 @@ pub fn eval(tokens: &[Token]) -> Result<f64, Error> {
     }
 
     // Result
-    if stack.is_empty() && args.len() == 1 {
+    if args.len() == 1 {
         return Ok(args[0]);
     }
     Err(Error::EmptyStack)
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::{eval, Token};
+
+    #[test]
+    fn test_eval_ok() {
+        let tokens = [Token::Number { value: 4.67 }];
+        let result = eval(&tokens).unwrap();
+        same!(result, 4.67);
+    }
 }

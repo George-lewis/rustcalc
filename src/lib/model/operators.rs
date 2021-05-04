@@ -25,6 +25,7 @@ pub enum OperatorType {
     RandomFloat,
 }
 
+/// Unary operators
 const UNARY_OPERATORS: &[OperatorType] = &[OperatorType::Positive, OperatorType::Negative];
 
 impl Representable for OperatorType {
@@ -56,15 +57,22 @@ impl Representable for Operator {
 }
 
 impl Operator {
+    /// Get an `Operator` by its `OperatorType`
     pub fn by_type(kind: OperatorType) -> &'static Self {
         OPERATORS.iter().find(|op| op.kind == kind).unwrap()
     }
+
+    /// get an `Operator` by one of its string representations
     pub fn by_repr(repr: &str) -> Option<(&'static Self, usize)> {
         get_by_repr(repr, OPERATORS)
     }
+
+    /// Determines if the next sequence is an `Operator`
     pub fn is(repr: &str) -> bool {
         Self::by_repr(repr).is_some()
     }
+
+    // Determines if the next sequence is a unary `Operator`
     pub fn unary(repr: &str) -> Option<(&OperatorType, usize)> {
         get_by_repr(repr, UNARY_OPERATORS)
     }
@@ -79,6 +87,7 @@ fn _factorial(x: f64) -> f64 {
     out
 }
 
+/// Compute `x!`
 fn factorial(x: f64) -> f64 {
     if x >= 1000.0 {
         f64::INFINITY
@@ -226,3 +235,62 @@ static OPERATORS: &[Operator] = &[
         doit: |arr| arr[0],
     },
 ];
+
+#[cfg(test)]
+mod tests {
+
+    use super::{factorial, Operator, OperatorType};
+
+    #[test]
+    fn test_factorial_normal() {
+        [
+            (1.0, 1.0),
+            (0.0, 1.0),
+            (2.0, 2.0),
+            (3.0, 6.0),
+            (5.0, 120.0),
+            (10.0, 3_628_800.0),
+        ]
+        .iter()
+        .for_each(|&(a, b)| {
+            let result = factorial(a);
+            same!(b, result);
+        })
+    }
+
+    #[test]
+    #[allow(clippy::shadow_unrelated)]
+    fn test_factorial_infinite() {
+        let result = factorial(1000.0);
+        let cmp = result.is_infinite();
+        assert!(cmp);
+        let result = factorial(5050.5);
+        let cmp = result.is_infinite();
+        assert!(cmp);
+    }
+
+    #[test]
+    fn test_factorial_negative() {
+        let result = factorial(-1.0);
+        same!(result, 1.0);
+    }
+
+    #[test]
+    fn test_by_type() {
+        let cons = Operator::by_type(OperatorType::Add);
+        assert!(cons.repr.contains(&"+"))
+    }
+
+    #[test]
+    fn test_by_repr() {
+        let cons = Operator::by_repr("pow").unwrap();
+        assert_eq!(cons.0.kind, OperatorType::Pow);
+        assert_eq!(cons.1, 3);
+    }
+
+    #[test]
+    fn test_is() {
+        assert!(Operator::is("sin"));
+        assert!(!Operator::is("qqq"));
+    }
+}
