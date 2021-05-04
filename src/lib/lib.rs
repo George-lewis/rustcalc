@@ -19,7 +19,8 @@ use self::model::{errors::Error, tokens::Token, variables::Variable};
 /// Evaluate a string containing a mathematical expression
 ///
 /// * `string` - The string
-/// * `vars` - The available `Variable`s
+/// * `vars` - The available `Variable`s.
+/// These must be sorted such that no variable's representation is a subset of one that comes after it
 ///
 /// ## Returns
 /// The result of the computation as an a 64-bit float plus the result of the tokenization
