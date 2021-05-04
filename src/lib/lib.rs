@@ -46,8 +46,7 @@ mod tests {
             constants::ConstantType, operators::OperatorType, tokens::ParenType,
             variables::Variable,
         },
-        Error,
-        Token,
+        Error, Token,
     };
 
     #[test]
@@ -178,7 +177,7 @@ mod tests {
         same!(result, -1.0);
         assert_eq!(
             tokens,
-        [
+            [
                 Token::Operator {
                     kind: OperatorType::Negative,
                 },
@@ -224,7 +223,7 @@ mod tests {
             ]
         );
 
-        // let (result _) = 
+        // let (result _) =
     }
 
     #[test]
@@ -240,86 +239,84 @@ mod tests {
         .for_each(|(a, b)| assert_eq!(doeval(a, &[]).unwrap_err(), *b));
     }
 
-#[test]
-fn test_vars() {
-    let test_vars = vec![
-        Variable {
-            repr: String::from('v'),
-            value: 5.0,
-        },
-        Variable {
-            repr: String::from("pi"),
-            value: 7.0,
-        },
-    ];
+    #[test]
+    fn test_vars() {
+        let test_vars = vec![
+            Variable {
+                repr: String::from('v'),
+                value: 5.0,
+            },
+            Variable {
+                repr: String::from("pi"),
+                value: 7.0,
+            },
+        ];
 
-    [
-        (
-            "$v",
-            5.0,
-            vec![Token::Variable {
-                inner: &test_vars[0],
-            }],
-        ),
-        (
-            "$v + 5",
-            10.0,
-            vec![
-                Token::Variable {
+        [
+            (
+                "$v",
+                5.0,
+                vec![Token::Variable {
                     inner: &test_vars[0],
-                },
-                Token::Operator {
-                    kind: OperatorType::Add,
-                },
-                Token::Number { value: 5.0 },
-            ],
-        ),
-        (
-            "  5 +    $v    ",
-            10.0,
-            vec![
-                Token::Number { value: 5.0 },
-                Token::Operator {
-                    kind: OperatorType::Add,
-                },
-                Token::Variable {
-                    inner: &test_vars[0],
-                },
-            ],
-        ),
-        (
-            "pi + $pi",
-            std::f64::consts::PI + 7.0,
-            vec![
-                Token::Constant {
-                    kind: ConstantType::PI,
-                },
-                Token::Operator {
-                    kind: OperatorType::Add,
-                },
-                Token::Variable {
-                    inner: &test_vars[1],
-                },
-            ],
-        ),
-    ]
-    .iter()
-    .for_each(|(a, b, c)| {
-        let (result, tokens) = match doeval(a, &test_vars) {
-            Ok((x, y)) => (x, y),
-            Err(e) => panic!("error! {:?}; {}", e, a),
-        };
-        assert_eq!(&tokens, c, "Checking tokenization of [{}]", a);
-        same!(result, *b, "Checking evaluation of [{}]", a);
-    });
-}
-
-#[test]
-fn fail_vars() {
-    vec![("3 + $a", Error::UnknownVariable(4))]
+                }],
+            ),
+            (
+                "$v + 5",
+                10.0,
+                vec![
+                    Token::Variable {
+                        inner: &test_vars[0],
+                    },
+                    Token::Operator {
+                        kind: OperatorType::Add,
+                    },
+                    Token::Number { value: 5.0 },
+                ],
+            ),
+            (
+                "  5 +    $v    ",
+                10.0,
+                vec![
+                    Token::Number { value: 5.0 },
+                    Token::Operator {
+                        kind: OperatorType::Add,
+                    },
+                    Token::Variable {
+                        inner: &test_vars[0],
+                    },
+                ],
+            ),
+            (
+                "pi + $pi",
+                std::f64::consts::PI + 7.0,
+                vec![
+                    Token::Constant {
+                        kind: ConstantType::PI,
+                    },
+                    Token::Operator {
+                        kind: OperatorType::Add,
+                    },
+                    Token::Variable {
+                        inner: &test_vars[1],
+                    },
+                ],
+            ),
+        ]
         .iter()
-        .for_each(|(a, b)| assert_eq!(doeval(a, &[]).unwrap_err(), *b));
-}
+        .for_each(|(a, b, c)| {
+            let (result, tokens) = match doeval(a, &test_vars) {
+                Ok((x, y)) => (x, y),
+                Err(e) => panic!("error! {:?}; {}", e, a),
+            };
+            assert_eq!(&tokens, c, "Checking tokenization of [{}]", a);
+            same!(result, *b, "Checking evaluation of [{}]", a);
+        });
+    }
 
-
+    #[test]
+    fn fail_vars() {
+        vec![("3 + $a", Error::UnknownVariable(4))]
+            .iter()
+            .for_each(|(a, b)| assert_eq!(doeval(a, &[]).unwrap_err(), *b));
+    }
 }

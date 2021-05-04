@@ -76,6 +76,4 @@ pub fn assign_var(vars: &mut Vec<Variable>, repr: &str, value: f64) {
 }
 
 #[cfg(test)]
-mod tests {
-    
-}
+mod tests {}

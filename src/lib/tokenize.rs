@@ -320,7 +320,7 @@ mod tests {
             Variable {
                 repr: "x".to_string(),
                 value: 3.0,
-            }
+            },
         ];
         let tokens = tokenize("1 + $x", &vars);
         assert_eq!(
