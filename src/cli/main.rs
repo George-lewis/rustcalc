@@ -29,11 +29,7 @@ pub fn main() -> ! {
     }
 
     let mut vars = vec![];
-    let mut funcs = vec![Function {
-        name: "sussy_baka".to_string(),
-        args: vec!["a".to_string()],
-        code: "$a + 1".to_string(),
-    }];
+    let mut funcs = vec![];
 
     if let Err(inner) = rcfile::load(&mut vars, &mut funcs) {
         match inner {
