@@ -10,7 +10,6 @@ mod stringify;
 mod utils;
 mod vars;
 
-use lib::model::functions::Function;
 pub use rustmatheval as lib;
 
 use config::HISTORY_FILE;

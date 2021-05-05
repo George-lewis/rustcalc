@@ -13,9 +13,11 @@ pub mod model;
 use eval::eval;
 use model::EvaluationContext;
 use rpn::rpn;
-use tokenize::tokenize;
+pub use tokenize::tokenize;
 
 use self::model::{errors::Error, tokens::Token};
+
+pub const RECURSION_LIMIT: u8 = std::u8::MAX as _;
 
 /// Evaluate a string containing a mathematical expression
 ///
@@ -32,7 +34,7 @@ pub fn doeval<'a>(
     string: &str,
     context: EvaluationContext<'a>,
 ) -> Result<(f64, Vec<Token<'a>>), Error> {
-    if context.depth == std::u8::MAX {
+    if context.depth == RECURSION_LIMIT {
         return Err(Error::RecursionLimit);
     }
 

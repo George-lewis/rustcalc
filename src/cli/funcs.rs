@@ -1,26 +1,48 @@
 use itertools::Itertools;
-use rustmatheval::model::functions::Function;
+use rustmatheval::{model::{EvaluationContext, functions::Function, variables::Variable}, tokenize};
 
 use colored::{ColoredString, Colorize};
 
-use crate::{error::Error, utils::insert_or_swap_sort};
+use crate::{error::Error, stringify::stringify, utils::insert_or_swap_sort};
+
+fn color_arg(arg: impl AsRef<str>) -> ColoredString {
+    arg.as_ref().yellow()
+}
+
+fn stringify_func_code(func: &Function, funcs: &[Function]) -> String {
+    let vars: Vec<_> = func.args.iter().map(|arg| {
+        Variable {
+            repr: arg.clone(),
+            value: 0.0
+        }
+    }).collect();
+    let context = EvaluationContext {
+        vars: &vars,
+        funcs,
+        depth: 0,
+    };
+    match tokenize(&func.code, context) {
+        Ok(tokens) => stringify(&tokens),
+        Err(_) => func.code.clone()
+    }
+}
 
 pub fn format_func_name(name: &str) -> ColoredString {
     format!("#{}", name.magenta().bold()).normal()
 }
 
-fn format_func(func: &Function) -> String {
+fn format_func(func: &Function, funcs: &[Function]) -> String {
     format!(
         "[ {}({}) = {} ]",
         format_func_name(&func.name),
-        func.args.join(", "),
-        func.code
+        func.args.iter().map(color_arg).join(", "),
+        stringify_func_code(func, funcs)
     )
 }
 
 #[allow(clippy::module_name_repetitions)]
 pub fn format_funcs(funcs: &[Function]) -> String {
-    funcs.iter().map(format_func).join("\n")
+    funcs.iter().map(|f| format_func(f, funcs)).join("\n")
 }
 
 pub fn assign_func_command(input: &str, funcs: &mut Vec<Function>) -> Result<String, Error> {
@@ -42,9 +64,9 @@ pub fn assign_func_command(input: &str, funcs: &mut Vec<Function>) -> Result<Str
 
     let func = Function { name, args, code };
 
-    let formatted = format_func(&func);
+    assign_func(func.clone(), funcs);
 
-    assign_func(func, funcs);
+    let formatted = format_func(&func, funcs);
 
     Ok(formatted)
 }
