@@ -11,6 +11,7 @@ pub enum ConstantType {
 }
 
 /// Represents a constant
+#[derive(Debug, PartialEq)]
 pub struct Constant {
     pub kind: ConstantType,
     pub repr: &'static [&'static str],

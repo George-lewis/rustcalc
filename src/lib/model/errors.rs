@@ -16,4 +16,7 @@ pub enum Error {
 
     /// Arises when an unknown `Variable` is found at a particular index
     UnknownVariable(usize),
+
+    UnknownFunction(usize),
+    RecursionLimit
 }

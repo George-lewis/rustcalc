@@ -52,22 +52,20 @@ pub fn slice(string: &str, start: usize, end: &Pos) -> String {
     string.chars().skip(start).take(end).collect()
 }
 
-#[allow(clippy::module_name_repetitions)]
-#[cfg(test)]
-#[macro_use]
-pub mod test_utils {
-    macro_rules! _same {
-        ($a:expr, $b:expr) => {
-            ($a - $b).abs() <= f64::EPSILON * $a.max($b).abs()
-        };
-    }
-    macro_rules! same {
-        ($a:expr, $b:expr) => {
-            assert!(_same!($a, $b), "{} != {}", $a, $b)
-        };
-        ($a:expr, $b:expr, $msg:expr, $($args:expr),*) => {
-            assert!(_same!($a, $b), $msg, $($args),*)
-        }
+#[macro_export]
+macro_rules! same {
+    ($a:expr, $b:expr) => {
+        ($a - $b).abs() <= f64::EPSILON * $a.max($b).abs()
+    };
+}
+
+#[macro_export]
+macro_rules! assert_same {
+    ($a:expr, $b:expr) => {
+        assert!(same!($a, $b), "{} != {}", $a, $b)
+    };
+    ($a:expr, $b:expr, $msg:expr, $($args:expr),*) => {
+        assert!(same!($a, $b), $msg, $($args),*)
     }
 }
 

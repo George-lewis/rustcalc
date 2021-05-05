@@ -1,41 +1,54 @@
-use colored::Colorize;
+use colored::{Colorize, ColoredString};
 use itertools::Itertools;
 
 use super::error::{Error, LibError};
 use super::lib::doeval;
-use super::lib::model::variables::Variable;
+use super::lib::model::{functions::Function, variables::Variable, EvaluationContext};
 use super::stringify::stringify;
+use super::utils::insert_or_swap_sort;
+
+pub fn format_var_name(name: &str) -> ColoredString {
+    format!("${}", name.green().bold()).normal()
+}
+
+fn format_var(var: &Variable) -> String {
+    format!(
+        "[ {} => {} ]",
+        format_var_name(&var.repr),
+        format!("{:.3}", var.value).blue()
+    )
+}
 
 #[allow(clippy::module_name_repetitions)]
 /// Formats a printable string listing all the `Variables` in the given slice `vars`
 pub fn format_vars(vars: &[Variable]) -> String {
     vars.iter()
-        .map(|var| {
-            format!(
-                "[ ${} => {} ]",
-                var.repr.green().bold(),
-                format!("{:.3}", var.value).blue()
-            )
-        })
+        .map(format_var)
         .join("\n")
 }
 
 /// Takes the given user `input` and splits it up into a name and value to be assigned or reassigned to a [Variable] in `vars`
-pub fn assign_var_command(input: &str, vars: &mut Vec<Variable>) -> Result<String, Error> {
+pub fn assign_var_command(
+    input: &str,
+    vars: &mut Vec<Variable>,
+    funcs: &[Function],
+) -> Result<String, Error> {
     // Variable assignment/reassignment
 
     let sides: Vec<&str> = input.split('=').collect();
     let trimmed_left = sides[0].trim(); // Trim here to remove space between end of variable name and = sign
 
-    if sides.len() != 2 || !trimmed_left.starts_with('$') {
+    if sides.len() != 2 {
         // Multiple = signs || Assigning without using a $ prefix
         return Err(Error::Assignment);
     }
 
     let user_repr: String = trimmed_left[1..].to_string(); // Trim again to remove whitespace between end of variable name and = sign
 
+    let context = EvaluationContext { vars, funcs, depth: 0 };
+
     // Get value for variable
-    let result = doeval(sides[1], vars);
+    let result = doeval(sides[1], context);
     if let Err(LibError::Parsing(idx)) = result {
         return Err(Error::Library(LibError::Parsing(idx + sides[0].len() + 1)));
         // Length of untrimmed lefthand side
@@ -52,28 +65,21 @@ pub fn assign_var_command(input: &str, vars: &mut Vec<Variable>) -> Result<Strin
         format!("{:.3}", user_value).blue()
     );
 
-    assign_var(vars, &user_repr, user_value);
+    let var = Variable {
+        repr: user_repr,
+        value: user_value,
+    };
+
+    assign_var(var, vars);
+
+    // assign_var(vars, &user_repr, user_value);
 
     Ok(conf_string)
 }
 
-/// Searches `vars` for the given `user_repr` to find if a [Variable] exists, and either reassigns it to, or creates it with, the given `user_value`
-pub fn assign_var(vars: &mut Vec<Variable>, repr: &str, value: f64) {
-    let cmp = |var: &Variable| repr.cmp(&var.repr);
-    let search = vars.binary_search_by(cmp);
-    match search {
-        Ok(idx) => {
-            vars[idx].value = value;
-        }
-        Err(idx) => {
-            let var = Variable {
-                repr: repr.to_string(),
-                value,
-            };
-            vars.insert(idx, var);
-        }
-    }
-}
+pub fn assign_var(var: Variable, vars: &mut Vec<Variable>) {
+    let repr = var.repr.clone();
+    let cmp = |v: &Variable| repr.cmp(&v.repr);
 
-#[cfg(test)]
-mod tests {}
+    insert_or_swap_sort(vars, var, cmp)
+}

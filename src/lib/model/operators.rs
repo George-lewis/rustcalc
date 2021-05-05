@@ -1,5 +1,7 @@
 #![allow(clippy::non_ascii_literal)]
 
+use std::fmt;
+
 use rand::Rng;
 
 use super::representable::{get_by_repr, Representable};
@@ -34,7 +36,7 @@ impl Representable for OperatorType {
     }
 }
 
-#[derive(Clone, PartialEq, Copy)]
+#[derive(Clone, PartialEq, Copy, Debug)]
 pub enum Associativity {
     Left,
     Right,
@@ -48,6 +50,19 @@ pub struct Operator {
     pub associativity: Associativity,
     pub arity: usize,
     pub doit: fn(&[f64]) -> f64,
+}
+
+// NOTE: This assumes that Operator-OperatorType pairs are unique
+impl PartialEq for Operator {
+    fn eq(&self, other: &Self) -> bool {
+        self.kind == other.kind
+    }
+}
+
+impl fmt::Debug for Operator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[{:?}]", self.kind)
+    }
 }
 
 impl Representable for Operator {
@@ -254,7 +269,7 @@ mod tests {
         .iter()
         .for_each(|&(a, b)| {
             let result = factorial(a);
-            same!(b, result);
+            assert_same!(b, result);
         })
     }
 
@@ -272,7 +287,7 @@ mod tests {
     #[test]
     fn test_factorial_negative() {
         let result = factorial(-1.0);
-        same!(result, 1.0);
+        assert_same!(result, 1.0);
     }
 
     #[test]

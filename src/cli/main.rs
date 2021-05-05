@@ -7,7 +7,10 @@ mod error;
 mod rcfile;
 mod stringify;
 mod vars;
+mod funcs;
+mod utils;
 
+use lib::model::functions::Function;
 pub use rustmatheval as lib;
 
 use config::HISTORY_FILE;
@@ -26,8 +29,15 @@ pub fn main() -> ! {
     }
 
     let mut vars = vec![];
+    let mut funcs = vec![
+        Function {
+            name: "sussy_baka".to_string(),
+            args: vec!["a".to_string()],
+            code: "$a + 1".to_string()
+        }
+    ];
 
-    if let Err(inner) = rcfile::load(&mut vars) {
+    if let Err(inner) = rcfile::load(&mut vars, &mut funcs) {
         match inner {
             Error::Io(inner) => {
                 println!("Error loading RCFile: {:#?}", inner)
@@ -39,7 +49,7 @@ pub fn main() -> ! {
     loop {
         #[allow(clippy::single_match_else)]
         let input = match editor.readline("> ") {
-            Ok(line) => line.trim_end().to_string(),
+            Ok(line) => line.trim().to_string(),
             Err(_) => {
                 if let Some(path) = HISTORY_FILE.as_deref() {
                     editor.save_history(&path).ok();
@@ -55,7 +65,7 @@ pub fn main() -> ! {
         // Add the line to the history
         editor.add_history_entry(&input);
 
-        match handle_input(&input, &mut vars) {
+        match handle_input(&input, &mut vars, &mut funcs) {
             Ok(formatted) => println!("{}", formatted),
             Err(error) => {
                 let msg = handle_errors(error, &input);

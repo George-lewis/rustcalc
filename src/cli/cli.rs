@@ -1,4 +1,6 @@
-use super::lib::model::variables::Variable;
+use crate::funcs::{assign_func_command, format_funcs};
+
+use super::lib::model::{functions::Function, variables::Variable, EvaluationContext};
 use super::lib::utils;
 
 use colored::Colorize;
@@ -15,20 +17,41 @@ use super::stringify::stringify;
 /// Interprets a given user `input` and executes the given command or evaluates the given expression.
 /// * `input` - The user submitted string to be interpreted
 /// * `vars` - The vector of `Variables` the user has already entered / will add to
-pub fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, Error> {
-    if input == "$" {
-        // Variable list command
+pub fn handle_input(
+    input: &str,
+    vars: &mut Vec<Variable>,
+    funcs: &mut Vec<Function>,
+) -> Result<String, Error> {
+    if input.len() == 1 {
+        if Variable::is(input) {
+            // Variable list command
         if vars.is_empty() {
             Ok("No vars".to_string())
         } else {
             Ok(format_vars(vars))
         }
+        } else if Function::is(input) {
+            if funcs.is_empty() {
+                Ok("No funcs".to_string())
+            } else {
+                Ok(format_funcs(funcs))
+            }
+        } else {
+            Ok("bruh".to_string())
+        }
     } else if input.contains('=') {
-        // Assign / Reassign variable command
-        assign_var_command(input, vars)
+        if Variable::is(input) {
+            // Assign / Reassign variable command
+            assign_var_command(input, vars, funcs)
+        } else if Function::is(input) {
+            assign_func_command(input, funcs)
+        } else {
+            Err(Error::Assignment)
+        }
     } else {
         // Evaluate as normal
-        let result = doeval(input, vars);
+        let context = EvaluationContext { vars, funcs, depth: 0 };
+        let result = doeval(input, context);
         if let Err(LibError::Parsing(idx)) = result {
             return Err(LibError::Parsing(idx).into());
         }
@@ -37,7 +60,12 @@ pub fn handle_input(input: &str, vars: &mut Vec<Variable>) -> Result<String, Err
         let formatted = stringify(&repr);
         let eval_string = format!("[ {} ] => {}", formatted, format!("{:.3}", x).blue());
 
-        assign_var(vars, "ans", x); // Set ans to new value
+        let ans = Variable {
+            repr: "ans".to_string(),
+            value: x,
+        };
+
+        assign_var(ans, vars); // Set ans to new value
 
         Ok(eval_string)
     }
@@ -59,7 +87,7 @@ fn make_highlighted_error(msg: &str, input_str: &str, idx: usize) -> String {
         "".to_string()
     };
     format!(
-        "{} [{}]\n{}{}{}\n{}{}",
+        "{} at index [{}]\n{}{}{}\n{}{}",
         msg,
         idx.to_string().red(),
         first,
@@ -91,7 +119,7 @@ pub fn handle_errors(error: Error, input: &str) -> String {
         }
         Error::Library(inner) => match inner {
             LibError::Parsing(idx) => {
-                make_highlighted_error("Couldn't parse the token at index", input, idx)
+                make_highlighted_error("Couldn't parse the token", input, idx)
             }
             LibError::Operand(kind) => {
                 format!(
@@ -102,7 +130,13 @@ pub fn handle_errors(error: Error, input: &str) -> String {
             LibError::EmptyStack => "Couldn't evalutate. Stack was empty?".to_string(),
             LibError::MismatchingParens => "Couldn't evaluate. Mismatched parens.".to_string(),
             LibError::UnknownVariable(idx) => {
-                make_highlighted_error("Unknown variable at index", input, idx)
+                make_highlighted_error("Unknown variable", input, idx)
+            }
+            LibError::UnknownFunction(idx) => {
+                make_highlighted_error("Unknown function", input, idx)
+            }
+            LibError::RecursionLimit => {
+                "Exceeded recursion limit.".to_string()
             }
         },
         Error::Io(..) => unreachable!(),

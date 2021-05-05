@@ -1,6 +1,6 @@
 use super::model::{
     errors::Error,
-    operators::{Associativity, Operator},
+    operators::Associativity,
     tokens::{ParenType, Token},
 };
 
@@ -18,8 +18,8 @@ pub fn rpn<'a>(tokens: &'a [Token]) -> Result<Vec<Token<'a>>, Error> {
             Token::Number { .. } | Token::Constant { .. } | Token::Variable { .. } => {
                 output.push(*token)
             }
-            Token::Operator { kind } => {
-                let op1 = Operator::by_type(*kind);
+            Token::Operator { inner: op1 } => {
+                // let op1 = Operator::by_type(*kind);
                 while !operator_stack.is_empty() {
                     let last = operator_stack.last().unwrap();
                     if let Token::Paren { kind } = last {
@@ -27,11 +27,11 @@ pub fn rpn<'a>(tokens: &'a [Token]) -> Result<Vec<Token<'a>>, Error> {
                             break;
                         }
                     }
-                    if let Token::Operator { kind } = last {
-                        let op2 = Operator::by_type(*kind);
-                        if !(op2.precedence > op1.precedence
-                            || (op2.precedence == op1.precedence
-                                && op1.associativity == Associativity::Left))
+                    if let Token::Operator { inner: op2 } = last {
+                        // let op2 = Operator::by_type(*kind);
+                        if !(op2.precedence() > op1.precedence()
+                            || (op2.precedence() == op1.precedence()
+                                && op1.associativity() == Associativity::Left))
                         {
                             break;
                         }
@@ -79,9 +79,7 @@ mod tests {
     fn test_rpn() {
         let tokens = [
             Token::Number { value: 1.0 },
-            Token::Operator {
-                kind: OperatorType::Add,
-            },
+            Token::operator(OperatorType::Add,),
             Token::Number { value: 3.0 },
         ];
         let tokens = rpn(&tokens).unwrap();
@@ -90,9 +88,7 @@ mod tests {
             [
                 Token::Number { value: 1.0 },
                 Token::Number { value: 3.0 },
-                Token::Operator {
-                    kind: OperatorType::Add
-                }
+                Token::operator(OperatorType::Add)
             ]
         );
     }

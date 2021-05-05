@@ -1,9 +1,12 @@
 use std::fmt::Display;
 
 use colored::{ColoredString, Colorize};
+use rustmatheval::model::functions::Functions;
+
+use crate::{funcs::format_func_name, vars::format_var_name};
 
 use super::lib::model::{
-    operators::{Associativity, Operator, OperatorType},
+    operators::{Associativity, OperatorType},
     tokens::{ParenType, Token},
 };
 
@@ -12,21 +15,44 @@ pub fn stringify(tokens: &[Token]) -> String {
     _stringify(tokens, color_cli)
 }
 
+pub fn ideal_repr(tok: &Token) -> String {
+    match tok {
+        Token::Number { value } => value.to_string(),
+        Token::Operator {
+            inner: Functions::Builtin(inner),
+        } => inner.repr[0].to_string(),
+        Token::Operator {
+            inner: Functions::User(inner),
+        } => inner.name.to_string(),
+        Token::Paren { kind } => match kind {
+            ParenType::Left => '('.to_string(),
+            ParenType::Right => ')'.to_string(),
+        },
+        Token::Constant { inner } => inner.repr[0].to_string(),
+        Token::Variable { inner } => inner.repr.to_string(),
+    }
+}
+
 /// Color
 fn color_cli(string: &str, token: &Token) -> ColoredString {
     match token {
         Token::Number { .. } => string.clear(),
-        Token::Operator { kind } => {
-            let op = Operator::by_type(*kind);
-            if op.associativity == Associativity::Left {
-                string.green().bold()
-            } else {
-                string.blue().bold()
+        Token::Operator { inner: op } => {
+            match op {
+                Functions::Builtin(_) => {
+                        if op.associativity() == Associativity::Left {
+                        string.green().bold()
+                    } else {
+                        string.blue().bold()
+                    }
+                }
+                Functions::User(func) => format_func_name(&func.name)
             }
+            
         }
-        Token::Paren { .. } => string.magenta(),
+        Token::Paren { .. } => string.red(),
         Token::Constant { .. } => string.yellow(),
-        Token::Variable { .. } => string.green(),
+        Token::Variable { .. } => format_var_name(string),
     }
 }
 
@@ -34,14 +60,21 @@ fn color_cli(string: &str, token: &Token) -> ColoredString {
 /// * `tokens` - The tokens
 /// * `colorize` - A function that colors tokens
 #[allow(clippy::too_many_lines)]
-fn _stringify<F, T: Display>(tokens: &[Token], colorize: F) -> String
+fn _stringify<F, T: Display + Default>(tokens: &[Token], colorize: F) -> String
 where
     F: Fn(&str, &Token) -> T,
 {
     let mut out = String::new();
     let mut implicit_paren: usize = 0;
+    let make_implicit_paren = |n: usize|
+        colorize(
+            &")".repeat(n),
+            &Token::Paren {
+                kind: ParenType::Right,
+            },
+        );
     for (idx, token) in tokens.iter().enumerate() {
-        let colored: T = colorize(&token.ideal_repr(), token);
+        let colored: T = colorize(&ideal_repr(token), token);
         let append = match *token {
             Token::Number { .. } | Token::Constant { .. } | Token::Variable { .. } => {
                 let is_r_paren = matches!(
@@ -53,14 +86,12 @@ where
 
                 let is_op = matches!(tokens.get(idx + 1), Some(Token::Operator { .. }));
 
-                let no_space = matches!(
-                    tokens.get(idx + 1),
+                let no_space = match tokens.get(idx + 1) {
                     Some(Token::Operator {
-                        kind: OperatorType::Pow
-                    }) | Some(Token::Operator {
-                        kind: OperatorType::Factorial
-                    })
-                );
+                        inner: Functions::Builtin(inner),
+                    }) => inner.kind == OperatorType::Pow || inner.kind == OperatorType::Factorial,
+                    _ => false,
+                };
 
                 let last = idx == tokens.len() - 1;
 
@@ -87,10 +118,10 @@ where
 
                 format!("{}{}", colored, appendix)
             }
-            Token::Operator { kind } => {
-                let op = Operator::by_type(kind);
+            Token::Operator { inner: op } => {
+                // let op = Operator::by_type(kind);
 
-                match op.associativity {
+                match op.associativity() {
                     Associativity::Left => {
                         let space = if idx == tokens.len() - 1 { "" } else { " " };
                         format!("{}{}", colored, space)
@@ -103,12 +134,15 @@ where
                             })
                         );
 
-                        let wants_implicit_paren = ![
-                            OperatorType::Positive,
-                            OperatorType::Negative,
-                            OperatorType::Pow,
-                        ]
-                        .contains(&op.kind);
+                        let wants_implicit_paren = match op {
+                            Functions::Builtin(op) => ![
+                                OperatorType::Positive,
+                                OperatorType::Negative,
+                                OperatorType::Pow,
+                            ]
+                            .contains(&op.kind),
+                            Functions::User(_) => true,
+                        };
 
                         if wants_implicit_paren && !is_l_paren {
                             implicit_paren += 1;
@@ -118,7 +152,17 @@ where
                                     kind: ParenType::Left,
                                 },
                             );
-                            format!("{}{}", colored, l_paren)
+
+                            // Special case for functions with no arguments
+                            // We just add the `)` immediately, because this is the easiest way
+                            // This will usually be user-defined [Function]s
+                            let r_paren = if op.arity() == 0 {
+                                make_implicit_paren(implicit_paren)
+                            } else {
+                                // This should be something like ""
+                                T::default()
+                            };
+                            format!("{}{}{}", colored, l_paren, r_paren)
                         } else {
                             format!("{}", colored)
                         }
@@ -138,14 +182,13 @@ where
                     // Is the next token:
                     //   - Pow
                     //   - An R Paren
-                    let is_pow_or_r_paren = matches!(
-                        tokens.get(idx + 1),
+                    let is_pow_or_r_paren = match tokens.get(idx + 1) {
                         Some(Token::Operator {
-                            kind: OperatorType::Pow
-                        }) | Some(Token::Paren {
-                            kind: ParenType::Right,
-                        })
-                    );
+                            inner: Functions::Builtin(inner),
+                        }) => inner.kind == OperatorType::Pow,
+                        Some(Token::Paren { kind }) => *kind == ParenType::Right,
+                        _ => false,
+                    };
 
                     if is_last || is_pow_or_r_paren {
                         format!("{}", colored)

@@ -11,10 +11,11 @@ mod tokenize;
 pub mod model;
 
 use eval::eval;
+use model::EvaluationContext;
 use rpn::rpn;
 use tokenize::tokenize;
 
-use self::model::{errors::Error, tokens::Token, variables::Variable};
+use self::model::{errors::Error, tokens::Token};
 
 /// Evaluate a string containing a mathematical expression
 ///
@@ -27,10 +28,17 @@ use self::model::{errors::Error, tokens::Token, variables::Variable};
 ///
 /// ## Errors
 /// Returns an error if the expression couldn't be computed
-pub fn doeval<'a>(string: &str, vars: &'a [Variable]) -> Result<(f64, Vec<Token<'a>>), Error> {
-    let tokens = tokenize(string, vars)?;
+pub fn doeval<'a>(
+    string: &str,
+    context: EvaluationContext<'a>,
+) -> Result<(f64, Vec<Token<'a>>), Error> {
+    if context.depth == std::u8::MAX {
+        return Err(Error::RecursionLimit);
+    }
+
+    let tokens = tokenize(string, context)?;
     let rpn = rpn(&tokens)?;
-    let result = eval(&rpn)?;
+    let result = eval(&rpn, context)?;
     Ok((result, tokens))
 }
 
@@ -44,7 +52,7 @@ mod tests {
     use crate::{
         model::{
             constants::ConstantType, operators::OperatorType, tokens::ParenType,
-            variables::Variable,
+            variables::Variable, EvaluationContext, constants::Constant
         },
         Error, Token,
     };
@@ -56,80 +64,69 @@ mod tests {
             repr: "x".to_string(),
             value: 5.5,
         }];
+        let context = EvaluationContext {
+            vars: &vars,
+            funcs: &[],
+            depth: 0
+        };
 
         // Relatively simple case with a variable
-        let (result, tokens) = doeval("1.1 + 2.2 + $x", &vars).unwrap();
-        same!(result, 8.8);
+        let (result, tokens) = doeval("1.1 + 2.2 + $x", context).unwrap();
+        assert_same!(result, 8.8);
         assert_eq!(
             tokens,
             [
                 Token::Number { value: 1.1 },
-                Token::Operator {
-                    kind: OperatorType::Add
-                },
+                Token::operator(OperatorType::Add),
                 Token::Number { value: 2.2 },
-                Token::Operator {
-                    kind: OperatorType::Add
-                },
-                Token::Variable { inner: &vars[0] }
+                Token::operator(OperatorType::Add),
+                Token::Variable {
+                    inner: &context.vars[0]
+                }
             ]
         );
 
         // Functions w/o parens
-        let (result, tokens) = doeval("sin pi", &vars).unwrap();
-        same!(result, std::f64::consts::PI.sin());
+        let (result, tokens) = doeval("sin pi", context).unwrap();
+        assert_same!(result, std::f64::consts::PI.sin());
         assert_eq!(
             tokens,
             [
-                Token::Operator {
-                    kind: OperatorType::Sin,
-                },
+                Token::operator(OperatorType::Sin,),
                 Token::Constant {
-                    kind: ConstantType::PI,
+                    inner: Constant::by_type(ConstantType::PI),
                 },
             ]
         );
 
-        let (result, tokens) = doeval("1 plus 7 sub 2 times 3", &vars).unwrap();
-        same!(result, 2.0);
+        let (result, tokens) = doeval("1 plus 7 sub 2 times 3", context).unwrap();
+        assert_same!(result, 2.0);
         assert_eq!(
             tokens,
             [
                 Token::Number { value: 1.0 },
-                Token::Operator {
-                    kind: OperatorType::Add,
-                },
+                Token::operator(OperatorType::Add,),
                 Token::Number { value: 7.0 },
-                Token::Operator {
-                    kind: OperatorType::Sub,
-                },
+                Token::operator(OperatorType::Sub,),
                 Token::Number { value: 2.0 },
-                Token::Operator {
-                    kind: OperatorType::Mul,
-                },
+                Token::operator(OperatorType::Mul,),
                 Token::Number { value: 3.0 },
             ]
         );
 
-        let (result, tokens) = doeval("sin(1 + 2 + 3)", &vars).unwrap();
-        same!(result, ((1.0 + 2.0 + 3.0) as f64).sin());
+        let (result, tokens) = doeval("sin(1 + 2 + 3)", context).unwrap();
+        assert_same!(result, ((1.0 + 2.0 + 3.0) as f64).sin());
         assert_eq!(
             tokens,
             [
-                Token::Operator {
-                    kind: OperatorType::Sin,
-                },
+                Token::operator(OperatorType::Sin,),
                 Token::Paren {
                     kind: ParenType::Left,
                 },
                 Token::Number { value: 1.0 },
-                Token::Operator {
-                    kind: OperatorType::Add,
-                },
+                Token::operator(OperatorType::Add,),
                 Token::Number { value: 2.0 },
-                Token::Operator {
-                    kind: OperatorType::Add,
-                },
+                Token::operator(OperatorType::Add,),
                 Token::Number { value: 3.0 },
                 Token::Paren {
                     kind: ParenType::Right,
@@ -137,8 +134,8 @@ mod tests {
             ]
         );
 
-        let (result, tokens) = doeval("(1)", &vars).unwrap();
-        same!(result, 1.0);
+        let (result, tokens) = doeval("(1)", context).unwrap();
+        assert_same!(result, 1.0);
         assert_eq!(
             tokens,
             [
@@ -152,8 +149,8 @@ mod tests {
             ]
         );
 
-        let (result, tokens) = doeval("((1))", &vars).unwrap();
-        same!(result, 1.0);
+        let (result, tokens) = doeval("((1))", context).unwrap();
+        assert_same!(result, 1.0);
         assert_eq!(
             tokens,
             [
@@ -173,49 +170,39 @@ mod tests {
             ]
         );
 
-        let (result, tokens) = doeval("-1", &vars).unwrap();
-        same!(result, -1.0);
+        let (result, tokens) = doeval("-1", context).unwrap();
+        assert_same!(result, -1.0);
         assert_eq!(
             tokens,
             [
-                Token::Operator {
-                    kind: OperatorType::Negative,
-                },
+                Token::operator(OperatorType::Negative,),
                 Token::Number { value: 1.0 },
             ]
         );
 
-        let (result, tokens) = doeval("1 + -1", &vars).unwrap();
-        same!(result, 0.0);
+        let (result, tokens) = doeval("1 + -1", context).unwrap();
+        assert_same!(result, 0.0);
         assert_eq!(
             tokens,
             [
                 Token::Number { value: 1.0 },
-                Token::Operator {
-                    kind: OperatorType::Add,
-                },
-                Token::Operator {
-                    kind: OperatorType::Negative,
-                },
+                Token::operator(OperatorType::Add,),
+                Token::operator(OperatorType::Negative,),
                 Token::Number { value: 1.0 },
             ]
         );
 
-        let (result, tokens) = doeval("-   (  1.1 +  2.2)", &vars).unwrap();
-        same!(result, -3.3);
+        let (result, tokens) = doeval("-   (  1.1 +  2.2)", context).unwrap();
+        assert_same!(result, -3.3);
         assert_eq!(
             tokens,
             [
-                Token::Operator {
-                    kind: OperatorType::Negative,
-                },
+                Token::operator(OperatorType::Negative,),
                 Token::Paren {
                     kind: ParenType::Left,
                 },
                 Token::Number { value: 1.1 },
-                Token::Operator {
-                    kind: OperatorType::Add,
-                },
+                Token::operator(OperatorType::Add,),
                 Token::Number { value: 2.2 },
                 Token::Paren {
                     kind: ParenType::Right,
@@ -236,7 +223,7 @@ mod tests {
             ("3 + $a", Error::UnknownVariable(4)),
         ]
         .iter()
-        .for_each(|(a, b)| assert_eq!(doeval(a, &[]).unwrap_err(), *b));
+        .for_each(|(a, b)| assert_eq!(doeval(a, EvaluationContext::default()).unwrap_err(), *b));
     }
 
     #[test]
@@ -267,9 +254,7 @@ mod tests {
                     Token::Variable {
                         inner: &test_vars[0],
                     },
-                    Token::Operator {
-                        kind: OperatorType::Add,
-                    },
+                    Token::operator(OperatorType::Add,),
                     Token::Number { value: 5.0 },
                 ],
             ),
@@ -278,9 +263,7 @@ mod tests {
                 10.0,
                 vec![
                     Token::Number { value: 5.0 },
-                    Token::Operator {
-                        kind: OperatorType::Add,
-                    },
+                    Token::operator(OperatorType::Add,),
                     Token::Variable {
                         inner: &test_vars[0],
                     },
@@ -291,11 +274,9 @@ mod tests {
                 std::f64::consts::PI + 7.0,
                 vec![
                     Token::Constant {
-                        kind: ConstantType::PI,
+                        inner: Constant::by_type(ConstantType::PI),
                     },
-                    Token::Operator {
-                        kind: OperatorType::Add,
-                    },
+                    Token::operator(OperatorType::Add),
                     Token::Variable {
                         inner: &test_vars[1],
                     },
@@ -304,12 +285,17 @@ mod tests {
         ]
         .iter()
         .for_each(|(a, b, c)| {
-            let (result, tokens) = match doeval(a, &test_vars) {
+            let context = EvaluationContext {
+                vars: &test_vars,
+                funcs: &[],
+                depth: 0
+            };
+            let (result, tokens) = match doeval(a, context) {
                 Ok((x, y)) => (x, y),
                 Err(e) => panic!("error! {:?}; {}", e, a),
             };
             assert_eq!(&tokens, c, "Checking tokenization of [{}]", a);
-            same!(result, *b, "Checking evaluation of [{}]", a);
+            assert_same!(result, *b, "Checking evaluation of [{}]", a);
         });
     }
 
@@ -317,6 +303,6 @@ mod tests {
     fn fail_vars() {
         vec![("3 + $a", Error::UnknownVariable(4))]
             .iter()
-            .for_each(|(a, b)| assert_eq!(doeval(a, &[]).unwrap_err(), *b));
+            .for_each(|(a, b)| assert_eq!(doeval(a, EvaluationContext::default()).unwrap_err(), *b));
     }
 }
