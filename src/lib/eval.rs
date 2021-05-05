@@ -48,7 +48,7 @@ pub fn eval(tokens: &[Token], context: EvaluationContext) -> Result<f64, Error> 
 #[cfg(test)]
 mod tests {
 
-    use super::{eval, Token, EvaluationContext};
+    use super::{eval, EvaluationContext, Token};
 
     #[test]
     fn test_eval_ok() {

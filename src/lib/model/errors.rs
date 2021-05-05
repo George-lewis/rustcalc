@@ -18,5 +18,5 @@ pub enum Error {
     UnknownVariable(usize),
 
     UnknownFunction(usize),
-    RecursionLimit
+    RecursionLimit,
 }

@@ -1,4 +1,4 @@
-use colored::{Colorize, ColoredString};
+use colored::{ColoredString, Colorize};
 use itertools::Itertools;
 
 use super::error::{Error, LibError};
@@ -22,9 +22,7 @@ fn format_var(var: &Variable) -> String {
 #[allow(clippy::module_name_repetitions)]
 /// Formats a printable string listing all the `Variables` in the given slice `vars`
 pub fn format_vars(vars: &[Variable]) -> String {
-    vars.iter()
-        .map(format_var)
-        .join("\n")
+    vars.iter().map(format_var).join("\n")
 }
 
 /// Takes the given user `input` and splits it up into a name and value to be assigned or reassigned to a [Variable] in `vars`
@@ -45,7 +43,11 @@ pub fn assign_var_command(
 
     let user_repr: String = trimmed_left[1..].to_string(); // Trim again to remove whitespace between end of variable name and = sign
 
-    let context = EvaluationContext { vars, funcs, depth: 0 };
+    let context = EvaluationContext {
+        vars,
+        funcs,
+        depth: 0,
+    };
 
     // Get value for variable
     let result = doeval(sides[1], context);

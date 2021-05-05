@@ -51,8 +51,8 @@ mod tests {
 
     use crate::{
         model::{
-            constants::ConstantType, operators::OperatorType, tokens::ParenType,
-            variables::Variable, EvaluationContext, constants::Constant
+            constants::Constant, constants::ConstantType, operators::OperatorType,
+            tokens::ParenType, variables::Variable, EvaluationContext,
         },
         Error, Token,
     };
@@ -67,7 +67,7 @@ mod tests {
         let context = EvaluationContext {
             vars: &vars,
             funcs: &[],
-            depth: 0
+            depth: 0,
         };
 
         // Relatively simple case with a variable
@@ -254,7 +254,7 @@ mod tests {
                     Token::Variable {
                         inner: &test_vars[0],
                     },
-                    Token::operator(OperatorType::Add,),
+                    Token::operator(OperatorType::Add),
                     Token::Number { value: 5.0 },
                 ],
             ),
@@ -263,7 +263,7 @@ mod tests {
                 10.0,
                 vec![
                     Token::Number { value: 5.0 },
-                    Token::operator(OperatorType::Add,),
+                    Token::operator(OperatorType::Add),
                     Token::Variable {
                         inner: &test_vars[0],
                     },
@@ -288,7 +288,7 @@ mod tests {
             let context = EvaluationContext {
                 vars: &test_vars,
                 funcs: &[],
-                depth: 0
+                depth: 0,
             };
             let (result, tokens) = match doeval(a, context) {
                 Ok((x, y)) => (x, y),
@@ -303,6 +303,8 @@ mod tests {
     fn fail_vars() {
         vec![("3 + $a", Error::UnknownVariable(4))]
             .iter()
-            .for_each(|(a, b)| assert_eq!(doeval(a, EvaluationContext::default()).unwrap_err(), *b));
+            .for_each(|(a, b)| {
+                assert_eq!(doeval(a, EvaluationContext::default()).unwrap_err(), *b)
+            });
     }
 }

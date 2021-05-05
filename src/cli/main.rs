@@ -4,11 +4,11 @@
 mod cli;
 mod config;
 mod error;
+mod funcs;
 mod rcfile;
 mod stringify;
-mod vars;
-mod funcs;
 mod utils;
+mod vars;
 
 use lib::model::functions::Function;
 pub use rustmatheval as lib;
@@ -29,13 +29,11 @@ pub fn main() -> ! {
     }
 
     let mut vars = vec![];
-    let mut funcs = vec![
-        Function {
-            name: "sussy_baka".to_string(),
-            args: vec!["a".to_string()],
-            code: "$a + 1".to_string()
-        }
-    ];
+    let mut funcs = vec![Function {
+        name: "sussy_baka".to_string(),
+        args: vec!["a".to_string()],
+        code: "$a + 1".to_string(),
+    }];
 
     if let Err(inner) = rcfile::load(&mut vars, &mut funcs) {
         match inner {

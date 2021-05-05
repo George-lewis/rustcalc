@@ -1,6 +1,12 @@
 use crate::doeval;
 
-use super::{EvaluationContext, errors::Error, operators::{Associativity, Operator}, representable::{Searchable, get_by_repr}, variables::Variable};
+use super::{
+    errors::Error,
+    operators::{Associativity, Operator},
+    representable::{get_by_repr, Searchable},
+    variables::Variable,
+    EvaluationContext,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Functions<'a> {
@@ -28,7 +34,11 @@ impl Functions<'_> {
                         value: *value,
                     })
                     .collect();
-                let context = EvaluationContext { vars: &vars, funcs: context.funcs, depth: context.depth + 1 };
+                let context = EvaluationContext {
+                    vars: &vars,
+                    funcs: context.funcs,
+                    depth: context.depth + 1,
+                };
                 let result = doeval(&func.code, context);
                 result.map(|(a, _)| a)
             }

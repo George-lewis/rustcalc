@@ -13,5 +13,5 @@ mod representable;
 pub struct EvaluationContext<'a> {
     pub vars: &'a [Variable],
     pub funcs: &'a [Function],
-    pub depth: u8
+    pub depth: u8,
 }

@@ -1,4 +1,8 @@
-use crate::model::{self, EvaluationContext, functions::{Function, Functions}};
+use crate::model::{
+    self,
+    functions::{Function, Functions},
+    EvaluationContext,
+};
 
 use super::{
     model::{
@@ -114,10 +118,10 @@ pub fn tokenize<'a>(string: &str, context: EvaluationContext<'a>) -> Result<Vec<
                 let search = Function::next_function(&slice[1..], context.funcs);
                 let (func, n) = match search {
                     Some(x) => x,
-                    None => return Err(Error::UnknownFunction(idx))
+                    None => return Err(Error::UnknownFunction(idx)),
                 };
                 vec.push(Token::Operator {
-                    inner: Functions::User(func)
+                    inner: Functions::User(func),
                 });
                 idx += n + 1;
                 unary = true;
@@ -180,8 +184,8 @@ pub fn tokenize<'a>(string: &str, context: EvaluationContext<'a>) -> Result<Vec<
 #[cfg(test)]
 mod tests {
 
+    use super::OperatorType::Add;
     use super::{tokenize, Error, EvaluationContext, OperatorType, ParenType, Token, Variable};
-    use super::OperatorType::{Add};
 
     #[test]
     fn test_tokenize_simple_ok() {
@@ -215,38 +219,17 @@ mod tests {
     #[test]
     fn test_tokenize_unary() {
         let tokens = tokenize("1 + -1", EvaluationContext::default()).unwrap();
-        assert_eq!(
-            tokens[2],
-            Token::operator(OperatorType::Negative)
-        );
+        assert_eq!(tokens[2], Token::operator(OperatorType::Negative));
         let tokens = tokenize("1 + +1", EvaluationContext::default()).unwrap();
-        assert_eq!(
-            tokens[2],
-            Token::operator(OperatorType::Positive)
-        );
+        assert_eq!(tokens[2], Token::operator(OperatorType::Positive));
         let tokens = tokenize("1 + +-", EvaluationContext::default()).unwrap();
-        assert_eq!(
-            tokens[2],
-            Token::operator(OperatorType::Positive)
-        );
-        assert_eq!(
-            tokens[3],
-            Token::operator(OperatorType::Negative)
-        );
+        assert_eq!(tokens[2], Token::operator(OperatorType::Positive));
+        assert_eq!(tokens[3], Token::operator(OperatorType::Negative));
         let tokens = tokenize("(+-1)", EvaluationContext::default()).unwrap();
-        assert_eq!(
-            tokens[1],
-            Token::operator(OperatorType::Positive)
-        );
-        assert_eq!(
-            tokens[2],
-            Token::operator(OperatorType::Negative)
-        );
+        assert_eq!(tokens[1], Token::operator(OperatorType::Positive));
+        assert_eq!(tokens[2], Token::operator(OperatorType::Negative));
         let tokens = tokenize("-(1)", EvaluationContext::default()).unwrap();
-        assert_eq!(
-            tokens[0],
-            Token::operator(OperatorType::Negative)
-        );
+        assert_eq!(tokens[0], Token::operator(OperatorType::Negative));
     }
 
     #[test]
@@ -281,7 +264,7 @@ mod tests {
         let context = EvaluationContext {
             vars: &vars,
             funcs: &[],
-            depth: 0
+            depth: 0,
         };
         let result = tokenize("$x", context);
         assert!(matches!(result, Err(Error::UnknownVariable(0))));
@@ -298,10 +281,10 @@ mod tests {
         let context = EvaluationContext {
             vars: &vars,
             funcs: &[],
-            depth: 0
+            depth: 0,
         };
 
-        let mul = Token::operator(OperatorType::Mul,);
+        let mul = Token::operator(OperatorType::Mul);
 
         let tokens = tokenize("1 2 3", context).unwrap();
         assert_eq!(tokens[1], mul);
@@ -329,7 +312,7 @@ mod tests {
         let context = EvaluationContext {
             vars: &vars,
             funcs: &[],
-            depth: 0
+            depth: 0,
         };
         let tokens = tokenize("1 + $x", context);
         assert_eq!(

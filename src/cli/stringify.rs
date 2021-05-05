@@ -37,19 +37,16 @@ pub fn ideal_repr(tok: &Token) -> String {
 fn color_cli(string: &str, token: &Token) -> ColoredString {
     match token {
         Token::Number { .. } => string.clear(),
-        Token::Operator { inner: op } => {
-            match op {
-                Functions::Builtin(_) => {
-                        if op.associativity() == Associativity::Left {
-                        string.green().bold()
-                    } else {
-                        string.blue().bold()
-                    }
+        Token::Operator { inner: op } => match op {
+            Functions::Builtin(_) => {
+                if op.associativity() == Associativity::Left {
+                    string.green().bold()
+                } else {
+                    string.blue().bold()
                 }
-                Functions::User(func) => format_func_name(&func.name)
             }
-            
-        }
+            Functions::User(func) => format_func_name(&func.name),
+        },
         Token::Paren { .. } => string.red(),
         Token::Constant { .. } => string.yellow(),
         Token::Variable { .. } => format_var_name(string),
@@ -66,13 +63,14 @@ where
 {
     let mut out = String::new();
     let mut implicit_paren: usize = 0;
-    let make_implicit_paren = |n: usize|
+    let make_implicit_paren = |n: usize| {
         colorize(
             &")".repeat(n),
             &Token::Paren {
                 kind: ParenType::Right,
             },
-        );
+        )
+    };
     for (idx, token) in tokens.iter().enumerate() {
         let colored: T = colorize(&ideal_repr(token), token);
         let append = match *token {

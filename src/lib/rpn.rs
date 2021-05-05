@@ -79,7 +79,7 @@ mod tests {
     fn test_rpn() {
         let tokens = [
             Token::Number { value: 1.0 },
-            Token::operator(OperatorType::Add,),
+            Token::operator(OperatorType::Add),
             Token::Number { value: 3.0 },
         ];
         let tokens = rpn(&tokens).unwrap();

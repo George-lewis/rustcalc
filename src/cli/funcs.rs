@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use rustmatheval::model::functions::Function;
 
-use colored::{Colorize, ColoredString};
+use colored::{ColoredString, Colorize};
 
 use crate::{error::Error, utils::insert_or_swap_sort};
 
@@ -10,7 +10,12 @@ pub fn format_func_name(name: &str) -> ColoredString {
 }
 
 fn format_func(func: &Function) -> String {
-    format!("[ {}({}) = {} ]", format_func_name(&func.name), func.args.join(", "), func.code)
+    format!(
+        "[ {}({}) = {} ]",
+        format_func_name(&func.name),
+        func.args.join(", "),
+        func.code
+    )
 }
 
 #[allow(clippy::module_name_repetitions)]
@@ -18,10 +23,7 @@ pub fn format_funcs(funcs: &[Function]) -> String {
     funcs.iter().map(format_func).join("\n")
 }
 
-pub fn assign_func_command(
-    input: &str,
-    funcs: &mut Vec<Function>,
-) -> Result<String, Error> {
+pub fn assign_func_command(input: &str, funcs: &mut Vec<Function>) -> Result<String, Error> {
     let sides: Vec<&str> = input.split('=').map(str::trim).collect();
 
     if sides.len() != 2 {

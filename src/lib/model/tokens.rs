@@ -112,14 +112,14 @@ mod tests {
         assert_eq!(result.1, 3);
         match result.0 {
             Token::Number { value } => assert_same!(value, 123.0),
-            _ => panic!("Expected a number")
+            _ => panic!("Expected a number"),
         };
 
         let result = Token::number("999.544").unwrap();
         assert_eq!(result.1, 7);
         match result.0 {
             Token::Number { value } => assert_same!(value, 999.544),
-            _ => panic!("Expected a number")
+            _ => panic!("Expected a number"),
         };
     }
 

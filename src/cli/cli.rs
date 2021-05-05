@@ -25,11 +25,11 @@ pub fn handle_input(
     if input.len() == 1 {
         if Variable::is(input) {
             // Variable list command
-        if vars.is_empty() {
-            Ok("No vars".to_string())
-        } else {
-            Ok(format_vars(vars))
-        }
+            if vars.is_empty() {
+                Ok("No vars".to_string())
+            } else {
+                Ok(format_vars(vars))
+            }
         } else if Function::is(input) {
             if funcs.is_empty() {
                 Ok("No funcs".to_string())
@@ -50,7 +50,11 @@ pub fn handle_input(
         }
     } else {
         // Evaluate as normal
-        let context = EvaluationContext { vars, funcs, depth: 0 };
+        let context = EvaluationContext {
+            vars,
+            funcs,
+            depth: 0,
+        };
         let result = doeval(input, context);
         if let Err(LibError::Parsing(idx)) = result {
             return Err(LibError::Parsing(idx).into());
@@ -135,9 +139,7 @@ pub fn handle_errors(error: Error, input: &str) -> String {
             LibError::UnknownFunction(idx) => {
                 make_highlighted_error("Unknown function", input, idx)
             }
-            LibError::RecursionLimit => {
-                "Exceeded recursion limit.".to_string()
-            }
+            LibError::RecursionLimit => "Exceeded recursion limit.".to_string(),
         },
         Error::Io(..) => unreachable!(),
     }
