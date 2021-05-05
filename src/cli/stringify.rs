@@ -57,7 +57,7 @@ fn color_cli(string: &str, token: &Token) -> ColoredString {
 /// * `tokens` - The tokens
 /// * `colorize` - A function that colors tokens
 #[allow(clippy::too_many_lines)]
-fn _stringify<F, T: Display + Default>(tokens: &[Token], colorize: F) -> String
+fn _stringify<F, T: Display>(tokens: &[Token], colorize: F) -> String
 where
     F: Fn(&str, &Token) -> T,
 {
@@ -155,10 +155,11 @@ where
                             // We just add the `)` immediately, because this is the easiest way
                             // This will usually be user-defined [Function]s
                             let r_paren = if op.arity() == 0 {
-                                make_implicit_paren(implicit_paren)
+                                let formatted = format!("{} ", make_implicit_paren(implicit_paren));
+                                implicit_paren = 0;
+                                formatted
                             } else {
-                                // This should be something like ""
-                                T::default()
+                                "".to_string()
                             };
                             format!("{}{}{}", colored, l_paren, r_paren)
                         } else {

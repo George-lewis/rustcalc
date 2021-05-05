@@ -47,7 +47,7 @@ impl Functions<'_> {
     pub fn arity(&self) -> usize {
         match self {
             Functions::Builtin(op) => op.arity,
-            Functions::User(func) => func.args.len(),
+            Functions::User(func) => func.arity(),
         }
     }
     pub const fn precedence(&self) -> u8 {
@@ -88,5 +88,8 @@ impl Function {
     }
     pub fn next_function<'a>(text: &str, funcs: &'a [Self]) -> Option<(&'a Self, usize)> {
         get_by_repr(text, funcs)
+    }
+    pub fn arity(&self) -> usize {
+        self.args.len()
     }
 }

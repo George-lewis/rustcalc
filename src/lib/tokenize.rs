@@ -124,7 +124,12 @@ pub fn tokenize<'a>(string: &str, context: EvaluationContext<'a>) -> Result<Vec<
                     inner: Functions::User(func),
                 });
                 idx += n + 1;
-                unary = true;
+                if func.arity() == 0 {
+                    unary = false;
+                    coeff = true;
+                } else {
+                    unary = true;
+                }
             }
             TokenType::Paren => {
                 let (t, kind) = Token::paren(c).unwrap();
