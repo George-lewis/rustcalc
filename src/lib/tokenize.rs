@@ -50,7 +50,7 @@ fn _type(s: &str) -> Result<TokenType, ()> {
 /// * `vars` - The available `Variable`s
 ///
 /// Returns a list of tokens or an error
-#[allow(clippy::unnecessary_unwrap, clippy::too_many_lines)]
+#[allow(clippy::unnecessary_unwrap, clippy::too_many_lines, clippy::missing_errors_doc)]
 pub fn tokenize<'a>(string: &str, context: EvaluationContext<'a>) -> Result<Vec<Token<'a>>, Error> {
     let mut vec: Vec<Token> = Vec::new();
     let mut explicit_paren = 0;
