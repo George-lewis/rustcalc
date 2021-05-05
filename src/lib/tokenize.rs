@@ -61,9 +61,13 @@ pub fn tokenize<'a>(string: &str, context: EvaluationContext<'a>) -> Result<Vec<
     let mut idx = 0;
     let mut coeff = false;
     let mut unary = true;
-    while idx < string.chars().count() {
+
+    let end = string.chars().count();
+    while idx < end {
+        let slice = utils::slice(string, idx, &Pos::End);
+
         // Current character
-        let c = string.chars().nth(idx).unwrap();
+        let c = slice.chars().next().unwrap();
 
         // Ignore whitespace and commas
         if c.is_whitespace() || c == ',' {
@@ -71,8 +75,6 @@ pub fn tokenize<'a>(string: &str, context: EvaluationContext<'a>) -> Result<Vec<
             coeff = coeff && c != ',';
             continue;
         }
-
-        let slice = utils::slice(string, idx, &Pos::End);
 
         if coeff {
             // No coefficient if the current character is an r-paren
