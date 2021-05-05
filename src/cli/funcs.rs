@@ -1,5 +1,8 @@
 use itertools::Itertools;
-use rustmatheval::{model::{EvaluationContext, functions::Function, variables::Variable}, tokenize};
+use rustmatheval::{
+    model::{functions::Function, variables::Variable, EvaluationContext},
+    tokenize,
+};
 
 use colored::{ColoredString, Colorize};
 
@@ -10,12 +13,14 @@ fn color_arg(arg: impl AsRef<str>) -> ColoredString {
 }
 
 fn stringify_func_code(func: &Function, funcs: &[Function]) -> String {
-    let vars: Vec<_> = func.args.iter().map(|arg| {
-        Variable {
+    let vars: Vec<_> = func
+        .args
+        .iter()
+        .map(|arg| Variable {
             repr: arg.clone(),
-            value: 0.0
-        }
-    }).collect();
+            value: 0.0,
+        })
+        .collect();
     let context = EvaluationContext {
         vars: &vars,
         funcs,
@@ -23,7 +28,7 @@ fn stringify_func_code(func: &Function, funcs: &[Function]) -> String {
     };
     match tokenize(&func.code, context) {
         Ok(tokens) => stringify(&tokens),
-        Err(_) => func.code.clone()
+        Err(_) => func.code.clone(),
     }
 }
 
