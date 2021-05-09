@@ -9,10 +9,10 @@ pub mod variables;
 
 mod representable;
 
-#[derive(Default, Clone, Copy)]
-pub struct EvaluationContext<'var, 'func> {
-    pub vars: &'var [Variable],
-    pub funcs: &'func [Function],
-    pub context: ErrorContext<'func>,
+#[derive(Default, Clone)]
+pub struct EvaluationContext<'a> {
+    pub vars: &'a [Variable],
+    pub funcs: &'a [Function],
+    pub context: ErrorContext,
     pub depth: u8,
 }

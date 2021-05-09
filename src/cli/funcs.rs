@@ -27,7 +27,7 @@ fn stringify_func_code(func: &Function, funcs: &[Function]) -> String {
         depth: 0,
         context: ErrorContext::Main
     };
-    match tokenize(&func.code, context) {
+    match tokenize(&func.code, &context) {
         Ok(tokens) => stringify(&tokens),
         Err(_) => func.code.clone(),
     }
@@ -51,7 +51,7 @@ pub fn format_funcs(funcs: &[Function]) -> String {
     funcs.iter().map(|f| format_func(f, funcs)).join("\n")
 }
 
-pub fn assign_func_command<'a>(input: &str, funcs: &mut Vec<Function>) -> Result<String, Error<'a>> {
+pub fn assign_func_command<'a>(input: &str, funcs: &mut Vec<Function>) -> Result<String, Error> {
     let sides: Vec<&str> = input.split('=').map(str::trim).collect();
 
     if sides.len() != 2 {

@@ -30,7 +30,7 @@ pub fn assign_var_command<'var, 'func>(
     input: &str,
     vars: &'var mut Vec<Variable>,
     funcs: &'func [Function],
-) -> Result<String, Error<'func>> {
+) -> Result<String, Error> {
     // Variable assignment/reassignment
 
     let sides: Vec<&str> = input.split('=').collect();

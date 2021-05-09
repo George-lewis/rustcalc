@@ -16,7 +16,7 @@ use super::cli::{handle_errors, handle_input};
 ///
 /// ## Output
 /// Returns an empty `Result` on success, or a `CliError` from io operations
-pub fn load<'a>(vars: &mut Vec<Variable>, funcs: &mut Vec<Function>) -> Result<(), Error<'a>> {
+pub fn load<'a>(vars: &mut Vec<Variable>, funcs: &mut Vec<Function>) -> Result<(), Error> {
     let path = match RCFILE.as_deref() {
         Some(path) => path,
         None => {

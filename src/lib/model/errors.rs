@@ -1,18 +1,18 @@
 use super::{functions::Function, operators::OperatorType};
 
 #[derive(Debug, PartialEq)]
-pub enum InnerFunction<'a> {
+pub enum InnerFunction {
     Builtin(OperatorType),
-    User(&'a Function)
+    User(Function)
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum ErrorContext<'a> {
+#[derive(Debug, PartialEq, Clone)]
+pub enum ErrorContext {
     Main,
-    Scoped(&'a Function)
+    Scoped(Function)
 }
 
-impl Default for ErrorContext<'_> {
+impl Default for ErrorContext {
     fn default() -> Self {
         Self::Main
     }
@@ -24,7 +24,7 @@ pub enum Error {
     Parsing(usize),
 
     /// Arises when an `Operator` failed to compute a value. e.g. when there are insufficient arguments.
-    Operand(usize),
+    Operand(InnerFunction),
 
     /// Arises when the stack is empty for some reason
     EmptyStack,
@@ -41,7 +41,7 @@ pub enum Error {
 }
 
 impl Error {
-    pub fn with_context<'a>(self, context: ErrorContext<'a>) -> ContextError<'a> {
+    pub fn with_context(self, context: ErrorContext) -> ContextError {
         ContextError {
             context,
             error: self
@@ -58,7 +58,7 @@ impl Error {
 //     }
 // }
 
-pub struct ContextError<'a> {
-    pub context: ErrorContext<'a>,
+pub struct ContextError {
+    pub context: ErrorContext,
     pub error: Error
 }

@@ -23,7 +23,7 @@ pub fn handle_input<'a>(
     input: &str,
     vars: &'a mut Vec<Variable>,
     funcs: &'a mut Vec<Function>,
-) -> Result<String, Error<'a>> {
+) -> Result<String, Error> {
     if input.len() == 1 {
         if Variable::is(input) {
             // Variable list command

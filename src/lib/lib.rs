@@ -30,16 +30,21 @@ pub const RECURSION_LIMIT: u8 = std::u8::MAX as _;
 ///
 /// ## Errors
 /// Returns an error if the expression couldn't be computed
-pub fn doeval<'var: 'context, 'func: 'context, 'context>(
+pub fn doeval<'a>(
     string: &str,
-    context: EvaluationContext<'var, 'func>,
-) -> Result<(f64, Vec<Token<'context>>), ContextError<'func>> {
+    context: EvaluationContext<'a>,
+) -> Result<(f64, Vec<Token<'a>>), ContextError> {
     if context.depth == RECURSION_LIMIT {
         return Err(Error::RecursionLimit.with_context(context.context));
     }
 
-    let tokens = tokenize(string, context).map_err(|e| e.with_context(context.context))?;
-    let rpn = rpn(&tokens).map_err(|e| e.with_context(context.context))?;
+    let tokens = tokenize(string, &context).map_err(|e| e.with_context(context.context.clone()))?;
+    let rpn = rpn(&tokens); //.map_err(|e| e.with_context(context.context))?;
+
+    let rpn = match rpn {
+        Ok(e) => e,
+        Err(e) => return Err(e.with_context(context.context))
+    };
     let result = eval(&rpn, context)?;
     Ok((result, tokens))
 }

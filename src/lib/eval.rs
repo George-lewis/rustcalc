@@ -1,12 +1,12 @@
 use crate::model::EvaluationContext;
 
-use super::model::{errors::{Error, ContextError, ErrorContext}, tokens::Token, functions::Functions};
+use super::model::{errors::{Error, ContextError, ErrorContext, InnerFunction}, tokens::Token, functions::Functions};
 
 /// Evaluate a list of tokens
 /// * `tokens` - The tokens
 ///
 /// Returns the result as a 64-bit float or an `Error`
-pub fn eval<'var: 'context, 'func: 'context, 'context>(tokens: &[Token], context: EvaluationContext<'var, 'func>) -> Result<f64, ContextError<'func>> {
+pub fn eval(tokens: &[Token], context: EvaluationContext) -> Result<f64, ContextError> {
     // We need a mutable copy of the tokens
     let mut stack: Vec<Token> = tokens.iter().rev().cloned().collect();
     let mut args: Vec<f64> = Vec::new();
@@ -23,7 +23,13 @@ pub fn eval<'var: 'context, 'func: 'context, 'context>(tokens: &[Token], context
             Token::Operator { inner: op } => {
                 let start = match args.len().checked_sub(op.arity()) {
                     Some(x) => x,
-                    None => panic!(), // None => return Err(Error::Operand(op.kind)),
+                    None => {
+                        let inner = match op {
+                            Functions::Builtin(b) => InnerFunction::Builtin(b.kind),
+                            Functions::User(func) => InnerFunction::User(func.clone())
+                        };
+                        return Err(Error::Operand(inner).with_context(context.context))
+                    }
                 };
 
                 // Takes the last `op.arity` number of values from `args`
@@ -37,7 +43,7 @@ pub fn eval<'var: 'context, 'func: 'context, 'context>(tokens: &[Token], context
                     },
                     Functions::User(func) => {
                         let find = context.funcs.iter().find(|f| f.name == func.name).unwrap();
-                        find.apply(&args_, context)?
+                        find.apply(&args_, &context)?
                     }
                 };
                 

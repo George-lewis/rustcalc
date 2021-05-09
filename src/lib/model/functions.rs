@@ -79,7 +79,7 @@ impl Function {
         self.args.len()
     }
 
-    pub fn apply<'a, 'b, 'c, 'd>(&'a self, args: &'b [f64], context: EvaluationContext<'c, 'a>) -> Result<f64, ContextError<'a>> {
+    pub fn apply<'a>(&self, args: &[f64], context: &EvaluationContext<'a>) -> Result<f64, ContextError> {
     let vars: Vec<_> = self
                     .args
                     .iter()
@@ -93,7 +93,7 @@ impl Function {
                     vars: &vars,
                     funcs: context.funcs,
                     depth: context.depth + 1,
-                    context: ErrorContext::Scoped(self)
+                    context: ErrorContext::Scoped(self.clone())
                 };
                 let result = doeval(&self.code, context);
                 // match result {
