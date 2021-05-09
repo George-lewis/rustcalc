@@ -1,9 +1,11 @@
 use colored::{ColoredString, Colorize};
 use itertools::Itertools;
 
-use super::error::{Error, LibError, ContextLibError};
+use super::error::{ContextLibError, Error, LibError};
 use super::lib::doeval;
-use super::lib::model::{functions::Function, variables::Variable, EvaluationContext, errors::ErrorContext};
+use super::lib::model::{
+    errors::ErrorContext, functions::Function, variables::Variable, EvaluationContext,
+};
 use super::stringify::stringify;
 use super::utils::insert_or_swap_sort;
 
@@ -47,7 +49,7 @@ pub fn assign_var_command<'var, 'func>(
         vars,
         funcs,
         depth: 0,
-        context: ErrorContext::Main
+        context: ErrorContext::Main,
     };
 
     // Get value for variable
@@ -55,12 +57,15 @@ pub fn assign_var_command<'var, 'func>(
     if let Err(ContextLibError {
         error: LibError::Parsing(idx),
         ..
-    }) = result {
-        return Err(Error::Library(LibError::Parsing(idx + sides[0].len() + 1).with_context(ErrorContext::Main)));
+    }) = result
+    {
+        return Err(Error::Library(
+            LibError::Parsing(idx + sides[0].len() + 1).with_context(ErrorContext::Main),
+        ));
         // Length of untrimmed lefthand side
         // Offset is added so that highlighting can be added to expressions that come after an '=' during assignment
     }
-    let (user_value, repr) =  result?;
+    let (user_value, repr) = result?;
 
     let conf_string = format!(
         "[ ${} {} {} ] => {}",

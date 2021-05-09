@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use rustmatheval::{
-    model::{functions::Function, variables::Variable, EvaluationContext, errors::ErrorContext},
+    model::{errors::ErrorContext, functions::Function, variables::Variable, EvaluationContext},
     tokenize,
 };
 
@@ -25,7 +25,7 @@ fn stringify_func_code(func: &Function, funcs: &[Function]) -> String {
         vars: &vars,
         funcs,
         depth: 0,
-        context: ErrorContext::Main
+        context: ErrorContext::Main,
     };
     match tokenize(&func.code, &context) {
         Ok(tokens) => stringify(&tokens),

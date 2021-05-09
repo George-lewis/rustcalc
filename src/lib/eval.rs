@@ -1,6 +1,10 @@
 use crate::model::EvaluationContext;
 
-use super::model::{errors::{Error, ContextError, ErrorContext, InnerFunction}, tokens::Token, functions::Functions};
+use super::model::{
+    errors::{ContextError, Error, ErrorContext, InnerFunction},
+    functions::Functions,
+    tokens::Token,
+};
 
 /// Evaluate a list of tokens
 /// * `tokens` - The tokens
@@ -26,9 +30,9 @@ pub fn eval(tokens: &[Token], context: EvaluationContext) -> Result<f64, Context
                     None => {
                         let inner = match op {
                             Functions::Builtin(b) => InnerFunction::Builtin(b.kind),
-                            Functions::User(func) => InnerFunction::User(func.clone())
+                            Functions::User(func) => InnerFunction::User(func.clone()),
                         };
-                        return Err(Error::Operand(inner).with_context(context.context))
+                        return Err(Error::Operand(inner).with_context(context.context));
                     }
                 };
 
@@ -40,13 +44,13 @@ pub fn eval(tokens: &[Token], context: EvaluationContext) -> Result<f64, Context
                     Functions::Builtin(b) => {
                         // op.apply(&args_, context)?
                         (b.doit)(&args_)
-                    },
+                    }
                     Functions::User(func) => {
                         let find = context.funcs.iter().find(|f| f.name == func.name).unwrap();
                         find.apply(&args_, &context)?
                     }
                 };
-                
+
                 // {
                 //     Ok(result) => {
                 //         // Push the result of the evaluation

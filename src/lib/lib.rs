@@ -15,7 +15,10 @@ use model::EvaluationContext;
 use rpn::rpn;
 pub use tokenize::tokenize;
 
-use self::model::{errors::{Error, ContextError}, tokens::Token};
+use self::model::{
+    errors::{ContextError, Error},
+    tokens::Token,
+};
 
 pub const RECURSION_LIMIT: u8 = std::u8::MAX as _;
 
@@ -43,7 +46,7 @@ pub fn doeval<'a>(
 
     let rpn = match rpn {
         Ok(e) => e,
-        Err(e) => return Err(e.with_context(context.context))
+        Err(e) => return Err(e.with_context(context.context)),
     };
     let result = eval(&rpn, context)?;
     Ok((result, tokens))

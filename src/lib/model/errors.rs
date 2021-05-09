@@ -3,13 +3,13 @@ use super::{functions::Function, operators::OperatorType};
 #[derive(Debug, PartialEq)]
 pub enum InnerFunction {
     Builtin(OperatorType),
-    User(Function)
+    User(Function),
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ErrorContext {
     Main,
-    Scoped(Function)
+    Scoped(Function),
 }
 
 impl Default for ErrorContext {
@@ -44,7 +44,7 @@ impl Error {
     pub fn with_context(self, context: ErrorContext) -> ContextError {
         ContextError {
             context,
-            error: self
+            error: self,
         }
     }
 }
@@ -60,5 +60,5 @@ impl Error {
 
 pub struct ContextError {
     pub context: ErrorContext,
-    pub error: Error
+    pub error: Error,
 }

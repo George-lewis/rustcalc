@@ -1,4 +1,9 @@
-use crate::model::{self, EvaluationContext, errors::ErrorContext, functions::{Function, Functions}};
+use crate::model::{
+    self,
+    errors::ErrorContext,
+    functions::{Function, Functions},
+    EvaluationContext,
+};
 
 use super::{
     model::{
@@ -50,7 +55,10 @@ fn _type(s: &str) -> Result<TokenType, ()> {
     clippy::too_many_lines,
     clippy::missing_errors_doc
 )]
-pub fn tokenize<'a>(string: &str, context: &EvaluationContext<'a>) -> Result<Vec<Token<'a>>, Error> {
+pub fn tokenize<'a>(
+    string: &str,
+    context: &EvaluationContext<'a>,
+) -> Result<Vec<Token<'a>>, Error> {
     let mut vec: Vec<Token> = Vec::new();
     let mut explicit_paren = 0;
     let mut idx = 0;

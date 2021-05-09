@@ -1,7 +1,7 @@
 use crate::doeval;
 
 use super::{
-    errors::{Error, ContextError, ErrorContext},
+    errors::{ContextError, Error, ErrorContext},
     operators::{Associativity, Operator},
     representable::{get_by_repr, Searchable},
     variables::Variable,
@@ -25,8 +25,8 @@ impl<'inner> Functions<'inner> {
     //     match self {
     //         Functions::Builtin(op) => Ok((op.doit)(args)),
     //         Functions::User(func) => {
-                
-                // Ok(result.0)
+
+    // Ok(result.0)
     //         }
     //     }
     // }
@@ -79,33 +79,37 @@ impl Function {
         self.args.len()
     }
 
-    pub fn apply<'a>(&self, args: &[f64], context: &EvaluationContext<'a>) -> Result<f64, ContextError> {
-    let vars: Vec<_> = self
-                    .args
-                    .iter()
-                    .zip(args)
-                    .map(|(name, value)| Variable {
-                        repr: name.clone(),
-                        value: *value,
-                    })
-                    .collect();
-                let context = EvaluationContext {
-                    vars: &vars,
-                    funcs: context.funcs,
-                    depth: context.depth + 1,
-                    context: ErrorContext::Scoped(self.clone())
-                };
-                let result = doeval(&self.code, context);
-                // match result {
-                //     Ok((a, _)) => Ok(a),
-                //     Err(ContextError { context, error }) => Err(ContextError {
-                //         context: ErrorContext::Scoped(self),
-                //         error
-                //     })
-                // }
-                match result {
-                    Ok((a, _)) => Ok(a),
-                    Err(e) => Err(e)
-                }
-            }
+    pub fn apply<'a>(
+        &self,
+        args: &[f64],
+        context: &EvaluationContext<'a>,
+    ) -> Result<f64, ContextError> {
+        let vars: Vec<_> = self
+            .args
+            .iter()
+            .zip(args)
+            .map(|(name, value)| Variable {
+                repr: name.clone(),
+                value: *value,
+            })
+            .collect();
+        let context = EvaluationContext {
+            vars: &vars,
+            funcs: context.funcs,
+            depth: context.depth + 1,
+            context: ErrorContext::Scoped(self.clone()),
+        };
+        let result = doeval(&self.code, context);
+        // match result {
+        //     Ok((a, _)) => Ok(a),
+        //     Err(ContextError { context, error }) => Err(ContextError {
+        //         context: ErrorContext::Scoped(self),
+        //         error
+        //     })
+        // }
+        match result {
+            Ok((a, _)) => Ok(a),
+            Err(e) => Err(e),
+        }
+    }
 }
