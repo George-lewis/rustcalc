@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use rustmatheval::{
-    model::{functions::Function, variables::Variable, EvaluationContext},
+    model::{functions::Function, variables::Variable, EvaluationContext, errors::ErrorContext},
     tokenize,
 };
 
@@ -25,6 +25,7 @@ fn stringify_func_code(func: &Function, funcs: &[Function]) -> String {
         vars: &vars,
         funcs,
         depth: 0,
+        context: ErrorContext::Main
     };
     match tokenize(&func.code, context) {
         Ok(tokens) => stringify(&tokens),
@@ -50,7 +51,7 @@ pub fn format_funcs(funcs: &[Function]) -> String {
     funcs.iter().map(|f| format_func(f, funcs)).join("\n")
 }
 
-pub fn assign_func_command(input: &str, funcs: &mut Vec<Function>) -> Result<String, Error> {
+pub fn assign_func_command<'a>(input: &str, funcs: &mut Vec<Function>) -> Result<String, Error<'a>> {
     let sides: Vec<&str> = input.split('=').map(str::trim).collect();
 
     if sides.len() != 2 {

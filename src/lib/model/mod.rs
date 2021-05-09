@@ -1,4 +1,4 @@
-use self::{functions::Function, variables::Variable};
+use self::{errors::ErrorContext, functions::Function, variables::Variable};
 
 pub mod constants;
 pub mod errors;
@@ -10,8 +10,9 @@ pub mod variables;
 mod representable;
 
 #[derive(Default, Clone, Copy)]
-pub struct EvaluationContext<'a> {
-    pub vars: &'a [Variable],
-    pub funcs: &'a [Function],
+pub struct EvaluationContext<'var, 'func> {
+    pub vars: &'var [Variable],
+    pub funcs: &'func [Function],
+    pub context: ErrorContext<'func>,
     pub depth: u8,
 }

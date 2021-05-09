@@ -1,9 +1,9 @@
 use colored::{ColoredString, Colorize};
 use itertools::Itertools;
 
-use super::error::{Error, LibError};
+use super::error::{Error, LibError, ContextLibError};
 use super::lib::doeval;
-use super::lib::model::{functions::Function, variables::Variable, EvaluationContext};
+use super::lib::model::{functions::Function, variables::Variable, EvaluationContext, errors::ErrorContext};
 use super::stringify::stringify;
 use super::utils::insert_or_swap_sort;
 
@@ -26,11 +26,11 @@ pub fn format_vars(vars: &[Variable]) -> String {
 }
 
 /// Takes the given user `input` and splits it up into a name and value to be assigned or reassigned to a [Variable] in `vars`
-pub fn assign_var_command(
+pub fn assign_var_command<'var, 'func>(
     input: &str,
-    vars: &mut Vec<Variable>,
-    funcs: &[Function],
-) -> Result<String, Error> {
+    vars: &'var mut Vec<Variable>,
+    funcs: &'func [Function],
+) -> Result<String, Error<'func>> {
     // Variable assignment/reassignment
 
     let sides: Vec<&str> = input.split('=').collect();
@@ -47,18 +47,21 @@ pub fn assign_var_command(
         vars,
         funcs,
         depth: 0,
+        context: ErrorContext::Main
     };
 
     // Get value for variable
     let result = doeval(sides[1], context);
-    if let Err(LibError::Parsing(idx)) = result {
-        return Err(Error::Library(LibError::Parsing(idx + sides[0].len() + 1)));
+    if let Err(ContextLibError {
+        error: LibError::Parsing(idx),
+        ..
+    }) = result {
+        return Err(Error::Library(LibError::Parsing(idx + sides[0].len() + 1).with_context(ErrorContext::Main)));
         // Length of untrimmed lefthand side
         // Offset is added so that highlighting can be added to expressions that come after an '=' during assignment
     }
-    let (user_value, repr) = result?;
+    let (user_value, repr) =  result?;
 
-    // Get printable confirmation string
     let conf_string = format!(
         "[ ${} {} {} ] => {}",
         user_repr.green().bold(),
@@ -73,8 +76,6 @@ pub fn assign_var_command(
     };
 
     assign_var(var, vars);
-
-    // assign_var(vars, &user_repr, user_value);
 
     Ok(conf_string)
 }

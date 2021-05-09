@@ -1,7 +1,7 @@
 use crate::doeval;
 
 use super::{
-    errors::Error,
+    errors::{Error, ContextError, ErrorContext},
     operators::{Associativity, Operator},
     representable::{get_by_repr, Searchable},
     variables::Variable,
@@ -14,36 +14,22 @@ pub enum Functions<'a> {
     User(&'a Function),
 }
 
-impl Functions<'_> {
+impl<'inner> Functions<'inner> {
     /// Apply this function over a set of arguments and return the result.
     /// This never fails for `Functions::Builtin`.
     ///
     /// ## Errors
     /// `Functions::User` produce errors in the same way as [doeval] can, as these are,
     /// in actuality, nested evaluation contexts
-    pub fn apply(&self, args: &[f64], context: EvaluationContext) -> Result<f64, Error> {
-        match self {
-            Functions::Builtin(op) => Ok((op.doit)(args)),
-            Functions::User(func) => {
-                let vars: Vec<_> = func
-                    .args
-                    .iter()
-                    .zip(args)
-                    .map(|(name, value)| Variable {
-                        repr: name.clone(),
-                        value: *value,
-                    })
-                    .collect();
-                let context = EvaluationContext {
-                    vars: &vars,
-                    funcs: context.funcs,
-                    depth: context.depth + 1,
-                };
-                let result = doeval(&func.code, context);
-                result.map(|(a, _)| a)
-            }
-        }
-    }
+    // pub fn apply<'b, 'c, 'd>(&'inner self, args: &'b [f64], context: EvaluationContext<'c, 'd>) -> Result<f64, ContextError<'inner>> {
+    //     match self {
+    //         Functions::Builtin(op) => Ok((op.doit)(args)),
+    //         Functions::User(func) => {
+                
+                // Ok(result.0)
+    //         }
+    //     }
+    // }
     pub fn arity(&self) -> usize {
         match self {
             Functions::Builtin(op) => op.arity,
@@ -92,4 +78,34 @@ impl Function {
     pub fn arity(&self) -> usize {
         self.args.len()
     }
+
+    pub fn apply<'a, 'b, 'c, 'd>(&'a self, args: &'b [f64], context: EvaluationContext<'c, 'a>) -> Result<f64, ContextError<'a>> {
+    let vars: Vec<_> = self
+                    .args
+                    .iter()
+                    .zip(args)
+                    .map(|(name, value)| Variable {
+                        repr: name.clone(),
+                        value: *value,
+                    })
+                    .collect();
+                let context = EvaluationContext {
+                    vars: &vars,
+                    funcs: context.funcs,
+                    depth: context.depth + 1,
+                    context: ErrorContext::Scoped(self)
+                };
+                let result = doeval(&self.code, context);
+                // match result {
+                //     Ok((a, _)) => Ok(a),
+                //     Err(ContextError { context, error }) => Err(ContextError {
+                //         context: ErrorContext::Scoped(self),
+                //         error
+                //     })
+                // }
+                match result {
+                    Ok((a, _)) => Ok(a),
+                    Err(e) => Err(e)
+                }
+            }
 }

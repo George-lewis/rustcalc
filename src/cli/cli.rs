@@ -1,45 +1,47 @@
 use crate::funcs::{assign_func_command, format_funcs};
 
-use super::lib::model::{functions::Function, variables::Variable, EvaluationContext};
+use super::lib::model::{functions::Function, variables::Variable, EvaluationContext, errors::ErrorContext};
 use super::lib::utils;
 
 use colored::Colorize;
 use utils::Pos;
 
-use super::error::{Error, LibError};
+use super::error::{Error, LibError, ContextLibError};
 
 use super::vars::{assign_var, assign_var_command, format_vars};
 
 use super::lib::doeval;
+
+use super::funcs::format_func_name;
 
 use super::stringify::stringify;
 
 /// Interprets a given user `input` and executes the given command or evaluates the given expression.
 /// * `input` - The user submitted string to be interpreted
 /// * `vars` - The vector of `Variables` the user has already entered / will add to
-pub fn handle_input(
+pub fn handle_input<'a>(
     input: &str,
-    vars: &mut Vec<Variable>,
-    funcs: &mut Vec<Function>,
-) -> Result<String, Error> {
+    vars: &'a mut Vec<Variable>,
+    funcs: &'a mut Vec<Function>,
+) -> Result<String, Error<'a>> {
     if input.len() == 1 {
         if Variable::is(input) {
             // Variable list command
-            if vars.is_empty() {
+            return if vars.is_empty() {
                 Ok("No vars".to_string())
             } else {
                 Ok(format_vars(vars))
-            }
+            };
         } else if Function::is(input) {
-            if funcs.is_empty() {
+            return if funcs.is_empty() {
                 Ok("No funcs".to_string())
             } else {
                 Ok(format_funcs(funcs))
-            }
-        } else {
-            Ok("bruh".to_string())
+            };
         }
-    } else if input.contains('=') {
+    }
+    
+    if input.contains('=') {
         if Variable::is(input) {
             // Assign / Reassign variable command
             assign_var_command(input, vars, funcs)
@@ -54,11 +56,12 @@ pub fn handle_input(
             vars,
             funcs,
             depth: 0,
+            context: ErrorContext::Main
         };
         let result = doeval(input, context);
-        if let Err(LibError::Parsing(idx)) = result {
-            return Err(LibError::Parsing(idx).into());
-        }
+        // if let Err(ContextLibError{ error: LibError::Parsing(idx), ..}) = result {
+        //     return Err(LibError::Parsing(idx).into());
+        // }
         let (x, repr) = result?;
 
         let formatted = stringify(&repr);
@@ -121,23 +124,44 @@ pub fn handle_errors(error: Error, input: &str) -> String {
         Error::Assignment => {
             "Couldn't assign to variable. Malformed assignment statement.".to_string()
         }
-        Error::Library(inner) => match inner {
+        Error::Library(ContextLibError {
+            context, error
+        }) => match error {
             LibError::Parsing(idx) => {
                 make_highlighted_error("Couldn't parse the token", input, idx)
             }
-            LibError::Operand(kind) => {
-                format!(
-                    "Couldn't evaluate. Operator [{}] requires an operand.",
-                    format!("{:?}", kind).green()
-                )
+            LibError::Operand(op) => {
+                // format!(
+                //     "Couldn't evaluate. Operator [{}] requires an operand.",
+                //     format!("{:?}", kind).green()
+                // )
+                "".to_string()
             }
             LibError::EmptyStack => "Couldn't evalutate. Stack was empty?".to_string(),
             LibError::MismatchingParens => "Couldn't evaluate. Mismatched parens.".to_string(),
             LibError::UnknownVariable(idx) => {
-                make_highlighted_error("Unknown variable", input, idx)
+                match context {
+                    ErrorContext::Main => {
+                        make_highlighted_error("Unknown variable", input, idx)
+                    }
+                    ErrorContext::Scoped(func) => {
+                        let name = format_func_name(&func.name);
+                        let msg = format!("Unknown variable in function {}", name);
+                        make_highlighted_error(&msg, &func.code, idx)
+                    }
+                }
             }
             LibError::UnknownFunction(idx) => {
-                make_highlighted_error("Unknown function", input, idx)
+                match context {
+                    ErrorContext::Main => {
+                        make_highlighted_error("Unknown function", input, idx)
+                    }
+                    ErrorContext::Scoped(func) => {
+                        let name = format_func_name(&func.name);
+                        let msg = format!("Unknown function within {}", name);
+                        make_highlighted_error(&msg, &func.code, idx)
+                    }
+                }
             }
             LibError::RecursionLimit => "Exceeded recursion limit.".to_string(),
         },
