@@ -46,8 +46,7 @@ pub fn eval(tokens: &[Token], context: EvaluationContext) -> Result<f64, Context
                         (b.doit)(&args_)
                     }
                     Functions::User(func) => {
-                        let find = context.funcs.iter().find(|f| f.name == func.name).unwrap();
-                        find.apply(&args_, &context)?
+                        func.apply(&args_, &context)?
                     }
                 };
 
