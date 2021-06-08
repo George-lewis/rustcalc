@@ -150,8 +150,12 @@ pub fn handle_errors(error: Error, input: &str) -> String {
                 }
                 LibError::EmptyStack => "Couldn't evalutate. Stack was empty?".to_string(),
                 LibError::MismatchingParens => "Couldn't evaluate. Mismatched parens.".to_string(),
-                LibError::UnknownVariable(idx) => make_highlighted_error("Unknown variable", code, idx),
-                LibError::UnknownFunction(idx) => make_highlighted_error("Unknown function", code, idx),
+                LibError::UnknownVariable(idx) => {
+                    make_highlighted_error("Unknown variable", code, idx)
+                }
+                LibError::UnknownFunction(idx) => {
+                    make_highlighted_error("Unknown function", code, idx)
+                }
                 LibError::RecursionLimit => "Exceeded recursion limit.".to_string(),
             };
             if let ErrorContext::Scoped(func) = &context {
