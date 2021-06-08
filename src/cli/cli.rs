@@ -6,6 +6,7 @@ use super::lib::model::{
 use super::lib::utils;
 
 use colored::Colorize;
+use rustmatheval::model::errors::InnerFunction;
 use utils::Pos;
 
 use super::error::{ContextualLibError, Error, LibError};
@@ -130,12 +131,19 @@ pub fn handle_errors(error: Error, input: &str) -> String {
             LibError::Parsing(idx) => {
                 make_highlighted_error("Couldn't parse the token", input, idx)
             }
-            LibError::Operand(_op) => {
-                // format!(
-                //     "Couldn't evaluate. Operator [{}] requires an operand.",
-                //     format!("{:?}", kind).green()
-                // )
-                "".to_string()
+            LibError::Operand(op) => {
+                let msg = match op {
+                    InnerFunction::Builtin(kind) => format!(
+                        "Operator [{}] requires an operand.",
+                        format!("{:?}", kind).green()
+                    ),
+                    InnerFunction::User(f) => format!(
+                        "Function [{}] requires [{}] arguments.",
+                        format_func_name(&f.name),
+                        format!("{}", f.args.len()).red()
+                    ),
+                };
+                format!("Couldn't evaluate. {}", msg)
             }
             LibError::EmptyStack => "Couldn't evalutate. Stack was empty?".to_string(),
             LibError::MismatchingParens => "Couldn't evaluate. Mismatched parens.".to_string(),
