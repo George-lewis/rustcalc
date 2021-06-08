@@ -67,15 +67,15 @@ pub fn eval(tokens: &[Token], context: EvaluationContext) -> Result<f64, Context
     Err(Error::EmptyStack.with_context(context.context))
 }
 
-// #[cfg(test)]
-// mod tests {
+#[cfg(test)]
+mod tests {
 
-//     use super::{eval, EvaluationContext, Token};
+    use super::{eval, EvaluationContext, Token};
 
-//     #[test]
-//     fn test_eval_ok() {
-//         let tokens = [Token::Number { value: 4.67 }];
-//         let result = eval(&tokens, EvaluationContext::default()).unwrap();
-//         assert_same!(result, 4.67);
-//     }
-// }
+    #[test]
+    fn test_eval_ok() {
+        let tokens = [Token::Number { value: 4.67 }];
+        let result = eval(&tokens, EvaluationContext::default()).unwrap();
+        assert_same!(result, 4.67);
+    }
+}

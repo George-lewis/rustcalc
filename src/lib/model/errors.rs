@@ -58,6 +58,7 @@ impl Error {
 //     }
 // }
 
+#[derive(Debug)]
 pub struct ContextualError {
     pub context: ErrorContext,
     pub error: Error,

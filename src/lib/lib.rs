@@ -41,13 +41,16 @@ pub fn doeval<'a>(
         return Err(Error::RecursionLimit.with_context(context.context));
     }
 
-    let tokens = tokenize(string, &context).map_err(|e| e.with_context(context.context.clone()))?;
-    let rpn = rpn(&tokens); //.map_err(|e| e.with_context(context.context))?;
+    let tokens = match tokenize(string, &context) {
+        Ok(tokens) => tokens,
+        Err(err) => return Err(err.with_context(context.context)),
+    };
 
-    let rpn = match rpn {
+    let rpn = match rpn(&tokens) {
         Ok(e) => e,
         Err(e) => return Err(e.with_context(context.context)),
     };
+
     let result = eval(&rpn, context)?;
     Ok((result, tokens))
 }
