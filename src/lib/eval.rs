@@ -6,7 +6,7 @@ use super::model::{constants::Constant, errors::Error, operators::Operator, toke
 /// Returns the result as a 64-bit float or an `Error`
 pub fn eval(tokens: &[Token]) -> Result<f64, Error> {
     // We need a mutable copy of the tokens
-    let mut stack: Vec<Token> = tokens.iter().rev().cloned().collect();
+    let mut stack: Vec<Token> = tokens.iter().rev().copied().collect();
     let mut args: Vec<f64> = Vec::new();
 
     while let Some(token) = stack.pop() {
