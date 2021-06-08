@@ -231,7 +231,6 @@ mod tests {
     #[test]
     fn test_doeval_errors() {
         [
-            // ("1 +", Error::Operand(OperatorType::Add)),
             ("1 + 2 + 3 + h", Error::Parsing(12)),
             ("h", Error::Parsing(0)),
             ("(1", Error::MismatchingParens),

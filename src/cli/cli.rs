@@ -62,9 +62,7 @@ pub fn handle_input<'a>(
             context: ErrorContext::Main,
         };
         let result = doeval(input, context);
-        // if let Err(ContextLibError{ error: LibError::Parsing(idx), ..}) = result {
-        //     return Err(LibError::Parsing(idx).into());
-        // }
+
         let (x, repr) = result?;
 
         let formatted = stringify(&repr);

@@ -40,10 +40,7 @@ pub fn eval(tokens: &[Token], context: EvaluationContext) -> Result<f64, Context
                 let args_: Vec<f64> = args.drain(start..).collect();
 
                 let result = match op {
-                    Functions::Builtin(b) => {
-                        // op.apply(&args_, context)?
-                        (b.doit)(&args_)
-                    }
+                    Functions::Builtin(b) => (b.doit)(&args_),
                     Functions::User(f) => f.apply(&args_, &context)?,
                 };
 
