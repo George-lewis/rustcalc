@@ -37,7 +37,7 @@ pub fn doeval<'a>(string: &str, vars: &'a [Variable]) -> Result<(f64, Vec<Token<
 #[cfg(test)]
 mod tests {
 
-    #![allow(clippy::shadow_unrelated)]
+    #![allow(clippy::shadow_unrelated, clippy::needless_for_each)]
 
     use super::doeval;
 

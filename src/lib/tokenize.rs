@@ -19,7 +19,6 @@ enum TokenType {
     Variable,
 }
 
-#[allow(clippy::clippy::iter_nth_zero)]
 fn _type(s: &str) -> Result<TokenType, ()> {
     Ok(if Token::is_next_number(s) {
         TokenType::Number
