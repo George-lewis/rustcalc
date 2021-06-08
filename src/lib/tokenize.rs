@@ -107,11 +107,14 @@ pub fn tokenize<'a>(
             TokenType::Operator => {
                 let unar = Operator::unary(&slice);
 
-                if unary && unar.is_some() {
+                unary = if unary && unar.is_some() {
                     // Current token is a unary operator
                     let (a, b) = unar.unwrap();
                     idx += b;
                     vec.push(Token::operator(*a));
+
+                    // Support for consecutive unary ops
+                    true
                 } else {
                     let (operator, n) = Operator::by_repr(&slice).unwrap();
 
@@ -119,8 +122,11 @@ pub fn tokenize<'a>(
                     vec.push(Token::Operator {
                         inner: model::functions::Functions::Builtin(operator),
                     });
-                }
-                unary = true;
+
+                    // The next token cannot be unary if this operator is factorial
+                    // ATM this is the only postfix operator we support
+                    operator.kind != OperatorType::Factorial
+                };
             }
             TokenType::Function => {
                 let x = context.funcs;
