@@ -39,8 +39,9 @@ pub fn load(vars: &mut Vec<Variable>) -> Result<(), Error> {
     // Filter out empty and comment lines
     let lines = lines
         .lines()
+        .map(str::trim)
         .enumerate()
-        .filter(|(_, l)| !(l.trim().is_empty() || l.starts_with("//")));
+        .filter(|(_, line)| !(line.is_empty() || line.starts_with("//")));
 
     // Feed each line through `handle_input` and make use of `handle_errors`
     // Succesfully executing statements are silent
