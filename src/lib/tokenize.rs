@@ -1,6 +1,5 @@
 use crate::model::{
     self,
-    errors::ErrorContext,
     functions::{Function, Functions},
     EvaluationContext,
 };

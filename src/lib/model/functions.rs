@@ -1,7 +1,7 @@
 use crate::doeval;
 
 use super::{
-    errors::{ContextualError, Error, ErrorContext},
+    errors::{ContextualError, ErrorContext},
     operators::{Associativity, Operator},
     representable::{get_by_repr, Searchable},
     variables::Variable,

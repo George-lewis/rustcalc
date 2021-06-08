@@ -130,7 +130,7 @@ pub fn handle_errors(error: Error, input: &str) -> String {
             LibError::Parsing(idx) => {
                 make_highlighted_error("Couldn't parse the token", input, idx)
             }
-            LibError::Operand(op) => {
+            LibError::Operand(_op) => {
                 // format!(
                 //     "Couldn't evaluate. Operator [{}] requires an operand.",
                 //     format!("{:?}", kind).green()

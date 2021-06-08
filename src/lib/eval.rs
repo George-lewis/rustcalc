@@ -1,7 +1,7 @@
 use crate::model::EvaluationContext;
 
 use super::model::{
-    errors::{ContextualError, Error, ErrorContext, InnerFunction},
+    errors::{ContextualError, Error, InnerFunction},
     functions::Functions,
     tokens::Token,
 };
