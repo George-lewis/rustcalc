@@ -92,11 +92,14 @@ pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>
             TokenType::Operator => {
                 let unar = Operator::unary(&slice);
 
-                if unary && unar.is_some() {
+                unary = if unary && unar.is_some() {
                     // Current token is a unary operator
                     let (a, b) = unar.unwrap();
                     idx += b;
                     vec.push(Token::Operator { kind: *a });
+
+                    // Support for consecutive unary ops
+                    true
                 } else {
                     let (operator, n) = Operator::by_repr(&slice).unwrap();
 
@@ -104,8 +107,11 @@ pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>
                     vec.push(Token::Operator {
                         kind: operator.kind,
                     });
-                }
-                unary = true;
+
+                    // The next token cannot be unary if this operator is factorial
+                    // ATM this is the only postfix operator we support
+                    operator.kind != OperatorType::Factorial
+                };
             }
             TokenType::Paren => {
                 let (t, kind) = Token::paren(c).unwrap();
