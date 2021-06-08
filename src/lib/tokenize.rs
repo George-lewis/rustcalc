@@ -200,7 +200,8 @@ mod tests {
 
     use super::OperatorType::Add;
     use super::{
-        tokenize, Error, ErrorContext, EvaluationContext, OperatorType, ParenType, Token, Variable,
+        model::errors::ErrorContext, tokenize, Error, EvaluationContext, OperatorType, ParenType,
+        Token, Variable,
     };
 
     #[test]
