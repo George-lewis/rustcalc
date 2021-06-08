@@ -25,15 +25,12 @@ pub fn eval(tokens: &[Token], context: EvaluationContext) -> Result<f64, Context
             }
             Token::Variable { inner } => args.push(inner.value),
             Token::Operator { inner: op } => {
-                let start = match args.len().checked_sub(op.arity()) {
-                    Some(x) => x,
-                    None => {
-                        let inner = match op {
-                            Functions::Builtin(b) => InnerFunction::Builtin(b.kind),
-                            Functions::User(func) => InnerFunction::User(func.clone()),
-                        };
-                        return Err(Error::Operand(inner).with_context(context.context));
-                    }
+                let start = if let Some(x) = args.len().checked_sub(op.arity()) { x } else {
+                    let inner = match op {
+                        Functions::Builtin(b) => InnerFunction::Builtin(b.kind),
+                        Functions::User(func) => InnerFunction::User(func.clone()),
+                    };
+                    return Err(Error::Operand(inner).with_context(context.context));
                 };
 
                 // Takes the last `op.arity` number of values from `args`
@@ -65,6 +62,17 @@ pub fn eval(tokens: &[Token], context: EvaluationContext) -> Result<f64, Context
 #[cfg(test)]
 mod tests {
 
+    use std::vec;
+
+    use crate::{
+        model::{
+            errors::ErrorContext,
+            functions::{Function, Functions},
+            variables::Variable,
+        },
+        rpn::rpn,
+    };
+
     use super::{eval, EvaluationContext, Token};
 
     #[test]
@@ -72,5 +80,60 @@ mod tests {
         let tokens = [Token::Number { value: 4.67 }];
         let result = eval(&tokens, EvaluationContext::default()).unwrap();
         assert_same!(result, 4.67);
+    }
+
+    #[test]
+    fn test_eval_functions() {
+        let funcs = [Function {
+            name: "inv".to_string(),
+            args: vec!["x".to_string()],
+            code: "1/$x".to_string(),
+        }];
+        let vars = [Variable {
+            repr: "e".to_string(),
+            value: 5.0,
+        }];
+        let context = EvaluationContext {
+            vars: &vars,
+            funcs: &funcs,
+            context: ErrorContext::Main,
+            depth: 0,
+        };
+
+        let tokens = [
+            Token::Operator {
+                inner: Functions::User(&funcs[0]),
+            },
+            Token::Number { value: 1.0 },
+        ];
+        let tokens = rpn(&tokens).unwrap();
+        let result = eval(&tokens, context.clone()).unwrap();
+        assert_same!(result, 1.0);
+
+        let tokens = [
+            Token::Operator {
+                inner: Functions::User(&funcs[0]),
+            },
+            Token::Variable { inner: &vars[0] },
+        ];
+        let tokens = rpn(&tokens).unwrap();
+        let result = eval(&tokens, context.clone()).unwrap();
+        assert_same!(result, 1.0 / vars[0].value);
+
+        let tokens = [
+            Token::Operator {
+                inner: Functions::User(&funcs[0]),
+            },
+            Token::Operator {
+                inner: Functions::User(&funcs[0]),
+            },
+            Token::Operator {
+                inner: Functions::User(&funcs[0]),
+            },
+            Token::Number { value: 8.0 },
+        ];
+        let tokens = rpn(&tokens).unwrap();
+        let result = eval(&tokens, context.clone()).unwrap();
+        assert_same!(result, 1.0 / 8.0);
     }
 }
