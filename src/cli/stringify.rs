@@ -15,7 +15,7 @@ pub fn stringify(tokens: &[Token]) -> String {
     _stringify(tokens, color_cli)
 }
 
-pub fn ideal_repr(tok: &Token) -> String {
+fn ideal_repr(tok: &Token) -> String {
     match tok {
         Token::Number { value } => value.to_string(),
         Token::Operator {
