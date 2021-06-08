@@ -196,171 +196,180 @@ pub fn tokenize<'a>(
     }
 }
 
-// #[cfg(test)]
-// mod tests {
+#[cfg(test)]
+mod tests {
 
-//     use super::OperatorType::Add;
-//     use super::{tokenize, Error, EvaluationContext, OperatorType, ParenType, Token, Variable};
+    use super::OperatorType::Add;
+    use super::{tokenize, Error, EvaluationContext, OperatorType, ParenType, Token, Variable, ErrorContext};
 
-//     #[test]
-//     fn test_tokenize_simple_ok() {
-//         let tokens = tokenize("1 + 1", EvaluationContext::default());
-//         assert_eq!(
-//             tokens.unwrap(),
-//             [
-//                 Token::Number { value: 1.0 },
-//                 Token::operator(Add),
-//                 Token::Number { value: 1.0 }
-//             ]
-//         );
+    #[test]
+    fn test_tokenize_simple_ok() {
+        let tokens = tokenize("1 + 1", &EvaluationContext::default());
+        assert_eq!(
+            tokens.unwrap(),
+            [
+                Token::Number { value: 1.0 },
+                Token::operator(Add),
+                Token::Number { value: 1.0 }
+            ]
+        );
 
-//         let tokens = tokenize("(1 + 1)", EvaluationContext::default());
-//         assert_eq!(
-//             tokens.unwrap(),
-//             [
-//                 Token::Paren {
-//                     kind: ParenType::Left
-//                 },
-//                 Token::Number { value: 1.0 },
-//                 Token::operator(Add),
-//                 Token::Number { value: 1.0 },
-//                 Token::Paren {
-//                     kind: ParenType::Right
-//                 },
-//             ]
-//         );
-//     }
+        let tokens = tokenize("(1 + 1)", &EvaluationContext::default());
+        assert_eq!(
+            tokens.unwrap(),
+            [
+                Token::Paren {
+                    kind: ParenType::Left
+                },
+                Token::Number { value: 1.0 },
+                Token::operator(Add),
+                Token::Number { value: 1.0 },
+                Token::Paren {
+                    kind: ParenType::Right
+                },
+            ]
+        );
+    }
 
-//     #[test]
-//     fn test_tokenize_unary() {
-//         let tokens = tokenize("1 + -1", EvaluationContext::default()).unwrap();
-//         assert_eq!(tokens[2], Token::operator(OperatorType::Negative));
-//         let tokens = tokenize("1 + +1", EvaluationContext::default()).unwrap();
-//         assert_eq!(tokens[2], Token::operator(OperatorType::Positive));
-//         let tokens = tokenize("1 + +-", EvaluationContext::default()).unwrap();
-//         assert_eq!(tokens[2], Token::operator(OperatorType::Positive));
-//         assert_eq!(tokens[3], Token::operator(OperatorType::Negative));
-//         let tokens = tokenize("(+-1)", EvaluationContext::default()).unwrap();
-//         assert_eq!(tokens[1], Token::operator(OperatorType::Positive));
-//         assert_eq!(tokens[2], Token::operator(OperatorType::Negative));
-//         let tokens = tokenize("-(1)", EvaluationContext::default()).unwrap();
-//         assert_eq!(tokens[0], Token::operator(OperatorType::Negative));
-//     }
+    #[test]
+    fn test_tokenize_unary() {
+        let context = EvaluationContext::default();
 
-//     #[test]
-//     fn test_tokenize_mismatched_parens() {
-//         let result = tokenize("((1)) + (1))", EvaluationContext::default());
-//         match result {
-//             Err(Error::MismatchingParens) => {}
-//             _ => panic!("Expected mismatched parens"),
-//         }
+        let tokens = tokenize("1 + -1", &context).unwrap();
+        assert_eq!(tokens[2], Token::operator(OperatorType::Negative));
+        let tokens = tokenize("1 + +1", &context).unwrap();
+        assert_eq!(tokens[2], Token::operator(OperatorType::Positive));
+        let tokens = tokenize("1 + +-", &context).unwrap();
+        assert_eq!(tokens[2], Token::operator(OperatorType::Positive));
+        assert_eq!(tokens[3], Token::operator(OperatorType::Negative));
+        let tokens = tokenize("(+-1)", &context).unwrap();
+        assert_eq!(tokens[1], Token::operator(OperatorType::Positive));
+        assert_eq!(tokens[2], Token::operator(OperatorType::Negative));
+        let tokens = tokenize("-(1)", &context).unwrap();
+        assert_eq!(tokens[0], Token::operator(OperatorType::Negative));
+    }
 
-//         let result = tokenize("(()", EvaluationContext::default());
-//         match result {
-//             Err(Error::MismatchingParens) => {}
-//             _ => panic!("Expected mismatched parens"),
-//         }
-//     }
+    #[test]
+    fn test_tokenize_mismatched_parens() {
+        let context = EvaluationContext::default();
 
-//     #[test]
-//     fn test_tokenize_parse_error() {
-//         let result = tokenize("1 + 2 + h", EvaluationContext::default());
-//         assert!(matches!(result, Err(Error::Parsing(8))));
-//         let result = tokenize("1 + 2eq + 6", EvaluationContext::default());
-//         assert!(matches!(result, Err(Error::Parsing(6))));
-//     }
+        let result = tokenize("((1)) + (1))", &&context);
+        match result {
+            Err(Error::MismatchingParens) => {}
+            _ => panic!("Expected mismatched parens"),
+        }
 
-//     // #[test]
-//     // fn test_tokenize_unknown_variable() {
-//     //     let vars = [Variable {
-//     //         repr: "q".to_string(),
-//     //         value: 1.0,
-//     //     }];
-//     //     let context = EvaluationContext {
-//     //         vars: &vars,
-//     //         funcs: &[],
-//     //         depth: 0,
-//     //     };
-//     //     let result = tokenize("$x", context);
-//     //     assert!(matches!(result, Err(Error::UnknownVariable(0))));
-//     //     let result = tokenize("1 * $x", context);
-//     //     assert!(matches!(result, Err(Error::UnknownVariable(4))));
-//     // }
+        let result = tokenize("(()", &context);
+        match result {
+            Err(Error::MismatchingParens) => {}
+            _ => panic!("Expected mismatched parens"),
+        }
+    }
 
-//     // #[test]
-//     // fn test_tokenize_implicit_coeff() {
-//     //     let vars = [Variable {
-//     //         repr: "q".to_string(),
-//     //         value: 1.0,
-//     //     }];
-//     //     let context = EvaluationContext {
-//     //         vars: &vars,
-//     //         funcs: &[],
-//     //         depth: 0,
-//     //     };
+    #[test]
+    fn test_tokenize_parse_error() {
+        let context = EvaluationContext::default();
 
-//     //     let mul = Token::operator(OperatorType::Mul);
+        let result = tokenize("1 + 2 + h", &context);
+        assert!(matches!(result, Err(Error::Parsing(8))));
+        let result = tokenize("1 + 2eq + 6", &context);
+        assert!(matches!(result, Err(Error::Parsing(6))));
+    }
 
-//     //     let tokens = tokenize("1 2 3", context).unwrap();
-//     //     assert_eq!(tokens[1], mul);
-//     //     assert_eq!(tokens[3], mul);
+    #[test]
+    fn test_tokenize_unknown_variable() {
+        let vars = [Variable {
+            repr: "q".to_string(),
+            value: 1.0,
+        }];
+        let context = EvaluationContext {
+            vars: &vars,
+            funcs: &[],
+            depth: 0,
+            context: ErrorContext::Main,
+        };
+        let result = tokenize("$x", &context);
+        assert!(matches!(result, Err(Error::UnknownVariable(0))));
+        let result = tokenize("1 * $x", &context);
+        assert!(matches!(result, Err(Error::UnknownVariable(4))));
+    }
 
-//     //     let tokens = tokenize("1 $q sin(pi) e", context).unwrap();
-//     //     assert_eq!(tokens[1], mul);
-//     //     assert_eq!(tokens[3], mul);
-//     //     assert_eq!(tokens[8], mul);
-//     // }
+    #[test]
+    fn test_tokenize_implicit_coeff() {
+        let vars = [Variable {
+            repr: "q".to_string(),
+            value: 1.0,
+        }];
+        let context = EvaluationContext {
+            vars: &vars,
+            funcs: &[],
+            depth: 0,
+            context: ErrorContext::Main,
+        };
 
-//     // #[test]
-//     // fn test_tokenize_variables_ok() {
-//     //     // It's important that these variables are sorted by length in descending order
-//     //     let vars = [
-//     //         Variable {
-//     //             repr: "xx".to_string(),
-//     //             value: 10.0,
-//     //         },
-//     //         Variable {
-//     //             repr: "x".to_string(),
-//     //             value: 3.0,
-//     //         },
-//     //     ];
-//     //     let context = EvaluationContext {
-//     //         vars: &vars,
-//     //         funcs: &[],
-//     //         depth: 0,
-//     //     };
-//     //     let tokens = tokenize("1 + $x", context);
-//     //     assert_eq!(
-//     //         tokens.unwrap(),
-//     //         [
-//     //             Token::Number { value: 1.0 },
-//     //             Token::operator(OperatorType::Add),
-//     //             Token::Variable {
-//     //                 inner: &context.vars[1]
-//     //             }
-//     //         ]
-//     //     );
+        let mul = Token::operator(OperatorType::Mul);
 
-//     //     let tokens = tokenize("sin $xx pow 5 + cos(6.54)", context);
-//     //     assert_eq!(
-//     //         tokens.unwrap(),
-//     //         [
-//     //             Token::operator(OperatorType::Sin),
-//     //             Token::Variable {
-//     //                 inner: &context.vars[0]
-//     //             },
-//     //             Token::operator(OperatorType::Pow),
-//     //             Token::Number { value: 5.0 },
-//     //             Token::operator(OperatorType::Add),
-//     //             Token::operator(OperatorType::Cos),
-//     //             Token::Paren {
-//     //                 kind: ParenType::Left
-//     //             },
-//     //             Token::Number { value: 6.54 },
-//     //             Token::Paren {
-//     //                 kind: ParenType::Right
-//     //             }
-//     //         ]
-//     //     );
-//     // }
-// }
+        let tokens = tokenize("1 2 3", &context).unwrap();
+        assert_eq!(tokens[1], mul);
+        assert_eq!(tokens[3], mul);
+
+        let tokens = tokenize("1 $q sin(pi) e", &context).unwrap();
+        assert_eq!(tokens[1], mul);
+        assert_eq!(tokens[3], mul);
+        assert_eq!(tokens[8], mul);
+    }
+
+    #[test]
+    fn test_tokenize_variables_ok() {
+        // It's important that these variables are sorted by length in descending order
+        let vars = [
+            Variable {
+                repr: "xx".to_string(),
+                value: 10.0,
+            },
+            Variable {
+                repr: "x".to_string(),
+                value: 3.0,
+            },
+        ];
+        let context = EvaluationContext {
+            vars: &vars,
+            funcs: &[],
+            depth: 0,
+            context: ErrorContext::Main
+        };
+        let tokens = tokenize("1 + $x", &context);
+        assert_eq!(
+            tokens.unwrap(),
+            [
+                Token::Number { value: 1.0 },
+                Token::operator(OperatorType::Add),
+                Token::Variable {
+                    inner: &context.vars[1]
+                }
+            ]
+        );
+
+        let tokens = tokenize("sin $xx pow 5 + cos(6.54)", &context);
+        assert_eq!(
+            tokens.unwrap(),
+            [
+                Token::operator(OperatorType::Sin),
+                Token::Variable {
+                    inner: &context.vars[0]
+                },
+                Token::operator(OperatorType::Pow),
+                Token::Number { value: 5.0 },
+                Token::operator(OperatorType::Add),
+                Token::operator(OperatorType::Cos),
+                Token::Paren {
+                    kind: ParenType::Left
+                },
+                Token::Number { value: 6.54 },
+                Token::Paren {
+                    kind: ParenType::Right
+                }
+            ]
+        );
+    }
+}
