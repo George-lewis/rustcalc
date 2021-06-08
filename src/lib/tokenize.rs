@@ -44,10 +44,17 @@ fn _type(s: &str) -> Result<TokenType, ()> {
 pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>, Error> {
     let mut vec: Vec<Token> = Vec::new();
     let mut explicit_paren = 0;
-    let mut idx = 0;
+
+    // Indicates the possibility of an implicit coefficient
     let mut coeff = false;
+
+    // Indicates that the current operator would be unary
     let mut unary = true;
-    while idx < string.chars().count() {
+
+    let char_count = string.chars().count();
+    let mut idx = 0;
+
+    while idx < char_count {
         // Current character
         let c = string.chars().nth(idx).unwrap();
 
