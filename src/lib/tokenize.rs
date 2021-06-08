@@ -199,7 +199,9 @@ pub fn tokenize<'a>(
 mod tests {
 
     use super::OperatorType::Add;
-    use super::{tokenize, Error, EvaluationContext, OperatorType, ParenType, Token, Variable, ErrorContext};
+    use super::{
+        tokenize, Error, ErrorContext, EvaluationContext, OperatorType, ParenType, Token, Variable,
+    };
 
     #[test]
     fn test_tokenize_simple_ok() {
@@ -335,7 +337,7 @@ mod tests {
             vars: &vars,
             funcs: &[],
             depth: 0,
-            context: ErrorContext::Main
+            context: ErrorContext::Main,
         };
         let tokens = tokenize("1 + $x", &context);
         assert_eq!(

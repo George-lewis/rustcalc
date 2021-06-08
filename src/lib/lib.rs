@@ -64,10 +64,10 @@ mod tests {
 
     use crate::{
         model::{
-            constants::Constant, constants::ConstantType, operators::OperatorType,
-            tokens::ParenType, variables::Variable, EvaluationContext, errors::ErrorContext
+            constants::Constant, constants::ConstantType, errors::ErrorContext,
+            operators::OperatorType, tokens::ParenType, variables::Variable, EvaluationContext,
         },
-        Error, Token
+        Error, Token,
     };
 
     macro_rules! context {
@@ -99,9 +99,7 @@ mod tests {
                 Token::operator(OperatorType::Add),
                 Token::Number { value: 2.2 },
                 Token::operator(OperatorType::Add),
-                Token::Variable {
-                    inner: &vars[0]
-                }
+                Token::Variable { inner: &vars[0] }
             ]
         );
 
@@ -240,7 +238,12 @@ mod tests {
             ("3 + $a", Error::UnknownVariable(4)),
         ]
         .iter()
-        .for_each(|(a, b)| assert_eq!(doeval(a, EvaluationContext::default()).unwrap_err().error, *b));
+        .for_each(|(a, b)| {
+            assert_eq!(
+                doeval(a, EvaluationContext::default()).unwrap_err().error,
+                *b
+            )
+        });
     }
 
     #[test]
@@ -317,7 +320,10 @@ mod tests {
         vec![("3 + $a", Error::UnknownVariable(4))]
             .iter()
             .for_each(|(a, b)| {
-                assert_eq!(doeval(a, EvaluationContext::default()).unwrap_err().error, *b)
+                assert_eq!(
+                    doeval(a, EvaluationContext::default()).unwrap_err().error,
+                    *b
+                )
             });
     }
 }
