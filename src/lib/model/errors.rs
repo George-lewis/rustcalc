@@ -49,15 +49,6 @@ impl Error {
     }
 }
 
-// impl From<Error> for ContextError<'_> {
-//     fn from(error: Error) -> Self {
-//         Self {
-//             context: ErrorContext::Main,
-//             error
-//         }
-//     }
-// }
-
 #[derive(Debug)]
 pub struct ContextualError {
     pub context: ErrorContext,
