@@ -138,7 +138,7 @@ pub fn handle_errors(error: Error, input: &str) -> String {
                         format!("{:?}", kind).green()
                     ),
                     InnerFunction::User(f) => format!(
-                        "Function [{}] requires [{}] arguments.",
+                        "Function {} requires [{}] arguments.",
                         format_func_name(&f.name),
                         format!("{}", f.args.len()).red()
                     ),
