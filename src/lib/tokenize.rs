@@ -237,6 +237,21 @@ mod tests {
                 },
             ]
         );
+
+        let tokens = tokenize("1! + 1", &[]);
+        assert_eq!(
+            tokens.unwrap(),
+            [
+                Token::Number { value: 1.0 },
+                Token::Operator {
+                    kind: OperatorType::Factorial
+                },
+                Token::Operator {
+                    kind: OperatorType::Add
+                },
+                Token::Number { value: 1.0 },
+            ]
+        );
     }
 
     #[test]
