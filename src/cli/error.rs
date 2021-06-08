@@ -1,15 +1,15 @@
-pub use super::lib::model::errors::{ContextError as ContextLibError, Error as LibError};
+pub use super::lib::model::errors::{ContextualError as ContextualLibError, Error as LibError};
 pub use std::io::Error as IoError;
 
 /// Error type for errors stemming from cli code, which includes `Errors` thrown by the library
 pub enum Error {
     Assignment,
     Io(IoError),
-    Library(ContextLibError),
+    Library(ContextualLibError),
 }
 
-impl<'a> From<ContextLibError> for Error {
-    fn from(error: ContextLibError) -> Self {
+impl<'a> From<ContextualLibError> for Error {
+    fn from(error: ContextualLibError) -> Self {
         Self::Library(error)
     }
 }

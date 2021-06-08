@@ -8,7 +8,7 @@ use super::lib::utils;
 use colored::Colorize;
 use utils::Pos;
 
-use super::error::{ContextLibError, Error, LibError};
+use super::error::{ContextualLibError, Error, LibError};
 
 use super::vars::{assign_var, assign_var_command, format_vars};
 
@@ -126,7 +126,7 @@ pub fn handle_errors(error: Error, input: &str) -> String {
         Error::Assignment => {
             "Couldn't assign to variable. Malformed assignment statement.".to_string()
         }
-        Error::Library(ContextLibError { context, error }) => match error {
+        Error::Library(ContextualLibError { context, error }) => match error {
             LibError::Parsing(idx) => {
                 make_highlighted_error("Couldn't parse the token", input, idx)
             }

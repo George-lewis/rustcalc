@@ -16,7 +16,7 @@ use rpn::rpn;
 pub use tokenize::tokenize;
 
 use self::model::{
-    errors::{ContextError, Error},
+    errors::{ContextualError, Error},
     tokens::Token,
 };
 
@@ -36,7 +36,7 @@ pub const RECURSION_LIMIT: u8 = std::u8::MAX as _;
 pub fn doeval<'a>(
     string: &str,
     context: EvaluationContext<'a>,
-) -> Result<(f64, Vec<Token<'a>>), ContextError> {
+) -> Result<(f64, Vec<Token<'a>>), ContextualError> {
     if context.depth == RECURSION_LIMIT {
         return Err(Error::RecursionLimit.with_context(context.context));
     }

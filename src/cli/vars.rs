@@ -1,7 +1,7 @@
 use colored::{ColoredString, Colorize};
 use itertools::Itertools;
 
-use super::error::{ContextLibError, Error, LibError};
+use super::error::{ContextualLibError, Error, LibError};
 use super::lib::doeval;
 use super::lib::model::{
     errors::ErrorContext, functions::Function, variables::Variable, EvaluationContext,
@@ -54,7 +54,7 @@ pub fn assign_var_command<'var, 'func>(
 
     // Get value for variable
     let result = doeval(sides[1], context);
-    if let Err(ContextLibError {
+    if let Err(ContextualLibError {
         error: LibError::Parsing(idx),
         ..
     }) = result

@@ -1,7 +1,7 @@
 use crate::doeval;
 
 use super::{
-    errors::{ContextError, Error, ErrorContext},
+    errors::{ContextualError, Error, ErrorContext},
     operators::{Associativity, Operator},
     representable::{get_by_repr, Searchable},
     variables::Variable,
@@ -83,7 +83,7 @@ impl Function {
         &self,
         args: &[f64],
         context: &EvaluationContext<'a>,
-    ) -> Result<f64, ContextError> {
+    ) -> Result<f64, ContextualError> {
         let vars: Vec<_> = self
             .args
             .iter()
@@ -100,13 +100,6 @@ impl Function {
             context: ErrorContext::Scoped(self.clone()),
         };
         let result = doeval(&self.code, context);
-        // match result {
-        //     Ok((a, _)) => Ok(a),
-        //     Err(ContextError { context, error }) => Err(ContextError {
-        //         context: ErrorContext::Scoped(self),
-        //         error
-        //     })
-        // }
         match result {
             Ok((a, _)) => Ok(a),
             Err(e) => Err(e),

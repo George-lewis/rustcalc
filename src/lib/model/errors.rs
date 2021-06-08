@@ -41,8 +41,8 @@ pub enum Error {
 }
 
 impl Error {
-    pub fn with_context(self, context: ErrorContext) -> ContextError {
-        ContextError {
+    pub fn with_context(self, context: ErrorContext) -> ContextualError {
+        ContextualError {
             context,
             error: self,
         }
@@ -58,7 +58,16 @@ impl Error {
 //     }
 // }
 
-pub struct ContextError {
+pub struct ContextualError {
     pub context: ErrorContext,
     pub error: Error,
+}
+
+impl ContextualError {
+    pub fn with_context(self, context: ErrorContext) -> ContextualError {
+        ContextualError {
+            context,
+            error: self.error,
+        }
+    }
 }

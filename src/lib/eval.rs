@@ -1,7 +1,7 @@
 use crate::model::EvaluationContext;
 
 use super::model::{
-    errors::{ContextError, Error, ErrorContext, InnerFunction},
+    errors::{ContextualError, Error, ErrorContext, InnerFunction},
     functions::Functions,
     tokens::Token,
 };
@@ -10,7 +10,7 @@ use super::model::{
 /// * `tokens` - The tokens
 ///
 /// Returns the result as a 64-bit float or an `Error`
-pub fn eval(tokens: &[Token], context: EvaluationContext) -> Result<f64, ContextError> {
+pub fn eval(tokens: &[Token], context: EvaluationContext) -> Result<f64, ContextualError> {
     // We need a mutable copy of the tokens
     let mut stack: Vec<Token> = tokens.iter().rev().cloned().collect();
     let mut args: Vec<f64> = Vec::new();
@@ -46,28 +46,13 @@ pub fn eval(tokens: &[Token], context: EvaluationContext) -> Result<f64, Context
                         (b.doit)(&args_)
                     }
                     Functions::User(func) => {
-                        func.apply(&args_, &context)?
+                        match func.apply(&args_, &context) {
+                            Ok(value) => value,
+                            Err(ce) => return Err(ce.with_context(context.context))
+                        }
                     }
                 };
 
-                // {
-                //     Ok(result) => {
-                //         // Push the result of the evaluation
-                //         stack.push(Token::Number { value: result });
-                //     }
-                //     Err(error) => {
-                //         if let Functions::User(func) = op {
-                //             let find = context.funcs.iter().find(|f| f.name == func.name).unwrap();
-                //             return Err(
-                //                 ContextError {
-                //                     context: ErrorContext::Scoped(find),
-                //                     error: error.error
-                //                 }
-                //             )
-                //         }
-                //         return Err(error)
-                //     }
-                // }
                 // Push the result of the evaluation
                 stack.push(Token::Number { value: result });
             }
