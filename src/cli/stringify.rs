@@ -55,9 +55,13 @@ where
 
                 let no_space = matches!(
                     tokens.get(idx + 1),
-                    Some(Token::Operator {
-                        kind: OperatorType::Pow | OperatorType::Factorial
-                    })
+                    Some(
+                        Token::Operator {
+                            kind: OperatorType::Pow | OperatorType::Factorial
+                        } | Token::Paren {
+                            kind: ParenType::Right
+                        }
+                    )
                 );
 
                 let last = idx == tokens.len() - 1;
