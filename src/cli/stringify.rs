@@ -117,8 +117,6 @@ where
                 format!("{}{}", colored, appendix)
             }
             Token::Operator { inner: op } => {
-                // let op = Operator::by_type(kind);
-
                 match op.associativity() {
                     Associativity::Left => {
                         let space = if idx == tokens.len() - 1 { "" } else { " " };
@@ -199,5 +197,7 @@ where
         };
         out.push_str(&append)
     }
-    out
+
+    // In some cases, there may be some implicit parens left over
+    format!("{}{}", out, make_implicit_paren(implicit_paren))
 }
