@@ -25,7 +25,9 @@ pub fn eval(tokens: &[Token], context: EvaluationContext) -> Result<f64, Context
             }
             Token::Variable { inner } => args.push(inner.value),
             Token::Operator { inner: op } => {
-                let start = if let Some(x) = args.len().checked_sub(op.arity()) { x } else {
+                let start = if let Some(x) = args.len().checked_sub(op.arity()) {
+                    x
+                } else {
                     let inner = match op {
                         Functions::Builtin(b) => InnerFunction::Builtin(b.kind),
                         Functions::User(func) => InnerFunction::User(func.clone()),
