@@ -204,7 +204,7 @@ pub fn tokenize<'a>(
 #[cfg(test)]
 mod tests {
 
-    use super::OperatorType::Add;
+    use super::OperatorType::{Add, Factorial};
     use super::{
         model::errors::ErrorContext, tokenize, Error, EvaluationContext, OperatorType, ParenType,
         Token, Variable,
@@ -238,17 +238,13 @@ mod tests {
             ]
         );
 
-        let tokens = tokenize("1! + 1", &[]);
+        let tokens = tokenize("1! + 1", &EvaluationContext::default());
         assert_eq!(
             tokens.unwrap(),
             [
                 Token::Number { value: 1.0 },
-                Token::Operator {
-                    kind: OperatorType::Factorial
-                },
-                Token::Operator {
-                    kind: OperatorType::Add
-                },
+                Token::operator(Factorial),
+                Token::operator(Add),
                 Token::Number { value: 1.0 },
             ]
         );
@@ -276,7 +272,7 @@ mod tests {
     fn test_tokenize_mismatched_parens() {
         let context = EvaluationContext::default();
 
-        let result = tokenize("((1)) + (1))", &&context);
+        let result = tokenize("((1)) + (1))", &context);
         match result {
             Err(Error::MismatchingParens) => {}
             _ => panic!("Expected mismatched parens"),

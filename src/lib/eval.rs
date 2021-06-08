@@ -45,7 +45,7 @@ pub fn eval(tokens: &[Token], context: EvaluationContext) -> Result<f64, Context
                         // op.apply(&args_, context)?
                         (b.doit)(&args_)
                     }
-                    Functions::User(f) => f.apply(&args_, &context)?
+                    Functions::User(f) => f.apply(&args_, &context)?,
                 };
 
                 // Push the result of the evaluation
