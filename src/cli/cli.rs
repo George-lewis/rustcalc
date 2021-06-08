@@ -159,7 +159,7 @@ pub fn handle_errors(error: Error, input: &str) -> String {
                 LibError::RecursionLimit => "Exceeded recursion limit.".to_string(),
             };
             if let ErrorContext::Scoped(func) = &context {
-                format!("In function [{}]: {}", format_func_name(&func.name), msg)
+                format!("In function {}: {}", format_func_name(&func.name), msg)
             } else {
                 msg
             }
