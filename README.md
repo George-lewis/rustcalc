@@ -88,7 +88,7 @@ Rustcalc strives to provide insightful messages when errors arise. Some examples
 
 Meta:
 - Builtin operator arguments are unnamed, here they shall be named `a` and `b`
-- Trigonometric functions are in degrees, as opposed to radians
+- Trigonometric functions operate in radians, as opposed to degrees
 
 Names | Description | Usage
 --- | --- | ---
