@@ -51,7 +51,7 @@ mod tests {
     #![allow(clippy::shadow_unrelated)]
 
     use super::{eval, Token};
-    use crate::{model::operators::OperatorType, rpn::rpn};
+    use crate::{model::{operators::OperatorType, tokens::ParenType}, rpn::rpn};
 
     #[test]
     fn test_eval_ok() {
@@ -65,13 +65,13 @@ mod tests {
                 kind: OperatorType::Sin
             },
             Token::Paren {
-                kind: crate::model::tokens::ParenType::Left,
+                kind: ParenType::Left,
             },
             Token::Number {
                 value: 5.0
             },
             Token::Paren {
-                kind: crate::model::tokens::ParenType::Right,
+                kind: ParenType::Right,
             },
             Token::Operator {
                 kind: OperatorType::Pow
@@ -86,13 +86,13 @@ mod tests {
                 kind: OperatorType::Cos
             },
             Token::Paren {
-                kind: crate::model::tokens::ParenType::Left,
+                kind: ParenType::Left,
             },
             Token::Number {
                 value: 5.0
             },
             Token::Paren {
-                kind: crate::model::tokens::ParenType::Right,
+                kind: ParenType::Right,
             },
             Token::Operator {
                 kind: OperatorType::Pow
