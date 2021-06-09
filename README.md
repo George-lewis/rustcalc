@@ -83,7 +83,9 @@ Rustcalc strives to provide insightful messages when errors arise. Some examples
 
 # Reference
 
-## Operators
+## Builtins
+
+### Operators
 
 Meta:
 - Builtin operator arguments are unnamed, here they shall be named `a` and `b`
@@ -109,10 +111,102 @@ randi, randint | Generate a random integer on the range `[a, b]` | randint(0, 10
 \+ | Positive unary operator | +1 -> 1
 \- | Negative unary operator | -1 -> -1
 
-## Constants
+### Constants
 
 Names | Value
 --- | ---
 π, pi | 3.1415...
 τ, tau | 6.283...
 e | 2.718...
+
+# Syntax and Grammar
+
+Rustcalc is operated via a series of statements entered by the user on the command line.
+
+There are four types.
+
+## Expression
+
+This is the most basic kind of statement. It consists of value types like numbers and variables, and operators. The input is passed to the evaluation engine and a numerical result is produced.
+
+On success, Rustcalc prints the following:
+
+```
+[ an idealized representation of the input ] => the result rounded to 3 decimal places
+```
+
+### Components
+
+Expressions are formed of several components.
+
+#### Numeric Literals
+
+These are base-10 numbers with a literal value. Examples include `10`, `10.`, and `10.0`.
+
+#### Constants
+
+Constants are built into Rustcalc and are symbolic representations of numbers. They act similarly to numeric literals. See the reference for an exhaustive list.
+
+#### Operators
+
+Operators are fundamental operations built into Rustcalc that accept one or more number(s) and produce an output. Examples include `+`, `*`, and `!`. See the reference for an exhaustive list.
+
+#### Variables
+
+Variables are user-defined symbols that represent a value. They are similar to constants in many ways, but can have their value modified at runtime. Variables are always prefixed with a `$`.
+
+### Examples:
+
+A single number, the simplest expression:
+
+```
+> 0
+[ 0 ] => 0.000
+> (1)
+[ (1) ] => 1.000
+```
+
+An expression with a single operator:
+
+```
+> 1 + 2
+[ 1 + 2 ] => 3.000
+```
+
+## Variable Assignment
+
+This kind of statement is composed of a variable name and an expression. The expression is evaluated and then that value is stored inside the variable.
+
+A variable assignment is formed:
+```
+$variable_name = expression
+```
+
+where `$` and `=` are literal, `variable_name` is any valid identifier, and `expression` is an arbitrary expression.
+
+This statement will create a new variable or update the value of an existing variable.
+
+When the expression evaluated successfully Rustcalc prints in the following format:
+
+```
+[ $variable_name = an idealized representation of the expression ] => the new value of $variable_name rounded to 3 decimal places
+```
+
+### Example
+
+```
+> $x = 7.5
+[ $x = 7.5 ] => 7.500
+```
+
+## Variable List
+
+The variable list statement is a literal `$`. Rustcalc will list all of the defined variables in the following format:
+
+```
+[ $a => the value of $a rounded to three decimal places ]
+[ $b => the value of $b rounded to three decimal places ]
+...
+```
+
+Note: This is the same format as Rustcalc outputs after a successful variable assignment
