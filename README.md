@@ -4,7 +4,7 @@ A CLI calculator written in rust
 
 ## Screenshot
 
-![](https://github.com/George-lewis/rustcalc/blob/master/screenshots/screenshot.png)
+![](screenshots/screenshot.png)
 
 # Features
 
@@ -14,7 +14,7 @@ A CLI calculator written in rust
 
 Rustcalc obeys the standard order of operations:
 
-![](https://github.com/George-lewis/rustcalc/blob/master/screenshots/bedmas.png)
+![](screenshots/bedmas.png)
 
 ## Expressivity
 
@@ -22,13 +22,13 @@ Rustcalc supports multiple representations of standard operations, including pla
 
 > A full list of operators is available in the [Reference](tbd)
 
-![](https://github.com/George-lewis/rustcalc/blob/master/screenshots/expressivity.png)
+![](screenshots/expressivity.png)
 
 ## Constants
 
 Rustcalc comes with some useful predefined constants:
 
-![](https://github.com/George-lewis/rustcalc/blob/master/screenshots/expressivity.png)
+![](screenshots/expressivity.png)
 
 ## Variables
 
@@ -36,15 +36,15 @@ You can define your own variables and use them in computation.
 
 Variables are indicated by a `$` prefix, and can have any name.
 
-![](https://github.com/George-lewis/rustcalc/blob/master/screenshots/variables-1.png)
+![](screenshots/variables-1.png)
 
 You can list all defined variables with `$`!
 
-![](https://github.com/George-lewis/rustcalc/blob/master/screenshots/variables-2.png)
+![](screenshots/variables-2.png)
 
 `$ans` is defined for you, and takes on the value of the last statement!
 
-![](https://github.com/George-lewis/rustcalc/blob/master/screenshots/variables-3.png)
+![](screenshots/variables-3.png)
 
 ## RCFile
 
