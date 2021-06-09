@@ -204,19 +204,19 @@ static OPERATORS: &[Operator] = &[
     },
     Operator {
         kind: OperatorType::RandomFloat,
-        repr: &["randf"],
+        repr: &["randf", "randfloat"],
         precedence: 4,
         associativity: Associativity::Right,
         arity: 2,
-        doit: |arr| rand::thread_rng().gen_range(arr[0]..arr[1]),
+        doit: |arr| rand::thread_rng().gen_range(arr[0]..=arr[1]),
     },
     Operator {
         kind: OperatorType::RandomInt,
-        repr: &["randint"],
+        repr: &["randi", "randint"],
         precedence: 4,
         associativity: Associativity::Right,
         arity: 2,
-        doit: |arr| rand::thread_rng().gen_range((arr[0] as i64)..(arr[1] as i64)) as f64,
+        doit: |arr| rand::thread_rng().gen_range((arr[0] as i64)..=(arr[1] as i64)) as f64,
     },
     Operator {
         kind: OperatorType::Negative,
