@@ -235,30 +235,22 @@ mod tests {
                 Token::Operator {
                     kind: OperatorType::Sin
                 },
-                Token::Number {
-                    value: 5.0
-                },
+                Token::Number { value: 5.0 },
                 Token::Operator {
                     kind: OperatorType::Pow
                 },
-                Token::Number {
-                    value: 2.0
-                },
+                Token::Number { value: 2.0 },
                 Token::Operator {
                     kind: OperatorType::Add
                 },
                 Token::Operator {
                     kind: OperatorType::Cos
                 },
-                Token::Number {
-                    value: 5.0
-                },
+                Token::Number { value: 5.0 },
                 Token::Operator {
                     kind: OperatorType::Pow
                 },
-                Token::Number {
-                    value: 2.0
-                }
+                Token::Number { value: 2.0 }
             ]
         );
     }

@@ -51,7 +51,10 @@ mod tests {
     #![allow(clippy::shadow_unrelated)]
 
     use super::{eval, Token};
-    use crate::{model::{operators::OperatorType, tokens::ParenType}, rpn::rpn};
+    use crate::{
+        model::{operators::OperatorType, tokens::ParenType},
+        rpn::rpn,
+    };
 
     #[test]
     fn test_eval_ok() {
@@ -62,44 +65,36 @@ mod tests {
         // sin(5)^2 + cos(5)^2 => 1
         let tokens = [
             Token::Operator {
-                kind: OperatorType::Sin
+                kind: OperatorType::Sin,
             },
             Token::Paren {
                 kind: ParenType::Left,
             },
-            Token::Number {
-                value: 5.0
-            },
+            Token::Number { value: 5.0 },
             Token::Paren {
                 kind: ParenType::Right,
             },
             Token::Operator {
-                kind: OperatorType::Pow
+                kind: OperatorType::Pow,
             },
-            Token::Number {
-                value: 2.0
+            Token::Number { value: 2.0 },
+            Token::Operator {
+                kind: OperatorType::Add,
             },
             Token::Operator {
-                kind: OperatorType::Add
-            },
-            Token::Operator {
-                kind: OperatorType::Cos
+                kind: OperatorType::Cos,
             },
             Token::Paren {
                 kind: ParenType::Left,
             },
-            Token::Number {
-                value: 5.0
-            },
+            Token::Number { value: 5.0 },
             Token::Paren {
                 kind: ParenType::Right,
             },
             Token::Operator {
-                kind: OperatorType::Pow
+                kind: OperatorType::Pow,
             },
-            Token::Number {
-                value: 2.0
-            }
+            Token::Number { value: 2.0 },
         ];
         let tokens = rpn(&tokens).unwrap();
         dbg!(&tokens);
