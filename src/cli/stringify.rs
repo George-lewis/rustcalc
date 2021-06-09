@@ -56,15 +56,13 @@ where
 
                 let no_space = matches!(
                     tokens.get(idx + 1),
-                    Some(
-                        Token::Operator {
-                            kind: OperatorType::Pow
-                        }| Token::Operator {
-                            kind: OperatorType::Factorial
-                        } | Token::Paren {
-                            kind: ParenType::Right
-                        }
-                    )
+                    Some(Token::Operator {
+                        kind: OperatorType::Pow
+                    }) | Some(Token::Operator {
+                        kind: OperatorType::Factorial
+                    }) | Some(Token::Paren {
+                        kind: ParenType::Right
+                    })
                 );
 
                 // We delay the r_parens when the next operator is pow
@@ -154,13 +152,11 @@ where
                     //   - An R Paren
                     let is_pow_or_r_paren = matches!(
                         tokens.get(idx + 1),
-                        Some(
-                            Token::Operator {
-                                kind: OperatorType::Pow
-                            } | Token::Paren {
-                                kind: ParenType::Right,
-                            }
-                        )
+                        Some(Token::Operator {
+                            kind: OperatorType::Pow
+                        }) | Some(Token::Paren {
+                            kind: ParenType::Right,
+                        })
                     );
 
                     if is_last || is_pow_or_r_paren {
