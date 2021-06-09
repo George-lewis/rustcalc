@@ -227,6 +227,40 @@ mod tests {
                 Token::Number { value: 1.0 },
             ]
         );
+
+        let tokens = tokenize("sin 5 exp 2 + cos 5^2", &[]);
+        assert_eq!(
+            tokens.unwrap(),
+            [
+                Token::Operator {
+                    kind: OperatorType::Sin
+                },
+                Token::Number {
+                    value: 5.0
+                },
+                Token::Operator {
+                    kind: OperatorType::Pow
+                },
+                Token::Number {
+                    value: 2.0
+                },
+                Token::Operator {
+                    kind: OperatorType::Add
+                },
+                Token::Operator {
+                    kind: OperatorType::Cos
+                },
+                Token::Number {
+                    value: 5.0
+                },
+                Token::Operator {
+                    kind: OperatorType::Pow
+                },
+                Token::Number {
+                    value: 2.0
+                }
+            ]
+        );
     }
 
     #[test]

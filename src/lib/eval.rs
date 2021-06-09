@@ -48,12 +48,62 @@ pub fn eval(tokens: &[Token]) -> Result<f64, Error> {
 #[cfg(test)]
 mod tests {
 
+    #![allow(clippy::shadow_unrelated)]
+
     use super::{eval, Token};
+    use crate::{model::operators::OperatorType, rpn::rpn};
 
     #[test]
     fn test_eval_ok() {
         let tokens = [Token::Number { value: 4.67 }];
         let result = eval(&tokens).unwrap();
         same!(result, 4.67);
+
+        // sin(5)^2 + cos(5)^2 => 1
+        let tokens = [
+            Token::Operator {
+                kind: OperatorType::Sin
+            },
+            Token::Paren {
+                kind: crate::model::tokens::ParenType::Left,
+            },
+            Token::Number {
+                value: 5.0
+            },
+            Token::Paren {
+                kind: crate::model::tokens::ParenType::Right,
+            },
+            Token::Operator {
+                kind: OperatorType::Pow
+            },
+            Token::Number {
+                value: 2.0
+            },
+            Token::Operator {
+                kind: OperatorType::Add
+            },
+            Token::Operator {
+                kind: OperatorType::Cos
+            },
+            Token::Paren {
+                kind: crate::model::tokens::ParenType::Left,
+            },
+            Token::Number {
+                value: 5.0
+            },
+            Token::Paren {
+                kind: crate::model::tokens::ParenType::Right,
+            },
+            Token::Operator {
+                kind: OperatorType::Pow
+            },
+            Token::Number {
+                value: 2.0
+            }
+        ];
+        let tokens = rpn(&tokens).unwrap();
+        dbg!(&tokens);
+        let result = eval(&tokens).unwrap();
+        same!(result, 1.0);
     }
 }
