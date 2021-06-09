@@ -2,7 +2,6 @@
 
 A CLI calculator written in rust
 
-
 ![](screenshots/screenshot.png)
 
 # Features
@@ -87,9 +86,7 @@ Rustcalc strives to provide insightful messages when errors arise. Some examples
 
 # Reference
 
-## Builtins
-
-### Operators
+## Operators
 
 Meta:
 - Builtin operator arguments are unnamed, here they shall be named `a` and `b`
@@ -112,10 +109,8 @@ min | Calculate the min of `a` and `b` | min(1, 2) -> 1
 !, factorial, fact | Calculate the factorial of `a` | 5! -> 120
 randf, randfloat | Generate a random real number on the range `[a, b]` | randf(0, 1) -> ind
 randi, randint | Generate a random integer on the range `[a, b]` | randint(0, 10)
-\+ | Positive unary operator | +1 -> 1
-\- | Negative unary operator | -1 -> -1
 
-### Constants
+## Constants
 
 Names | Value
 --- | ---
