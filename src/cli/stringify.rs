@@ -33,7 +33,8 @@ fn color_cli(string: &str, token: &Token) -> ColoredString {
 /// Convert a list of `Token`s into a string representation
 /// * `tokens` - The tokens
 /// * `colorize` - A function that colors tokens
-#[allow(clippy::too_many_lines)]
+// TODO: Allowing unnested or patterns because while they are stabilized, they're not release yet
+#[allow(clippy::too_many_lines, clippy::unnested_or_patterns)]
 fn _stringify<F, T: Display>(tokens: &[Token], colorize: F) -> String
 where
     F: Fn(&str, &Token) -> T,
@@ -57,7 +58,9 @@ where
                     tokens.get(idx + 1),
                     Some(
                         Token::Operator {
-                            kind: OperatorType::Pow | OperatorType::Factorial
+                            kind: OperatorType::Pow
+                        }| Token::Operator {
+                            kind: OperatorType::Factorial
                         } | Token::Paren {
                             kind: ParenType::Right
                         }
