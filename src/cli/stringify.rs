@@ -13,11 +13,11 @@ pub fn stringify(tokens: &[Token]) -> String {
 }
 
 /// Color
-fn color_cli(string: &str, token: &Token) -> ColoredString {
-    match token {
+pub fn color_cli<'a>(string: &str, token: &impl Stringable<'a>) -> ColoredString {
+    match token.matchable() {
         Token::Number { .. } => string.clear(),
         Token::Operator { kind } => {
-            let op = Operator::by_type(*kind);
+            let op = Operator::by_type(kind);
             if op.associativity == Associativity::Left {
                 string.green().bold()
             } else {
@@ -30,32 +30,87 @@ fn color_cli(string: &str, token: &Token) -> ColoredString {
     }
 }
 
+pub trait Stringable<'a> {
+    fn matchable(&self) -> Token;
+    fn ideal_repr(&self) -> String;
+}
+
+impl<'a> Stringable<'a> for Token<'a> {
+    fn matchable(&self) -> Token {
+        *self
+    }
+
+    fn ideal_repr(&self) -> String {
+        self.ideal_repr()
+    }
+}
+
+// impl<'a> Into<Token<'a>> for (Token<'a>, Option<String>) {
+//     fn into(self) -> Token<'a> {
+//         self.0
+//     }
+// }
+
+#[derive(Debug)]
+pub struct StringToken<'a> {
+    pub token: Token<'a>,
+    pub repr: Option<String>
+}
+
+impl<'a> From<Token<'a>> for StringToken<'a> {
+    fn from(t: Token<'a>) -> Self {
+        Self {
+            token: t,
+            repr: None,
+        }
+    }
+} 
+
+impl<'a> Into<Token<'a>> for StringToken<'a> {
+    fn into(self) -> Token<'a> {
+        self.token
+    }
+}
+
+impl<'a> Stringable<'a> for StringToken<'a> {
+    fn matchable(&self) -> Token {
+        self.token
+    }
+
+    fn ideal_repr(&self) -> String {
+        match &self.repr {
+            Some(s) => s.to_string(),
+            None => self.matchable().ideal_repr(),
+        }
+    }
+}
+
 /// Convert a list of `Token`s into a string representation
 /// * `tokens` - The tokens
 /// * `colorize` - A function that colors tokens
 // TODO: Allowing unnested or patterns because while they are stabilized, they're not release yet
 #[allow(clippy::too_many_lines, clippy::unnested_or_patterns)]
-fn _stringify<F, T: Display>(tokens: &[Token], colorize: F) -> String
+pub fn _stringify<'a, F, T: Display, S: Stringable<'a> + From<Token<'a>>>(tokens: &[S], colorize: F) -> String
 where
-    F: Fn(&str, &Token) -> T,
+    F: Fn(&str, &S) -> T,
 {
     let mut out = String::new();
     let mut implicit_paren: usize = 0;
     for (idx, token) in tokens.iter().enumerate() {
         let colored: T = colorize(&token.ideal_repr(), token);
-        let append = match *token {
+        let append = match token.matchable() {
             Token::Number { .. } | Token::Constant { .. } | Token::Variable { .. } => {
                 let is_r_paren = matches!(
-                    tokens.get(idx + 1),
+                    tokens.get(idx + 1).map(|t| t.matchable()),
                     Some(Token::Paren {
                         kind: ParenType::Right
                     })
                 );
 
-                let is_op = matches!(tokens.get(idx + 1), Some(Token::Operator { .. }));
+                let is_op = matches!(tokens.get(idx + 1).map(|t| t.matchable()), Some(Token::Operator { .. }));
 
                 let no_space = matches!(
-                    tokens.get(idx + 1),
+                    tokens.get(idx + 1).map(|t| t.matchable()),
                     Some(Token::Operator {
                         kind: OperatorType::Pow
                     }) | Some(Token::Operator {
@@ -69,7 +124,7 @@ where
                 // Because exponents have a higher precedence in BEDMAS
                 // So, `sin 5^2` should become `sin(5^2)` NOT `sin(5)^2`
                 let delay_implicit_paren = matches!(
-                    tokens.get(idx + 1),
+                    tokens.get(idx + 1).map(|t| t.matchable()),
                     Some(Token::Operator {
                         kind: OperatorType::Pow
                     })
@@ -83,7 +138,7 @@ where
                         &")".repeat(implicit_paren),
                         &Token::Paren {
                             kind: ParenType::Right,
-                        },
+                        }.into(),
                     );
                     implicit_paren = 0;
                     format!("{}{}", r_paren, space)
@@ -109,7 +164,7 @@ where
                     }
                     Associativity::Right => {
                         let is_l_paren = matches!(
-                            tokens.get(idx + 1),
+                            tokens.get(idx + 1).map(|t| t.matchable()),
                             Some(Token::Paren {
                                 kind: ParenType::Left
                             })
@@ -128,7 +183,7 @@ where
                                 "(",
                                 &Token::Paren {
                                     kind: ParenType::Left,
-                                },
+                                }.into(),
                             );
                             format!("{}{}", colored, l_paren)
                         } else {
@@ -151,7 +206,7 @@ where
                     //   - Pow
                     //   - An R Paren
                     let is_pow_or_r_paren = matches!(
-                        tokens.get(idx + 1),
+                        tokens.get(idx + 1).map(S::matchable),
                         Some(Token::Operator {
                             kind: OperatorType::Pow
                         }) | Some(Token::Paren {

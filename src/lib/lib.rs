@@ -12,7 +12,9 @@ pub mod model;
 
 use eval::eval;
 use rpn::rpn;
-use tokenize::tokenize;
+pub use tokenize::tokenize;
+pub use tokenize::tokenize1;
+
 
 use self::model::{errors::Error, tokens::Token, variables::Variable};
 

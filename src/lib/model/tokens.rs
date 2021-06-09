@@ -35,10 +35,10 @@ impl Token<'_> {
             _ => None,
         }
     }
-    pub fn number(string: &str) -> Option<(Self, usize)> {
+    pub fn number(string: &str) -> Option<(Self, String)> {
         let repr = Self::next_number(string);
         match repr.parse::<f64>() {
-            Ok(value) => Some((Self::Number { value }, repr.len())),
+            Ok(value) => Some((Self::Number { value }, repr)),
             Err(..) => None,
         }
     }

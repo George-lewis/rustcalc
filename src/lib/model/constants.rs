@@ -48,7 +48,7 @@ impl Constant {
     }
 
     /// Get a `Constant` by one of its string representations
-    pub fn by_repr(repr: &str) -> Option<(&'static Self, usize)> {
+    pub fn by_repr(repr: &str) -> Option<(&'static Self, &'static str)> {
         get_by_repr(repr, CONSTANTS)
     }
 

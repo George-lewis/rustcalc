@@ -8,10 +8,10 @@ pub struct Variable {
 }
 
 impl Searchable for Variable {
-    fn search<'a>(&'a self, search: &str) -> Option<(&'a Self, usize)> {
+    fn search<'a>(&'a self, search: &str) -> Option<(&'a Self, &'a str)> {
         // Case sensitive
         if search.starts_with(&self.repr) {
-            Some((self, self.repr.chars().count()))
+            Some((self, &self.repr))
         } else {
             None
         }
@@ -23,7 +23,7 @@ impl Variable {
     /// * `text` - The string to search. Must start with the name of a variable (not a '$') but can
     /// be arbitrarily long. Matches are case sensitive.
     /// * `vars` - A slice of [Variable]s to check for
-    pub fn next_variable<'a>(text: &str, vars: &'a [Self]) -> Option<(&'a Self, usize)> {
+    pub fn next_variable<'a>(text: &str, vars: &'a [Self]) -> Option<(&'a Self, &'a str)> {
         get_by_repr(text, vars)
     }
 

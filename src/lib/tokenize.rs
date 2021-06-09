@@ -40,9 +40,9 @@ fn _type(s: &str) -> Result<TokenType, ()> {
 /// * `vars` - The available `Variable`s
 ///
 /// Returns a list of tokens or an error
-#[allow(clippy::unnecessary_unwrap, clippy::too_many_lines)]
-pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>, Error> {
-    let mut vec: Vec<Token> = Vec::new();
+#[allow(clippy::unnecessary_unwrap, clippy::too_many_lines, clippy::missing_errors_doc, clippy::module_name_repetitions)]
+pub fn tokenize1<'a, T, F: Fn(Token<'a>, Option<String>) -> T>(string: &str, vars: &'a [Variable], f: F) -> Result<Vec<T>, (Vec<T>, Error)> {
+    let mut vec: Vec<T> = Vec::new();
     let mut explicit_paren = 0;
 
     // Indicates the possibility of an implicit coefficient
@@ -79,9 +79,9 @@ pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>
                 // Only a coefficient if the next (current) token is not
                 // A left-associative function or pow
                 if !is_left_assoc_or_pow {
-                    vec.push(Token::Operator {
+                    vec.push(f(Token::Operator {
                         kind: OperatorType::Mul,
-                    });
+                    }, None));
                 }
             }
             coeff = false;
@@ -90,7 +90,7 @@ pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>
         let kind: TokenType = match _type(&slice) {
             Ok(k) => k,
             Err(()) => {
-                return Err(Error::Parsing(idx));
+                return Err((vec, Error::Parsing(idx)));
             }
         };
 
@@ -101,18 +101,18 @@ pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>
                 unary = if unary && unar.is_some() {
                     // Current token is a unary operator
                     let (a, b) = unar.unwrap();
-                    idx += b;
-                    vec.push(Token::Operator { kind: *a });
+                    idx += b.chars().count();
+                    vec.push(f(Token::Operator { kind: *a }, Some(b.to_string())));
 
                     // Support for consecutive unary ops
                     true
                 } else {
-                    let (operator, n) = Operator::by_repr(&slice).unwrap();
+                    let (operator, s) = Operator::by_repr(&slice).unwrap();
 
-                    idx += n;
-                    vec.push(Token::Operator {
+                    idx += s.chars().count();
+                    vec.push(f(Token::Operator {
                         kind: operator.kind,
-                    });
+                    }, Some(s.to_owned())));
 
                     // The next token cannot be unary if this operator is factorial
                     // ATM this is the only postfix operator we support
@@ -134,13 +134,13 @@ pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>
                     }
                 }
 
-                vec.push(t);
+                vec.push(f(t, Some(c.to_string())));
                 idx += 1;
             }
             TokenType::Number => {
                 let (t, n) = match Token::number(&slice) {
-                    Some(a) => a,
-                    None => return Err(Error::Parsing(idx)),
+                    Some((t, s)) => (f(t, Some(s.to_string())), s.chars().count()),
+                    None => return Err((vec, Error::Parsing(idx))),
                 };
                 idx += n;
                 vec.push(t);
@@ -148,11 +148,11 @@ pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>
                 unary = false;
             }
             TokenType::Constant => {
-                let (constant, n) = Constant::by_repr(&slice).unwrap();
-                idx += n;
-                vec.push(Token::Constant {
+                let (constant, s) = Constant::by_repr(&slice).unwrap();
+                idx += s.chars().count();
+                vec.push(f(Token::Constant {
                     kind: constant.kind,
-                });
+                }, Some(s.to_string())));
                 coeff = true;
                 unary = false;
             }
@@ -160,10 +160,10 @@ pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>
                 let (variable, n) = match Variable::next_variable(&slice[1..], vars) {
                     // [1..] to ignore the $ prefix
                     Some(a) => a,
-                    None => return Err(Error::UnknownVariable(idx)),
+                    None => return Err((vec, Error::UnknownVariable(idx))),
                 };
-                idx += n + 1; // +1 to account for '$'
-                vec.push(Token::Variable { inner: variable });
+                idx += n.chars().count() + 1; // +1 to account for '$'
+                vec.push(f(Token::Variable { inner: variable }, Some(n.to_string())));
                 coeff = true;
                 unary = false;
             }
@@ -172,8 +172,12 @@ pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>
     if explicit_paren == 0 {
         Ok(vec)
     } else {
-        Err(Error::MismatchingParens)
+        Err((vec, Error::MismatchingParens))
     }
+}
+
+pub fn tokenize<'a>(string: &str, vars: &'a [Variable]) -> Result<Vec<Token<'a>>, Error> {
+    tokenize1(string, vars, |a, b| a).map_err(|(_, a)| a)
 }
 
 #[cfg(test)]

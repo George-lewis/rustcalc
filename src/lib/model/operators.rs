@@ -63,7 +63,7 @@ impl Operator {
     }
 
     /// get an `Operator` by one of its string representations
-    pub fn by_repr(repr: &str) -> Option<(&'static Self, usize)> {
+    pub fn by_repr(repr: &str) -> Option<(&'static Self, &'static str)> {
         get_by_repr(repr, OPERATORS)
     }
 
@@ -73,7 +73,7 @@ impl Operator {
     }
 
     // Determines if the next sequence is a unary `Operator`
-    pub fn unary(repr: &str) -> Option<(&OperatorType, usize)> {
+    pub fn unary(repr: &str) -> Option<(&OperatorType, &str)> {
         get_by_repr(repr, UNARY_OPERATORS)
     }
 }
