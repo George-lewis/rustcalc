@@ -64,9 +64,19 @@ where
                     )
                 );
 
+                // We delay the r_parens when the next operator is pow
+                // Because exponents have a higher precedence in BEDMAS
+                // So, `sin 5^2` should become `sin(5^2)` NOT `sin(5)^2`
+                let delay_implicit_paren = matches!(
+                    tokens.get(idx + 1),
+                    Some(Token::Operator {
+                        kind: OperatorType::Pow
+                    })
+                );
+
                 let last = idx == tokens.len() - 1;
 
-                let appendix = if implicit_paren > 0 {
+                let appendix = if implicit_paren > 0 && !delay_implicit_paren {
                     let space = if last || no_space { "" } else { " " };
                     let r_paren: T = colorize(
                         &")".repeat(implicit_paren),
@@ -74,6 +84,7 @@ where
                             kind: ParenType::Right,
                         },
                     );
+                    implicit_paren = 0;
                     format!("{}{}", r_paren, space)
                 } else if last {
                     "".to_string()
@@ -84,8 +95,6 @@ where
                 } else {
                     "".to_string()
                 };
-
-                implicit_paren = 0;
 
                 format!("{}{}", colored, appendix)
             }
