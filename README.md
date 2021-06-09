@@ -107,7 +107,7 @@ max | Calculate the max of `a` and `b` | max(1, 2) -> 2
 min | Calculate the min of `a` and `b` | min(1, 2) -> 1
 √, sqrt, root | Calculate the square root of `a` | sqrt(2) -> 1.414
 !, factorial, fact | Calculate the factorial of `a` | 5! -> 120
-randf, randfloat | Generate a random real number on the range `[a, b]` | randf(0, 1) -> ind
+randf, randfloat | Generate a random real number on the range `[a, b]` | randf(0, 1)
 randi, randint | Generate a random integer on the range `[a, b]` | randint(0, 10)
 
 ## Constants
