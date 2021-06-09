@@ -21,13 +21,15 @@ Rustcalc obeys the standard order of operations:
 
 Rustcalc supports multiple representations of standard operations, including plain English!
 
-> A full list of operators is available in the [Reference](tbd)
+> A full list of operators is available in [the reference](#operators)
 
 ![](screenshots/expressivity.png)
 
 ## Constants
 
-Rustcalc comes with some useful predefined constants:
+Rustcalc comes with some useful predefined constants.
+
+> A full list of constants is available in [the reference](#constants-1)
 
 ![](screenshots/expressivity.png)
 
@@ -57,6 +59,9 @@ Rustcalc supports running a script at runtime. On first run, Rustcalc will gener
 
 On startup, Rustcalc will load the RCFile and run each line as if it had been input manually.
 
+> ### Note
+> Unlike manual input, statements executed from the RCFile are silent. Thus, while you could have something like: `1 + 2` in your RCFile, it would be ineffectual.
+
 This allows you to define variables that will be available immediately.
 
 On first startup:
@@ -72,7 +77,7 @@ Example RCFile:
 $golden_ratio = 1.618033
 ```
 
-`$golden_ratio` will then be created at startup and available for use.
+`$golden_ratio` will then be created at startup and available for use immediately.
 
 ## Descriptive Errors
 
