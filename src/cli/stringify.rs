@@ -89,6 +89,9 @@ where
                     Some(Token::Operator {
                         inner: Functions::Builtin(inner),
                     }) => inner.kind == OperatorType::Pow || inner.kind == OperatorType::Factorial,
+                    Some(Token::Paren {
+                        kind: ParenType::Right,
+                    }) => true,
                     _ => false,
                 };
 
