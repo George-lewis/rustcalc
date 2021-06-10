@@ -56,7 +56,8 @@ fn color_cli(string: &str, token: &Token) -> ColoredString {
 /// Convert a list of `Token`s into a string representation
 /// * `tokens` - The tokens
 /// * `colorize` - A function that colors tokens
-#[allow(clippy::too_many_lines)]
+// TODO: Allowing unnested or patterns because while they are stabilized, they're not release yet
+#[allow(clippy::too_many_lines, clippy::unnested_or_patterns)]
 fn _stringify<F, T: Display>(tokens: &[Token], colorize: F) -> String
 where
     F: Fn(&str, &Token) -> T,
@@ -91,9 +92,19 @@ where
                     _ => false,
                 };
 
+                // We delay the r_parens when the next operator is pow
+                // Because exponents have a higher precedence in BEDMAS
+                // So, `sin 5^2` should become `sin(5^2)` NOT `sin(5)^2`
+                let delay_implicit_paren = match tokens.get(idx + 1) {
+                    Some(Token::Operator {
+                        inner: Functions::Builtin(inner)
+                    }) => inner.kind == OperatorType::Pow,
+                    _ => false
+                };
+
                 let last = idx == tokens.len() - 1;
 
-                let appendix = if implicit_paren > 0 {
+                let appendix = if implicit_paren > 0 && !delay_implicit_paren {
                     let space = if last || no_space { "" } else { " " };
                     let r_paren: T = colorize(
                         &")".repeat(implicit_paren),
@@ -101,6 +112,7 @@ where
                             kind: ParenType::Right,
                         },
                     );
+                    implicit_paren = 0;
                     format!("{}{}", r_paren, space)
                 } else if last {
                     "".to_string()
@@ -111,8 +123,6 @@ where
                 } else {
                     "".to_string()
                 };
-
-                implicit_paren = 0;
 
                 format!("{}{}", colored, appendix)
             }

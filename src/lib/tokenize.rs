@@ -60,10 +60,14 @@ pub fn tokenize<'a>(
 ) -> Result<Vec<Token<'a>>, Error> {
     let mut vec: Vec<Token> = Vec::new();
     let mut explicit_paren = 0;
-    let mut idx = 0;
+
+    // Indicates the possibility of an implicit coefficient
     let mut coeff = false;
+
+    // Indicates that the current operator would be unary
     let mut unary = true;
 
+    let mut idx = 0;
     let end = string.chars().count();
     while idx < end {
         let slice = utils::slice(string, idx, &Pos::End);
@@ -246,6 +250,22 @@ mod tests {
                 Token::operator(Factorial),
                 Token::operator(Add),
                 Token::Number { value: 1.0 },
+            ]
+        );
+
+        let tokens = tokenize("sin 5 exp 2 + cos 5^2", &EvaluationContext::default());
+        assert_eq!(
+            tokens.unwrap(),
+            [
+                Token::operator(OperatorType::Sin),
+                Token::Number { value: 5.0 },
+                Token::operator(OperatorType::Pow),
+                Token::Number { value: 2.0 },
+                Token::operator(OperatorType::Add),
+                Token::operator(OperatorType::Cos),
+                Token::Number { value: 5.0 },
+                Token::operator(OperatorType::Pow),
+                Token::Number { value: 2.0 }
             ]
         );
     }

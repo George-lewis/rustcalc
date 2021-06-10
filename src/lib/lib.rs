@@ -58,7 +58,7 @@ pub fn doeval<'a>(
 #[cfg(test)]
 mod tests {
 
-    #![allow(clippy::shadow_unrelated)]
+    #![allow(clippy::shadow_unrelated, clippy::needless_for_each)]
 
     use super::doeval;
 

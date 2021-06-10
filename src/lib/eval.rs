@@ -61,24 +61,48 @@ pub fn eval(tokens: &[Token], context: EvaluationContext) -> Result<f64, Context
 #[cfg(test)]
 mod tests {
 
+    #![allow(clippy::shadow_unrelated)]
+
     use std::vec;
 
-    use crate::{
-        model::{
-            errors::ErrorContext,
-            functions::{Function, Functions},
-            variables::Variable,
-        },
-        rpn::rpn,
-    };
+    use crate::{model::{errors::ErrorContext, functions::{Function, Functions}, operators::OperatorType, tokens::ParenType, variables::Variable}, rpn::rpn};
 
     use super::{eval, EvaluationContext, Token};
 
     #[test]
     fn test_eval_ok() {
         let tokens = [Token::Number { value: 4.67 }];
+
         let result = eval(&tokens, EvaluationContext::default()).unwrap();
-        assert_same!(result, 4.67);
+        same!(result, 4.67);
+
+        // sin(5)^2 + cos(5)^2 => 1
+        let tokens = [
+            Token::operator(OperatorType::Sin),
+            Token::Paren {
+                kind: ParenType::Left,
+            },
+            Token::Number { value: 5.0 },
+            Token::Paren {
+                kind: ParenType::Right,
+            },
+            Token::operator(OperatorType::Pow),
+            Token::Number { value: 2.0 },
+            Token::operator(OperatorType::Add),
+            Token::operator(OperatorType::Cos),
+            Token::Paren {
+                kind: ParenType::Left,
+            },
+            Token::Number { value: 5.0 },
+            Token::Paren {
+                kind: ParenType::Right,
+            },
+            Token::operator(OperatorType::Pow),
+            Token::Number { value: 2.0 }
+        ];
+        let tokens = rpn(&tokens).unwrap();
+        let result = eval(&tokens, EvaluationContext::default()).unwrap();
+        same!(result, 1.0);
     }
 
     #[test]
@@ -134,5 +158,6 @@ mod tests {
         let tokens = rpn(&tokens).unwrap();
         let result = eval(&tokens, context.clone()).unwrap();
         assert_same!(result, 1.0 / 8.0);
+        
     }
 }
