@@ -28,10 +28,10 @@ pub fn format_vars(vars: &[Variable]) -> String {
 }
 
 /// Takes the given user `input` and splits it up into a name and value to be assigned or reassigned to a [Variable] in `vars`
-pub fn assign_var_command<'var, 'func>(
+pub fn assign_var_command(
     input: &str,
-    vars: &'var mut Vec<Variable>,
-    funcs: &'func [Function],
+    vars: &mut Vec<Variable>,
+    funcs: &[Function],
 ) -> Result<String, Error> {
     // Variable assignment/reassignment
 

@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 
+#[allow(clippy::let_underscore_drop)]
 pub fn insert_or_swap_sort<Element, Cmp>(vec: &mut Vec<Element>, element: Element, cmp: Cmp)
 where
     Cmp: Fn(&Element) -> Ordering,

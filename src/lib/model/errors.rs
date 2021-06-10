@@ -41,7 +41,7 @@ pub enum Error {
 }
 
 impl Error {
-    pub fn with_context(self, context: ErrorContext) -> ContextualError {
+    pub const fn with_context(self, context: ErrorContext) -> ContextualError {
         ContextualError {
             context,
             error: self,
@@ -56,8 +56,14 @@ pub struct ContextualError {
 }
 
 impl ContextualError {
-    pub fn with_context(self, context: ErrorContext) -> ContextualError {
-        ContextualError {
+    // Why:
+    // > destructors cannot be evaluated at compile-time
+    // > constant functions cannot evaluate destructors
+    // > rustc(E0493)
+    // It may be possible to fix this later
+    #[allow(clippy::missing_const_for_fn)]
+    pub fn with_context(self, context: ErrorContext) -> Self {
+        Self {
             context,
             error: self.error,
         }

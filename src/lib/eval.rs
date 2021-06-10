@@ -74,7 +74,7 @@ mod tests {
         let tokens = [Token::Number { value: 4.67 }];
 
         let result = eval(&tokens, EvaluationContext::default()).unwrap();
-        same!(result, 4.67);
+        assert_same!(result, 4.67);
 
         // sin(5)^2 + cos(5)^2 => 1
         let tokens = [
@@ -102,7 +102,7 @@ mod tests {
         ];
         let tokens = rpn(&tokens).unwrap();
         let result = eval(&tokens, EvaluationContext::default()).unwrap();
-        same!(result, 1.0);
+        assert_same!(result, 1.0);
     }
 
     #[test]

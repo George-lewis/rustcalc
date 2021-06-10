@@ -51,7 +51,7 @@ pub fn format_funcs(funcs: &[Function]) -> String {
     funcs.iter().map(|f| format_func(f, funcs)).join("\n")
 }
 
-pub fn assign_func_command<'a>(input: &str, funcs: &mut Vec<Function>) -> Result<String, Error> {
+pub fn assign_func_command(input: &str, funcs: &mut Vec<Function>) -> Result<String, Error> {
     let sides: Vec<&str> = input.split('=').map(str::trim).collect();
 
     if sides.len() != 2 {

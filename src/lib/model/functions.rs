@@ -79,6 +79,10 @@ impl Function {
         self.args.len()
     }
 
+    /// Apply this function to a set of arguments
+    ///
+    /// # Errors
+    /// This function calls into `lib::doeval` and bubbles up and errors occuring from within there.
     pub fn apply<'a>(
         &self,
         args: &[f64],
