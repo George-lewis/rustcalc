@@ -65,7 +65,16 @@ mod tests {
 
     use std::vec;
 
-    use crate::{model::{errors::ErrorContext, functions::{Function, Functions}, operators::OperatorType, tokens::ParenType, variables::Variable}, rpn::rpn};
+    use crate::{
+        model::{
+            errors::ErrorContext,
+            functions::{Function, Functions},
+            operators::OperatorType,
+            tokens::ParenType,
+            variables::Variable,
+        },
+        rpn::rpn,
+    };
 
     use super::{eval, EvaluationContext, Token};
 
@@ -98,7 +107,7 @@ mod tests {
                 kind: ParenType::Right,
             },
             Token::operator(OperatorType::Pow),
-            Token::Number { value: 2.0 }
+            Token::Number { value: 2.0 },
         ];
         let tokens = rpn(&tokens).unwrap();
         let result = eval(&tokens, EvaluationContext::default()).unwrap();
@@ -158,6 +167,5 @@ mod tests {
         let tokens = rpn(&tokens).unwrap();
         let result = eval(&tokens, context.clone()).unwrap();
         assert_same!(result, 1.0 / 8.0);
-        
     }
 }

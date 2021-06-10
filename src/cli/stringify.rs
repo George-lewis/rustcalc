@@ -97,9 +97,9 @@ where
                 // So, `sin 5^2` should become `sin(5^2)` NOT `sin(5)^2`
                 let delay_implicit_paren = match tokens.get(idx + 1) {
                     Some(Token::Operator {
-                        inner: Functions::Builtin(inner)
+                        inner: Functions::Builtin(inner),
                     }) => inner.kind == OperatorType::Pow,
-                    _ => false
+                    _ => false,
                 };
 
                 let last = idx == tokens.len() - 1;
