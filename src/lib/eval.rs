@@ -167,5 +167,32 @@ mod tests {
         let tokens = rpn(&tokens).unwrap();
         let result = eval(&tokens, context.clone()).unwrap();
         assert_same!(result, 1.0 / 8.0);
+
+        let funcs = [Function {
+            name: "ident".to_string(),
+            args: vec!["a".to_string()],
+            code: "$a".to_string(),
+        }];
+        let context = EvaluationContext {
+            vars: &[],
+            funcs: &funcs,
+            context: ErrorContext::Main,
+            depth: 0,
+        };
+
+        let tokens = [
+            Token::Operator {
+                inner: Functions::User(&funcs[0]),
+            },
+            Token::Number { value: 1.0 },
+            Token::operator(OperatorType::Add),
+            Token::Operator {
+                inner: Functions::User(&funcs[0]),
+            },
+            Token::Number { value: -1.0 },
+        ];
+        let tokens = rpn(&tokens).unwrap();
+        let result = eval(&tokens, context).unwrap();
+        assert_same!(result, 0.0);
     }
 }
