@@ -8,7 +8,7 @@ pub enum Error {
     Library(ContextualLibError),
 }
 
-impl<'a> From<ContextualLibError> for Error {
+impl From<ContextualLibError> for Error {
     fn from(error: ContextualLibError) -> Self {
         Self::Library(error)
     }
