@@ -52,6 +52,27 @@ You can list all defined variables with `$`!
 
 ![](screenshots/variables-4.png)
 
+## Functions
+
+Rustcalc supports user-defined functions. Functions take an input via arguments and produce a value through using operators and other functions.
+Functions are always prefixed with an octothorpe (`#`).
+
+![](screenshots/functions-1.png)
+
+This function, `#profit_loss` can calculate the profits or losses of a position in the stock market given the number of shares, current price, and book cost.
+
+Functions can call other functions:
+
+![](screenshots/functions-2.png)
+
+Functions can call themselves!
+
+![](screenshots/functions-3.png)
+
+Tip: Functions are lazily evaluated, so you can define them out-of-order!
+
+![](screenshots/functions-4.png)
+
 ## RCFile
 
 Rustcalc supports running a script at runtime. On first run, Rustcalc will generate a default RCFile.
