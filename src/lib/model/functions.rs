@@ -21,15 +21,6 @@ impl<'inner> Functions<'inner> {
     /// ## Errors
     /// `Functions::User` produce errors in the same way as [doeval] can, as these are,
     /// in actuality, nested evaluation contexts
-    // pub fn apply<'b, 'c, 'd>(&'inner self, args: &'b [f64], context: EvaluationContext<'c, 'd>) -> Result<f64, ContextError<'inner>> {
-    //     match self {
-    //         Functions::Builtin(op) => Ok((op.doit)(args)),
-    //         Functions::User(func) => {
-
-    // Ok(result.0)
-    //         }
-    //     }
-    // }
     pub fn arity(&self) -> usize {
         match self {
             Functions::Builtin(op) => op.arity,
