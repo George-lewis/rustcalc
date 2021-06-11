@@ -20,7 +20,7 @@ use self::model::{
     tokens::Token,
 };
 
-pub const RECURSION_LIMIT: u8 = std::u8::MAX as _;
+pub const RECURSION_LIMIT: u8 = 25;
 
 /// Evaluate a string containing a mathematical expression
 ///
