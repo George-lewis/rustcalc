@@ -109,12 +109,7 @@ where
 
                 let appendix = if implicit_paren > 0 && !delay_implicit_paren {
                     let space = if last || no_space { "" } else { " " };
-                    let r_paren: T = colorize(
-                        &")".repeat(implicit_paren),
-                        &Token::Paren {
-                            kind: ParenType::Right,
-                        },
-                    );
+                    let r_paren = make_implicit_paren(implicit_paren);
                     implicit_paren = 0;
                     format!("{}{}", r_paren, space)
                 } else if last {
@@ -166,7 +161,21 @@ where
                             // We just add the `)` immediately, because this is the easiest way
                             // This will usually be user-defined [Function]s
                             let r_paren = if op.arity() == 0 {
-                                let formatted = format!("{} ", make_implicit_paren(implicit_paren));
+                                let is_r_paren = matches!(
+                                    tokens.get(idx + 1),
+                                    Some(Token::Paren {
+                                        kind: ParenType::Right
+                                    })
+                                );
+
+                                let is_last = idx + 1 == tokens.len();
+
+                                // We don't want to add a space after our implicit r_parens
+                                // If the next token is also an r_paren, or this is the last token
+                                let space = if is_r_paren || is_last { "" } else { " " };
+
+                                let formatted =
+                                    format!("{}{}", make_implicit_paren(implicit_paren), space);
                                 implicit_paren = 0;
                                 formatted
                             } else {
