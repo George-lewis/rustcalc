@@ -72,6 +72,17 @@ where
             },
         )
     };
+    let no_space_after_implicit_paren = |idx: usize| {
+        match tokens.get(idx + 1) {
+            Some(Token::Operator {
+                inner: Functions::Builtin(inner),
+            }) => inner.kind == OperatorType::Pow || inner.kind == OperatorType::Factorial,
+            Some(Token::Paren {
+                kind: ParenType::Right,
+            }) => true,
+            _ => false,
+        }
+    };
     for (idx, token) in tokens.iter().enumerate() {
         let colored: T = colorize(&ideal_repr(token), token);
         let append = match *token {
@@ -85,15 +96,7 @@ where
 
                 let is_op = matches!(tokens.get(idx + 1), Some(Token::Operator { .. }));
 
-                let no_space = match tokens.get(idx + 1) {
-                    Some(Token::Operator {
-                        inner: Functions::Builtin(inner),
-                    }) => inner.kind == OperatorType::Pow || inner.kind == OperatorType::Factorial,
-                    Some(Token::Paren {
-                        kind: ParenType::Right,
-                    }) => true,
-                    _ => false,
-                };
+                let no_space = no_space_after_implicit_paren(idx);
 
                 // We delay the r_parens when the next operator is pow
                 // Because exponents have a higher precedence in BEDMAS
@@ -127,7 +130,8 @@ where
             Token::Operator { inner: op } => {
                 match op.associativity() {
                     Associativity::Left => {
-                        let space = if idx == tokens.len() - 1 { "" } else { " " };
+                        let no_space =  no_space_after_implicit_paren(idx);
+                        let space = if idx == tokens.len() - 1 || no_space { "" } else { " " };
                         format!("{}{}", colored, space)
                     }
                     Associativity::Right => {
@@ -161,18 +165,13 @@ where
                             // We just add the `)` immediately, because this is the easiest way
                             // This will usually be user-defined [Function]s
                             let r_paren = if op.arity() == 0 {
-                                let is_r_paren = matches!(
-                                    tokens.get(idx + 1),
-                                    Some(Token::Paren {
-                                        kind: ParenType::Right
-                                    })
-                                );
+                                let no_space = no_space_after_implicit_paren(idx);
 
                                 let is_last = idx + 1 == tokens.len();
 
                                 // We don't want to add a space after our implicit r_parens
                                 // If the next token is also an r_paren, or this is the last token
-                                let space = if is_r_paren || is_last { "" } else { " " };
+                                let space = if no_space || is_last { "" } else { " " };
 
                                 let formatted =
                                     format!("{}{}", make_implicit_paren(implicit_paren), space);
@@ -205,7 +204,7 @@ where
                         Some(Token::Operator {
                             inner: Functions::Builtin(inner),
                         }) => inner.kind == OperatorType::Pow,
-                        Some(Token::Paren { kind }) => *kind == ParenType::Right,
+                        Some(Token::Paren { kind: ParenType::Right }) => true,
                         _ => false,
                     };
 
