@@ -15,6 +15,7 @@ pub fn rpn<'a>(tokens: &'a [Token]) -> Result<Vec<Token<'a>>, Error> {
 
     for token in tokens {
         match token {
+            Token::Comma => {}
             Token::Number { .. } | Token::Constant { .. } | Token::Variable { .. } => {
                 output.push(*token)
             }

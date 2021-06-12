@@ -1,4 +1,7 @@
-use std::fmt::Display;
+use std::{
+    fmt::Display,
+    iter
+};
 
 use colored::{ColoredString, Colorize};
 use rustmatheval::model::functions::Functions;
@@ -30,13 +33,14 @@ fn ideal_repr(tok: &Token) -> String {
         },
         Token::Constant { inner } => inner.repr[0].to_string(),
         Token::Variable { inner } => inner.repr.to_string(),
+        Token::Comma => ",".to_string(),
     }
 }
 
 /// Color
 fn color_cli(string: &str, token: &Token) -> ColoredString {
     match token {
-        Token::Number { .. } => string.clear(),
+        Token::Number { .. } | Token::Comma => string.clear(),
         Token::Operator { inner: op } => match op {
             Functions::Builtin(_) => {
                 if op.associativity() == Associativity::Left {
@@ -53,172 +57,67 @@ fn color_cli(string: &str, token: &Token) -> ColoredString {
     }
 }
 
-/// Convert a list of `Token`s into a string representation
-/// * `tokens` - The tokens
-/// * `colorize` - A function that colors tokens
-// TODO: Allowing unnested or patterns because while they are stabilized, they're not release yet
-#[allow(clippy::too_many_lines, clippy::unnested_or_patterns)]
+#[allow(clippy::unnested_or_patterns)]
+fn wants_space(cur: &Token, next: &Token) -> usize {
+    match (cur, next) {
+        (
+            Token::Operator {
+                inner: Functions::Builtin(op),
+            },
+            _,
+        ) => ![
+            OperatorType::Sin,
+            OperatorType::Cos,
+            OperatorType::Tan,
+            OperatorType::Sqrt,
+        ]
+        .contains(&op.kind) as _,
+        | (
+            _,
+            Token::Paren {
+                kind: ParenType::Right,
+            },
+        )
+        | (Token::Number { .. }, _)
+        | (Token::Variable { .. }, _)
+        | (Token::Constant { .. }, _) => 1,
+        _ => 0,
+    }
+}
+
+fn exclude_space(_cur: &Token, next: &Token) -> bool {
+    match next {
+        Token::Paren {
+            kind: ParenType::Right,
+        }
+        | Token::Comma => true,
+        Token::Operator {
+            inner: Functions::Builtin(op),
+        } => [OperatorType::Pow, OperatorType::Factorial].contains(&op.kind),
+        _ => false,
+    }
+}
+
 fn _stringify<F, T: Display>(tokens: &[Token], colorize: F) -> String
 where
     F: Fn(&str, &Token) -> T,
 {
-    let mut out = String::new();
-    let mut implicit_paren: usize = 0;
-    let make_implicit_paren = |n: usize| {
-        colorize(
-            &")".repeat(n),
-            &Token::Paren {
-                kind: ParenType::Right,
-            },
-        )
-    };
-    let no_space_after_implicit_paren = |idx: usize| {
-        match tokens.get(idx + 1) {
-            Some(Token::Operator {
-                inner: Functions::Builtin(inner),
-            }) => inner.kind == OperatorType::Pow || inner.kind == OperatorType::Factorial,
-            Some(Token::Paren {
-                kind: ParenType::Right,
-            }) => true,
-            _ => false,
-        }
-    };
-    for (idx, token) in tokens.iter().enumerate() {
-        let colored: T = colorize(&ideal_repr(token), token);
-        let append = match *token {
-            Token::Number { .. } | Token::Constant { .. } | Token::Variable { .. } => {
-                let is_r_paren = matches!(
-                    tokens.get(idx + 1),
-                    Some(Token::Paren {
-                        kind: ParenType::Right
-                    })
-                );
-
-                let is_op = matches!(tokens.get(idx + 1), Some(Token::Operator { .. }));
-
-                let no_space = no_space_after_implicit_paren(idx);
-
-                // We delay the r_parens when the next operator is pow
-                // Because exponents have a higher precedence in BEDMAS
-                // So, `sin 5^2` should become `sin(5^2)` NOT `sin(5)^2`
-                let delay_implicit_paren = match tokens.get(idx + 1) {
-                    Some(Token::Operator {
-                        inner: Functions::Builtin(inner),
-                    }) => inner.kind == OperatorType::Pow,
-                    _ => false,
-                };
-
-                let last = idx == tokens.len() - 1;
-
-                let appendix = if implicit_paren > 0 && !delay_implicit_paren {
-                    let space = if last || no_space { "" } else { " " };
-                    let r_paren = make_implicit_paren(implicit_paren);
-                    implicit_paren = 0;
-                    format!("{}{}", r_paren, space)
-                } else if last {
-                    "".to_string()
-                } else if !(is_r_paren || is_op) {
-                    ", ".to_string()
-                } else if is_op && !no_space {
-                    " ".to_string()
-                } else {
-                    "".to_string()
-                };
-
-                format!("{}{}", colored, appendix)
-            }
-            Token::Operator { inner: op } => {
-                match op.associativity() {
-                    Associativity::Left => {
-                        let no_space =  no_space_after_implicit_paren(idx);
-                        let space = if idx == tokens.len() - 1 || no_space { "" } else { " " };
-                        format!("{}{}", colored, space)
-                    }
-                    Associativity::Right => {
-                        let is_l_paren = matches!(
-                            tokens.get(idx + 1),
-                            Some(Token::Paren {
-                                kind: ParenType::Left
-                            })
-                        );
-
-                        let wants_implicit_paren = match op {
-                            Functions::Builtin(op) => ![
-                                OperatorType::Positive,
-                                OperatorType::Negative,
-                                OperatorType::Pow,
-                            ]
-                            .contains(&op.kind),
-                            Functions::User(_) => true,
-                        };
-
-                        if wants_implicit_paren && !is_l_paren {
-                            implicit_paren += 1;
-                            let l_paren: T = colorize(
-                                "(",
-                                &Token::Paren {
-                                    kind: ParenType::Left,
-                                },
-                            );
-
-                            // Special case for functions with no arguments
-                            // We just add the `)` immediately, because this is the easiest way
-                            // This will usually be user-defined [Function]s
-                            let r_paren = if op.arity() == 0 {
-                                let no_space = no_space_after_implicit_paren(idx);
-
-                                let is_last = idx + 1 == tokens.len();
-
-                                // We don't want to add a space after our implicit r_parens
-                                // If the next token is also an r_paren, or this is the last token
-                                let space = if no_space || is_last { "" } else { " " };
-
-                                let formatted =
-                                    format!("{}{}", make_implicit_paren(implicit_paren), space);
-                                implicit_paren = 0;
-                                formatted
-                            } else {
-                                "".to_string()
-                            };
-                            format!("{}{}{}", colored, l_paren, r_paren)
-                        } else {
-                            format!("{}", colored)
-                        }
-                    }
-                }
-            }
-            Token::Paren { kind } => match kind {
-                ParenType::Left => {
-                    // Subtracts one bottoming out at 0 because `implicit_paren` is a `usize`
-                    implicit_paren = implicit_paren.saturating_sub(1);
-                    format!("{}", colored)
-                }
-                ParenType::Right => {
-                    // Is this token the last one
-                    let is_last = idx + 1 == tokens.len();
-
-                    // Is the next token:
-                    //   - Pow
-                    //   - An R Paren
-                    let is_pow_or_r_paren = match tokens.get(idx + 1) {
-                        Some(Token::Operator {
-                            inner: Functions::Builtin(inner),
-                        }) => inner.kind == OperatorType::Pow,
-                        Some(Token::Paren { kind: ParenType::Right }) => true,
-                        _ => false,
-                    };
-
-                    if is_last || is_pow_or_r_paren {
-                        format!("{}", colored)
-                    } else {
-                        format!("{} ", colored)
-                    }
-                }
-            },
-        };
-        out.push_str(&append)
-    }
-
-    // In some cases, there may be some implicit parens left over
-    format!("{}{}", out, make_implicit_paren(implicit_paren))
+    let last = iter::once((tokens.last().expect("Expected `tokens` to contain at least one token"), 0));
+    tokens
+        .windows(2)
+        .map(|window| {
+            let (cur, next) = (&window[0], &window[1]);
+            let spaces = if exclude_space(cur, next) {
+                0
+            } else {
+                wants_space(cur, next)
+            };
+            (cur, spaces)
+        })
+        .chain(last)
+        .map(|(token, space)| {
+            let colored = colorize(&ideal_repr(token), token);
+            format!("{}{}", colored, " ".repeat(space))
+        })
+        .collect()
 }

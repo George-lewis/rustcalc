@@ -2,7 +2,7 @@
 
 use super::{
     constants::{Constant, ConstantType},
-    functions::Functions,
+    functions::{Function, Functions},
     operators::{Operator, OperatorType},
     variables::Variable,
 };
@@ -23,6 +23,7 @@ pub enum Token<'a> {
     Paren { kind: ParenType },
     Constant { inner: &'a Constant },
     Variable { inner: &'a Variable },
+    Comma,
 }
 
 impl Token<'_> {

@@ -17,6 +17,7 @@ pub fn eval(tokens: &[Token], context: EvaluationContext) -> Result<f64, Context
 
     while let Some(token) = stack.pop() {
         match token {
+            Token::Comma => {}
             Token::Number { value } => {
                 args.push(value);
             }

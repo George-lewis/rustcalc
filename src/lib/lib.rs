@@ -7,6 +7,7 @@ pub mod utils;
 mod eval;
 mod rpn;
 mod tokenize;
+mod transform;
 
 pub mod model;
 
@@ -14,6 +15,9 @@ use eval::eval;
 use model::EvaluationContext;
 use rpn::rpn;
 pub use tokenize::tokenize;
+use transform::implicit_coeffs;
+
+use crate::transform::implicit_parens;
 
 use self::model::{
     errors::{ContextualError, Error},
@@ -41,10 +45,15 @@ pub fn doeval<'a>(
         return Err(Error::RecursionLimit.with_context(context.context));
     }
 
-    let tokens = match tokenize(string, &context) {
+    let mut tokens = match tokenize(string, &context) {
         Ok(tokens) => tokens,
         Err(err) => return Err(err.with_context(context.context)),
     };
+
+    implicit_coeffs(&mut tokens);
+    implicit_parens(&mut tokens);
+
+    dbg!(&tokens);
 
     let rpn = match rpn(&tokens) {
         Ok(e) => e,
