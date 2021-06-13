@@ -17,7 +17,7 @@ fn stringify_func_code(func: &Function, funcs: &[Function], vars: &[Variable]) -
     // Because we're just going to tokenize it
     let args = [0.0].repeat(func.arity());
 
-    // Creates args and merges with globals
+    // Creates args and merges with variables in-scope (`vars`)
     let vars = func.create_variables(&args, vars);
 
     // Depth and context also don't matter here

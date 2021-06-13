@@ -70,8 +70,8 @@ impl Function {
         self.args.len()
     }
 
-    /// Create the variables required to evaluate this function, including both arguments and global variables.
-    /// The list is created such that arguments always come before globals. This is important for correct varible-name resolution.
+    /// Create the variables required to evaluate this function, including both arguments and scoped variables.
+    /// The list is created such that arguments always come before scoped variables. This is important for correct varible-name resolution.
     pub fn create_variables(&self, args: &[f64], vars: &[Variable]) -> Vec<Variable> {
         // Create the arguments for the function
         let args = self.args.iter().zip(args).map(|(name, value)| Variable {
@@ -79,13 +79,13 @@ impl Function {
             value: *value,
         });
 
-        // Create a cloned iteration of the global variables
-        let global = vars.iter().cloned();
+        // Create a cloned iteration of the scoped variables
+        let scoped = vars.iter().cloned();
 
-        // Merge the function arguments withthe globals
+        // Merge the function arguments with scoped variables
         // It's important that the function variables are first
         // So that variable name resolution prioritizes args
-        args.chain(global).collect()
+        args.chain(scoped).collect()
     }
 
     /// Apply this function to a set of arguments
