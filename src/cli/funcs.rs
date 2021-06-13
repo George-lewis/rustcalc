@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use rustmatheval::{model::{errors::ErrorContext, functions::Function, variables::Variable, EvaluationContext}, tokenize, tokenize_and_transform};
+use rustmatheval::{model::{errors::ErrorContext, functions::Function, variables::Variable, EvaluationContext}, tokenize_and_transform};
 
 use colored::{ColoredString, Colorize};
 
