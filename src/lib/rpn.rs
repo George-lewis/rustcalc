@@ -20,7 +20,6 @@ pub fn rpn<'a>(tokens: &'a [Token]) -> Result<Vec<Token<'a>>, Error> {
                 output.push(*token)
             }
             Token::Operator { inner: op1 } => {
-                // let op1 = Operator::by_type(*kind);
                 while !operator_stack.is_empty() {
                     let last = operator_stack.last().unwrap();
                     if let Token::Paren { kind } = last {
@@ -29,7 +28,6 @@ pub fn rpn<'a>(tokens: &'a [Token]) -> Result<Vec<Token<'a>>, Error> {
                         }
                     }
                     if let Token::Operator { inner: op2 } = last {
-                        // let op2 = Operator::by_type(*kind);
                         if !(op2.precedence() > op1.precedence()
                             || (op2.precedence() == op1.precedence()
                                 && op1.associativity() == Associativity::Left))

@@ -38,7 +38,7 @@ pub fn implicit_parens(tokens: &mut Vec<Token>) {
         } else if !preclude {
             let wants_implicit_paren = match cur {
                 Token::Operator { inner } => match inner {
-                    // Functional-style builtin operators that only take a single argument
+                    // Functional-style builtin operators *that only take a single argument*
                     Functions::Builtin(op) => [
                         OperatorType::Sin,
                         OperatorType::Cos,
