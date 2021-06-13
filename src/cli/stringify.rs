@@ -62,11 +62,12 @@ fn spaces(cur: &Token) -> usize {
     // - Spaces after value types: numbers, variables, and constants
     // - Spaces after r_parens and commas
     // - Spaces after all operators except function-style ones: sin, cos, tan, sqrt, ..
+    //   - and pow
     // - Otherwise no spaces
     match cur {
         Token::Operator {
             inner: Functions::Builtin(op),
-        } => !FUNCTIONAL_STYLE_OPERATORS.contains(&op.kind) as _,
+        } => (!FUNCTIONAL_STYLE_OPERATORS.contains(&op.kind) && op.kind != OperatorType::Pow) as _ ,
         Token::Paren {
             kind: ParenType::Right,
         }
