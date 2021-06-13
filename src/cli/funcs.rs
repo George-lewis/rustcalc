@@ -1,8 +1,5 @@
 use itertools::Itertools;
-use rustmatheval::{
-    model::{errors::ErrorContext, functions::Function, variables::Variable, EvaluationContext},
-    tokenize,
-};
+use rustmatheval::{model::{errors::ErrorContext, functions::Function, variables::Variable, EvaluationContext}, tokenize, tokenize_and_transform};
 
 use colored::{ColoredString, Colorize};
 
@@ -27,7 +24,7 @@ fn stringify_func_code(func: &Function, funcs: &[Function]) -> String {
         depth: 0,
         context: ErrorContext::Main,
     };
-    match tokenize(&func.code, &context) {
+    match tokenize_and_transform(&func.code, &context) {
         Ok(tokens) => stringify(&tokens),
         Err(_) => func.code.clone(),
     }
