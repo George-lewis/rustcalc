@@ -4,6 +4,10 @@ use crate::model::{
     tokens::{ParenType, Token},
 };
 
+/// Insert implicit parantheses into the tokens.
+/// Implicit parentheses are inserted for arguments to functions
+/// or function-like operators that accept 0 or 1 arguments
+/// Ex: sin sin 2^5 + 9 => sin(sin(2^5)) + 9
 pub fn implicit_parens(tokens: &mut Vec<Token>) {
     let mut implicit_paren: u8 = 0;
 
@@ -97,7 +101,9 @@ pub fn implicit_parens(tokens: &mut Vec<Token>) {
     }
 }
 
-///
+/// Insert implicit coefficients into the tokens.
+/// It's important that parantheses and commas are present.
+/// `tokens` should be run through `implicit_parantheses` before this function
 #[allow(clippy::unnested_or_patterns)]
 pub fn implicit_coeffs(tokens: &mut Vec<Token>) {
     let mut idx = 0;
