@@ -1,6 +1,6 @@
 use super::config::{DEFAULT_RCFILE, RCFILE};
 use super::error::{Error, IoError};
-use super::lib::model::variables::Variable;
+use super::lib::model::{functions::Function, variables::Variable};
 use colored::Colorize;
 use std::{fs, io::ErrorKind::NotFound};
 
@@ -16,7 +16,7 @@ use super::cli::{handle_errors, handle_input};
 ///
 /// ## Output
 /// Returns an empty `Result` on success, or a `CliError` from io operations
-pub fn load(vars: &mut Vec<Variable>) -> Result<(), Error> {
+pub fn load(vars: &mut Vec<Variable>, funcs: &mut Vec<Function>) -> Result<(), Error> {
     let path = match RCFILE.as_deref() {
         Some(path) => path,
         None => {
@@ -46,7 +46,7 @@ pub fn load(vars: &mut Vec<Variable>) -> Result<(), Error> {
     // Feed each line through `handle_input` and make use of `handle_errors`
     // Succesfully executing statements are silent
     for (n, line) in lines {
-        if let Err(inner) = handle_input(line, vars) {
+        if let Err(inner) = handle_input(line, vars, funcs) {
             let message = handle_errors(inner, line);
             println!(
                 "Error in RCFile on line [{}]: {}",

@@ -1,15 +1,17 @@
-pub use super::lib::model::errors::Error as LibError;
+#![allow(clippy::module_name_repetitions)]
+
+pub use super::lib::model::errors::{ContextualError as ContextualLibError, Error as LibError};
 pub use std::io::Error as IoError;
 
 /// Error type for errors stemming from cli code, which includes `Errors` thrown by the library
 pub enum Error {
     Assignment,
     Io(IoError),
-    Library(LibError),
+    Library(ContextualLibError),
 }
 
-impl From<LibError> for Error {
-    fn from(error: LibError) -> Self {
+impl From<ContextualLibError> for Error {
+    fn from(error: ContextualLibError) -> Self {
         Self::Library(error)
     }
 }

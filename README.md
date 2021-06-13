@@ -52,6 +52,47 @@ You can list all defined variables with `$`!
 
 ![](screenshots/variables-4.png)
 
+## Functions
+
+Rustcalc supports user-defined functions. Functions take an input via arguments and produce a value through using operators and other functions.
+Functions are always prefixed with an octothorpe (`#`).
+
+![](screenshots/functions-1.png)
+
+This function, `#profit_loss` can calculate the profits or losses of a position in the stock market given the number of shares, current price, and book cost.
+
+Functions can call other functions:
+
+![](screenshots/functions-2.png)
+
+Functions can call themselves!
+
+![](screenshots/functions-3.png)
+
+Tip: Functions are lazily evaluated, so you can define them out-of-order!
+
+![](screenshots/functions-4.png)
+
+Functions can access variables from outer scopes! Just make sure that they're defined when you call.
+
+(`$ans` is only defined after a statement is executed)
+
+![](screenshots/functions-6.png)
+
+![](screenshots/functions-8.png)
+
+> Here, `$x` is defined within `#foo` because it is called within `#bar` where the variable is introduced as an argument.
+>
+> However, calling `#foo` directly would result in an error if `$x` is not defined globally.
+
+Local arguments will take precedence over scoped variables.
+
+![](screenshots/functions-7.png)
+
+Multi-argument functions!
+
+![](screenshots/functions-5.png)
+
 ## RCFile
 
 Rustcalc supports running a script at runtime. On first run, Rustcalc will generate a default RCFile.
@@ -146,13 +187,20 @@ These are base-10 numbers with a literal value. Examples include `10`, `10.`, an
 
 Constants are built into Rustcalc and are symbolic representations of numbers. They act similarly to numeric literals. See the reference for an exhaustive list.
 
-#### Operators
-
-Operators are fundamental operations built into Rustcalc that accept one or more number(s) and produce an output. Examples include `+`, `*`, and `!`. See the reference for an exhaustive list.
 
 #### Variables
 
 Variables are user-defined symbols that represent a value. They are similar to constants in many ways, but can have their value modified at runtime. Variables are always prefixed with a `$`.
+
+#### Operators
+
+Operators are fundamental operations built into Rustcalc that accept one or more  and produce an output. Examples include `+`, `*`, and `!`. See the reference for an exhaustive list.
+
+#### Functions
+
+Functions are user-defined operators that accepts zero or more arguments and produce a numeric result. Functions have a fixed number of arguments that can be
+accessed within their body using variable syntax. Variables can also call other functions, including themself, and access variables from outer scopes.
+Functions are always prefixed with a `#`
 
 ### Examples:
 
@@ -171,6 +219,52 @@ An expression with a single operator:
 > 1 + 2
 [ 1 + 2 ] => 3.000
 ```
+
+## Function Assignment
+
+This kind of statement is used to create or modify a function. It consists of a name for the function, a list of arguments, and a function body.
+
+A function assignment is formed:
+```
+#function_name $arg_one $arg_two ... = expression
+```
+
+Where `#`, `$`, and `=` are literal, `function_name` is the desired name of the function, `arg_one` and `arg_two` are arguments to the function, and `expression` is the function body. The function body has access to the function's arguments using familiar variable syntax, and access to other functions (including itself), and variables from outer scopes.
+
+### Example
+
+```
+#five = 5
+```
+
+This function `#five` takes no arguments and returns the number `5`.
+
+It can be used like so:
+
+```
+> #five() * #five()
+[ #five() × #five() ] => 25.000
+```
+
+---
+
+```
+#sum2 $x $y = $x + $y
+```
+
+This function sums two numbers.
+
+## Function List
+
+The function list statement is a literal `#`. Rustcalc will list all of the defined functions in the following format:
+
+```
+[ #foo(x) = $x ]
+[ #sum2(a, b) = $a + $b ]
+...
+```
+
+Note: This is the same format as Rustcalc outputs after a successful assignment
 
 ## Variable Assignment
 
@@ -208,4 +302,4 @@ The variable list statement is a literal `$`. Rustcalc will list all of the defi
 ...
 ```
 
-Note: This is the same format as Rustcalc outputs after a successful variable assignment
+Note: This is the same format as Rustcalc outputs after a successful assignment

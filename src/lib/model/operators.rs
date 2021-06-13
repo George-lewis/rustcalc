@@ -1,5 +1,7 @@
 #![allow(clippy::non_ascii_literal)]
 
+use std::fmt;
+
 use rand::Rng;
 
 use super::representable::{get_by_repr, Representable};
@@ -27,6 +29,15 @@ pub enum OperatorType {
 
 /// Unary operators
 const UNARY_OPERATORS: &[OperatorType] = &[OperatorType::Positive, OperatorType::Negative];
+pub const FUNCTIONAL_STYLE_OPERATORS: &[OperatorType] = &[
+    OperatorType::Sin,
+    OperatorType::Cos,
+    OperatorType::Tan,
+    OperatorType::Max,
+    OperatorType::Min,
+    OperatorType::RandomFloat,
+    OperatorType::RandomInt,
+];
 
 impl Representable for OperatorType {
     fn repr(&self) -> &'static [&'static str] {
@@ -34,7 +45,7 @@ impl Representable for OperatorType {
     }
 }
 
-#[derive(Clone, PartialEq, Copy)]
+#[derive(Clone, PartialEq, Copy, Debug)]
 pub enum Associativity {
     Left,
     Right,
@@ -48,6 +59,19 @@ pub struct Operator {
     pub associativity: Associativity,
     pub arity: usize,
     pub doit: fn(&[f64]) -> f64,
+}
+
+// NOTE: This assumes that Operator-OperatorType pairs are unique
+impl PartialEq for Operator {
+    fn eq(&self, other: &Self) -> bool {
+        self.kind == other.kind
+    }
+}
+
+impl fmt::Debug for Operator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[{:?}]", self.kind)
+    }
 }
 
 impl Representable for Operator {
@@ -82,7 +106,7 @@ impl Operator {
 fn _factorial(x: f64) -> f64 {
     let mut out: f64 = 1.0;
     for i in 1..=(x as i64) {
-        out *= i as f64
+        out *= i as f64;
     }
     out
 }
@@ -243,19 +267,17 @@ mod tests {
 
     #[test]
     fn test_factorial_normal() {
-        [
+        for &(a, b) in &[
             (1.0, 1.0),
             (0.0, 1.0),
             (2.0, 2.0),
             (3.0, 6.0),
             (5.0, 120.0),
             (10.0, 3_628_800.0),
-        ]
-        .iter()
-        .for_each(|&(a, b)| {
+        ] {
             let result = factorial(a);
-            same!(b, result);
-        })
+            assert_same!(b, result);
+        }
     }
 
     #[test]
@@ -272,13 +294,13 @@ mod tests {
     #[test]
     fn test_factorial_negative() {
         let result = factorial(-1.0);
-        same!(result, 1.0);
+        assert_same!(result, 1.0);
     }
 
     #[test]
     fn test_by_type() {
         let cons = Operator::by_type(OperatorType::Add);
-        assert!(cons.repr.contains(&"+"))
+        assert!(cons.repr.contains(&"+"));
     }
 
     #[test]

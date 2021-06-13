@@ -11,6 +11,7 @@ pub enum ConstantType {
 }
 
 /// Represents a constant
+#[derive(Debug, PartialEq)]
 pub struct Constant {
     pub kind: ConstantType,
     pub repr: &'static [&'static str],
@@ -66,7 +67,7 @@ mod tests {
     #[test]
     fn test_by_type() {
         let cons = Constant::by_type(ConstantType::PI);
-        assert!(cons.repr.contains(&"pi"))
+        assert!(cons.repr.contains(&"pi"));
     }
 
     #[test]

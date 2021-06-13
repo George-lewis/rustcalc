@@ -2,12 +2,14 @@
 
 use super::{
     constants::{Constant, ConstantType},
+    functions::Functions,
     operators::{Operator, OperatorType},
     variables::Variable,
 };
 
 const NUMBER_CHARACTERS: [char; 11] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'];
 const PAREN_CHARACTERS: [char; 2] = ['(', ')'];
+const COMMA_CHARACTERS: [char; 1] = [','];
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum ParenType {
@@ -18,10 +20,11 @@ pub enum ParenType {
 #[derive(Clone, Debug, Copy, PartialEq)]
 pub enum Token<'a> {
     Number { value: f64 },
-    Operator { kind: OperatorType },
+    Operator { inner: Functions<'a> },
     Paren { kind: ParenType },
-    Constant { kind: ConstantType },
+    Constant { inner: &'a Constant },
     Variable { inner: &'a Variable },
+    Comma,
 }
 
 impl Token<'_> {
@@ -42,6 +45,16 @@ impl Token<'_> {
             Err(..) => None,
         }
     }
+    pub fn operator(kind: OperatorType) -> Self {
+        Self::Operator {
+            inner: Functions::Builtin(Operator::by_type(kind)),
+        }
+    }
+    pub fn constant(kind: ConstantType) -> Self {
+        Self::Constant {
+            inner: Constant::by_type(kind),
+        }
+    }
     fn next_number(string: &str) -> String {
         string
             .chars()
@@ -57,17 +70,8 @@ impl Token<'_> {
     pub fn is_next_paren(string: &str) -> bool {
         Self::is_next_t(string, &PAREN_CHARACTERS)
     }
-    pub fn ideal_repr(&self) -> String {
-        match self {
-            Self::Number { value } => value.to_string(),
-            Self::Operator { kind } => Operator::by_type(*kind).repr[0].to_string(),
-            Self::Paren { kind } => match kind {
-                ParenType::Left => '('.to_string(),
-                ParenType::Right => ')'.to_string(),
-            },
-            Self::Constant { kind } => Constant::by_type(*kind).repr[0].to_string(),
-            Self::Variable { inner } => format!("${}", inner.repr),
-        }
+    pub fn is_next_comma(string: &str) -> bool {
+        Self::is_next_t(string, &COMMA_CHARACTERS)
     }
 }
 
@@ -111,19 +115,17 @@ mod tests {
     fn test_number() {
         let result = Token::number("123").unwrap();
         assert_eq!(result.1, 3);
-        // let result = match result.0 {
-        //     Token::Number { value } => same(value, 123.0),
-        //     _ => panic!("Expected a number")
-        // };
-        // assert!(result);
+        match result.0 {
+            Token::Number { value } => assert_same!(value, 123.0),
+            _ => panic!("Expected a number"),
+        };
 
         let result = Token::number("999.544").unwrap();
         assert_eq!(result.1, 7);
-        // let result = match result.0 {
-        //     Token::Number { value } => same(value, 999.544),
-        //     _ => panic!("Expected a number")
-        // };
-        // assert!(result);
+        match result.0 {
+            Token::Number { value } => assert_same!(value, 999.544),
+            _ => panic!("Expected a number"),
+        };
     }
 
     #[test]
