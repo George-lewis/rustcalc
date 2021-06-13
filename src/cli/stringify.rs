@@ -55,37 +55,31 @@ fn color_cli(string: &str, token: &Token) -> ColoredString {
     }
 }
 
-/// Determine if (and how many) spaces should be between `cur` and `next` in a string representation.
+/// Determine if (and how many) spaces should be come after `cur` in a string representation.
 #[allow(clippy::unnested_or_patterns)]
-fn spaces(cur: &Token, next: &Token) -> usize {
+fn spaces(cur: &Token) -> usize {
     // Cases:
     // - Spaces after value types: numbers, variables, and constants
     // - Spaces after r_parens and commas
     // - Spaces after all operators except function-style ones: sin, cos, tan, sqrt
     // - Otherwise no spaces
-    match (cur, next) {
-        (
-            Token::Operator {
-                inner: Functions::Builtin(op),
-            },
-            _,
-        ) => ![
+    match cur {
+        Token::Operator {
+            inner: Functions::Builtin(op),
+        } => ![
             OperatorType::Sin,
             OperatorType::Cos,
             OperatorType::Tan,
             OperatorType::Sqrt,
         ]
         .contains(&op.kind) as _,
-        (
-            _,
-            Token::Paren {
-                kind: ParenType::Right,
-            },
-        )
-        | (Token::Number { .. }, _)
-        | (Token::Variable { .. }, _)
-        | (Token::Constant { .. }, _)
-        | (Token::Comma, _) => 1,
+        Token::Paren {
+            kind: ParenType::Right,
+        }
+        | Token::Number { .. }
+        | Token::Variable { .. }
+        | Token::Constant { .. }
+        | Token::Comma => 1,
 
         // Otherwise none
         _ => 0,
@@ -145,7 +139,7 @@ where
             let spaces = if exclude_space(cur, next) {
                 0
             } else {
-                spaces(cur, next)
+                spaces(cur)
             };
             (cur, spaces)
         })
