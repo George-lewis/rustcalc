@@ -38,6 +38,7 @@ pub fn implicit_parens(tokens: &mut Vec<Token>) {
         } else if !preclude {
             let wants_implicit_paren = match cur {
                 Token::Operator { inner } => match inner {
+                    // Functional-style builtin operators that only take a single argument
                     Functions::Builtin(op) => [
                         OperatorType::Sin,
                         OperatorType::Cos,
@@ -83,6 +84,7 @@ pub fn implicit_parens(tokens: &mut Vec<Token>) {
     }
 }
 
+/// 
 #[allow(clippy::unnested_or_patterns)]
 pub fn implicit_coeffs(tokens: &mut Vec<Token>) {
     let mut idx = 0;
