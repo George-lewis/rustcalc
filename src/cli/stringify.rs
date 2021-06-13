@@ -34,7 +34,7 @@ fn ideal_repr(tok: &Token) -> String {
     }
 }
 
-/// Color
+/// Color tokens for the CLI
 fn color_cli(string: &str, token: &Token) -> ColoredString {
     match token {
         Token::Number { .. } | Token::Comma => string.clear(),
@@ -46,7 +46,7 @@ fn color_cli(string: &str, token: &Token) -> ColoredString {
                     string.blue().bold()
                 }
             }
-            Functions::User(func) => format_func_name(&func.name),
+            Functions::User(_) => format_func_name(string),
         },
         Token::Paren { .. } => string.red(),
         Token::Constant { .. } => string.yellow(),
@@ -54,8 +54,14 @@ fn color_cli(string: &str, token: &Token) -> ColoredString {
     }
 }
 
+/// Determine if (and how many) spaces should be between `cur` and `next` in a string representation.
 #[allow(clippy::unnested_or_patterns)]
-fn wants_space(cur: &Token, next: &Token) -> usize {
+fn spaces(cur: &Token, next: &Token) -> usize {
+    // Cases:
+    // - Spaces after value types: numbers, variables, and constants
+    // - Spaces are r_parens
+    // - Spaces after all operators except function-style ones: sin, cos, tan, sqrt
+    // - Otherwise no spaces
     match (cur, next) {
         (
             Token::Operator {
@@ -78,11 +84,23 @@ fn wants_space(cur: &Token, next: &Token) -> usize {
         | (Token::Number { .. }, _)
         | (Token::Variable { .. }, _)
         | (Token::Constant { .. }, _) => 1,
+
+        // Otherwise none
         _ => 0,
     }
 }
 
+/// Determine if there can or cannot be a space between `cur` and `next` in a string representation
+///
+/// ## Returns
+/// True -> There cannot be a space between these tokens
+///
+/// False -> Spaces are permitted between these tokens
 fn exclude_space(_cur: &Token, next: &Token) -> bool {
+    // Cases:
+    // - No spaces before an r_paren
+    // - No spaces before certain operators: pow, and factorial
+    // - All else is permitted
     match next {
         Token::Paren {
             kind: ParenType::Right,
@@ -99,24 +117,39 @@ fn _stringify<F, T: Display>(tokens: &[Token], colorize: F) -> String
 where
     F: Fn(&str, &Token) -> T,
 {
+    // The last element of the slice
+    // `std::slice::windows` does not include the last element as its own window
+    // So we must add it ourselves
+    //
+    // The tuple is `(&Token, number_of_space: usize)`
+    // There are not spaces after the last token, thus it is always zero
     let last = iter::once((
         tokens
             .last()
             .expect("Expected `tokens` to contain at least one token"),
         0,
     ));
+
+    // Windows of size two let us determine if we want to insert a space
+    // between them, given the context of the "current" and "next" token
+    // Caveat: There will be no window for the last element, see above.
     tokens
         .windows(2)
         .map(|window| {
             let (cur, next) = (&window[0], &window[1]);
+
+            // `exclude_space` determines if any conditions prevent there from being a space
+            // and then `spaces` determines the number of spaces to insert, if they are permitted
             let spaces = if exclude_space(cur, next) {
                 0
             } else {
-                wants_space(cur, next)
+                spaces(cur, next)
             };
             (cur, spaces)
         })
+        // Insert the last token
         .chain(last)
+        // Color
         .map(|(token, space)| {
             let colored = colorize(&ideal_repr(token), token);
             format!("{}{}", colored, " ".repeat(space))
