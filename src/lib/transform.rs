@@ -84,7 +84,7 @@ pub fn implicit_parens(tokens: &mut Vec<Token>) {
     }
 }
 
-/// 
+///
 #[allow(clippy::unnested_or_patterns)]
 pub fn implicit_coeffs(tokens: &mut Vec<Token>) {
     let mut idx = 0;
@@ -115,15 +115,17 @@ pub fn implicit_coeffs(tokens: &mut Vec<Token>) {
         if !precluded {
             let can_coeff = match cur {
                 // Allows: 5! 5 => 5!*5
-                Token::Operator {inner:Functions::Builtin(op)} => op.kind == OperatorType::Factorial,
+                Token::Operator {
+                    inner: Functions::Builtin(op),
+                } => op.kind == OperatorType::Factorial,
                 Token::Number { .. }
-                    | Token::Constant { .. }
-                    | Token::Variable { .. }
-                    | Token::Paren {
-                        kind: ParenType::Right
-                    } => true,
-                    _ => false
-                };
+                | Token::Constant { .. }
+                | Token::Variable { .. }
+                | Token::Paren {
+                    kind: ParenType::Right,
+                } => true,
+                _ => false,
+            };
 
             if can_coeff {
                 tokens.insert(idx + 1, Token::operator(OperatorType::Mul));

@@ -67,7 +67,7 @@ fn spaces(cur: &Token) -> usize {
     match cur {
         Token::Operator {
             inner: Functions::Builtin(op),
-        } => (!FUNCTIONAL_STYLE_OPERATORS.contains(&op.kind) && op.kind != OperatorType::Pow) as _ ,
+        } => (!FUNCTIONAL_STYLE_OPERATORS.contains(&op.kind) && op.kind != OperatorType::Pow) as _,
         Token::Paren {
             kind: ParenType::Right,
         }
