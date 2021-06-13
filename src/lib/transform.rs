@@ -21,10 +21,23 @@ pub fn implicit_parens(tokens: &mut Vec<Token>) {
             })
         );
 
+        // We delay the r_parens when the next operator is pow
+        // Because exponents have a higher precedence in BEDMAS
+        // So, `sin 5^2` should become `sin(5^2)` NOT `sin(5)^2`
+        let delay = match next {
+            Some(Token::Operator {
+                inner: Functions::Builtin(inner),
+            }) => inner.kind == OperatorType::Pow,
+            _ => false,
+        };
+
+        // Insert r_parens if the current token is a value type AND we're not delaying
+        // The delay case should _never_ coincide with the `else if` condition on this block, so it's ok
         if matches!(
             cur,
             Token::Number { .. } | Token::Variable { .. } | Token::Constant { .. }
-        ) {
+        ) && !delay
+        {
             for offset in 0..implicit_paren {
                 tokens.insert(
                     idx + 1 + offset as usize,
