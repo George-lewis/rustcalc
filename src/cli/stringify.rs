@@ -1,7 +1,4 @@
-use std::{
-    fmt::Display,
-    iter
-};
+use std::{fmt::Display, iter};
 
 use colored::{ColoredString, Colorize};
 use rustmatheval::model::functions::Functions;
@@ -72,7 +69,7 @@ fn wants_space(cur: &Token, next: &Token) -> usize {
             OperatorType::Sqrt,
         ]
         .contains(&op.kind) as _,
-        | (
+        (
             _,
             Token::Paren {
                 kind: ParenType::Right,
@@ -102,7 +99,12 @@ fn _stringify<F, T: Display>(tokens: &[Token], colorize: F) -> String
 where
     F: Fn(&str, &Token) -> T,
 {
-    let last = iter::once((tokens.last().expect("Expected `tokens` to contain at least one token"), 0));
+    let last = iter::once((
+        tokens
+            .last()
+            .expect("Expected `tokens` to contain at least one token"),
+        0,
+    ));
     tokens
         .windows(2)
         .map(|window| {

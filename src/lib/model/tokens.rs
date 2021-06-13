@@ -2,7 +2,7 @@
 
 use super::{
     constants::{Constant, ConstantType},
-    functions::{Function, Functions},
+    functions::Functions,
     operators::{Operator, OperatorType},
     variables::Variable,
 };

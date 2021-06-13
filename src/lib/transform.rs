@@ -28,12 +28,12 @@ pub fn implicit_parens(tokens: &mut Vec<Token>) {
             _ => false,
         };
 
-        let preclude = match next {
+        let preclude = matches!(
+            next,
             Some(Token::Paren {
                 kind: ParenType::Left,
-            }) => true,
-            _ => false,
-        };
+            })
+        );
 
         if wants_implicit_paren && !preclude {
             tokens.insert(
@@ -104,14 +104,12 @@ pub fn implicit_coeffs(tokens: &mut Vec<Token>) {
     }
 }
 
-pub fn unary() {}
-
 #[cfg(test)]
 mod tests {
     use super::{implicit_coeffs, implicit_parens};
 
     use crate::{
-        model::{errors::ErrorContext, functions::Function, EvaluationContext},
+        model::{functions::Function, EvaluationContext},
         tokenize,
     };
 
