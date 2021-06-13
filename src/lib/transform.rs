@@ -1,6 +1,6 @@
 use crate::model::{
     functions::Functions,
-    operators::OperatorType,
+    operators::{OperatorType, FUNCTIONAL_STYLE_OPERATORS},
     tokens::{ParenType, Token},
 };
 
@@ -81,7 +81,6 @@ pub fn implicit_parens(tokens: &mut Vec<Token>) {
         }
         idx += 1;
     }
-    dbg!(tokens);
 }
 
 #[allow(clippy::unnested_or_patterns)]
@@ -94,16 +93,22 @@ pub fn implicit_coeffs(tokens: &mut Vec<Token>) {
         };
 
         // Certain tokens preclude coefficients
-        // For example, we want to prevent: `1 * + 5`
-        let precluded = matches!(
-            next,
-            Some(Token::Operator { .. })
-                | Some(Token::Paren {
-                    kind: ParenType::Right,
-                })
-                | Some(Token::Comma)
-                | None
-        );
+        // Cases, the next token:
+        // - Is an operator, but not a functional-style one
+        // - Is an r_paren
+        // - Is a comma
+        // - Does not exist (meaning `cur` is the last token)
+        let precluded = match next {
+            Some(Token::Operator {
+                inner: Functions::Builtin(op),
+            }) => !FUNCTIONAL_STYLE_OPERATORS.contains(&op.kind),
+            Some(Token::Paren {
+                kind: ParenType::Right,
+            })
+            | Some(Token::Comma)
+            | None => true,
+            _ => false,
+        };
 
         if !precluded {
             let can_coeff = matches!(
@@ -127,32 +132,44 @@ pub fn implicit_coeffs(tokens: &mut Vec<Token>) {
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::missing_const_for_fn)]
+
     use super::{implicit_coeffs, implicit_parens};
 
     use crate::{
-        model::{functions::Function, EvaluationContext},
+        model::{
+            errors::ErrorContext, functions::Function, operators::OperatorType, tokens::Token,
+            variables::Variable, EvaluationContext,
+        },
         tokenize,
     };
 
     #[test]
     fn test_coeff() {
-        let mut tokens = tokenize("1 (2) 3!", &EvaluationContext::default()).unwrap();
-        implicit_coeffs(&mut tokens);
-
-        let funcs = [Function {
-            name: "fixed".to_string(),
-            args: vec![],
-            code: "5".to_string(),
+        let vars = [Variable {
+            repr: "q".to_string(),
+            value: 1.0,
         }];
-
         let context = EvaluationContext {
-            funcs: &funcs,
-            ..EvaluationContext::default()
+            vars: &vars,
+            funcs: &[],
+            depth: 0,
+            context: ErrorContext::Main,
         };
 
-        let mut tokens = tokenize("#fixed()^2", &context).unwrap();
-        tokens.remove(1);
+        let mul = Token::operator(OperatorType::Mul);
+
+        let mut tokens = tokenize("1 2 3", &context).unwrap();
         implicit_coeffs(&mut tokens);
+        assert_eq!(tokens[1], mul);
+        assert_eq!(tokens[3], mul);
+
+        let mut tokens = tokenize("1 $q sin(pi) e", &context).unwrap();
+        implicit_coeffs(&mut tokens);
+
+        assert_eq!(tokens[1], mul);
+        assert_eq!(tokens[3], mul);
+        assert_eq!(tokens[8], mul);
     }
 
     #[test]

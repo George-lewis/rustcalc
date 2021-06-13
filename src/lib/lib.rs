@@ -117,8 +117,14 @@ mod tests {
             tokens,
             [
                 Token::operator(OperatorType::Sin,),
+                Token::Paren {
+                    kind: ParenType::Left
+                },
                 Token::Constant {
                     inner: Constant::by_type(ConstantType::PI),
+                },
+                Token::Paren {
+                    kind: ParenType::Right
                 },
             ]
         );

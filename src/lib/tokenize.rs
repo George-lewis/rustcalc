@@ -279,31 +279,6 @@ mod tests {
     }
 
     #[test]
-    fn test_tokenize_implicit_coeff() {
-        let vars = [Variable {
-            repr: "q".to_string(),
-            value: 1.0,
-        }];
-        let context = EvaluationContext {
-            vars: &vars,
-            funcs: &[],
-            depth: 0,
-            context: ErrorContext::Main,
-        };
-
-        let mul = Token::operator(OperatorType::Mul);
-
-        let tokens = tokenize("1 2 3", &context).unwrap();
-        assert_eq!(tokens[1], mul);
-        assert_eq!(tokens[3], mul);
-
-        let tokens = tokenize("1 $q sin(pi) e", &context).unwrap();
-        assert_eq!(tokens[1], mul);
-        assert_eq!(tokens[3], mul);
-        assert_eq!(tokens[8], mul);
-    }
-
-    #[test]
     fn test_tokenize_variables_ok() {
         // It's important that these variables are sorted by length in descending order
         let vars = [

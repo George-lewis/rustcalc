@@ -1,7 +1,7 @@
 use std::{fmt::Display, iter};
 
 use colored::{ColoredString, Colorize};
-use rustmatheval::model::functions::Functions;
+use rustmatheval::model::{functions::Functions, operators::FUNCTIONAL_STYLE_OPERATORS};
 
 use crate::{funcs::format_func_name, vars::format_var_name};
 
@@ -61,18 +61,12 @@ fn spaces(cur: &Token) -> usize {
     // Cases:
     // - Spaces after value types: numbers, variables, and constants
     // - Spaces after r_parens and commas
-    // - Spaces after all operators except function-style ones: sin, cos, tan, sqrt
+    // - Spaces after all operators except function-style ones: sin, cos, tan, sqrt, ..
     // - Otherwise no spaces
     match cur {
         Token::Operator {
             inner: Functions::Builtin(op),
-        } => ![
-            OperatorType::Sin,
-            OperatorType::Cos,
-            OperatorType::Tan,
-            OperatorType::Sqrt,
-        ]
-        .contains(&op.kind) as _,
+        } => !FUNCTIONAL_STYLE_OPERATORS.contains(&op.kind) as _,
         Token::Paren {
             kind: ParenType::Right,
         }
