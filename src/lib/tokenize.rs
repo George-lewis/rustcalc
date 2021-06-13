@@ -39,7 +39,7 @@ fn _type(s: &str) -> Option<TokenType> {
         TokenType::Variable
     } else if Function::is(s) {
         TokenType::Function
-    } else if s.starts_with(',') {
+    } else if Token::is_next_comma(s) {
         TokenType::Comma
     } else {
         return None;

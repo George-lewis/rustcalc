@@ -9,6 +9,7 @@ use super::{
 
 const NUMBER_CHARACTERS: [char; 11] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'];
 const PAREN_CHARACTERS: [char; 2] = ['(', ')'];
+const COMMA_CHARACTERS: [char; 1] = [','];
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum ParenType {
@@ -68,6 +69,9 @@ impl Token<'_> {
     }
     pub fn is_next_paren(string: &str) -> bool {
         Self::is_next_t(string, &PAREN_CHARACTERS)
+    }
+    pub fn is_next_comma(string: &str) -> bool {
+        Self::is_next_t(string, &COMMA_CHARACTERS)
     }
 }
 
