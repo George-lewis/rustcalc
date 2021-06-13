@@ -54,8 +54,8 @@ pub fn doeval<'a>(
     implicit_coeffs(&mut tokens);
 
     let rpn = match rpn(&tokens) {
-        Ok(e) => e,
-        Err(e) => return Err(e.with_context(context.context)),
+        Ok(tokens) => tokens,
+        Err(error) => return Err(error.with_context(context.context)),
     };
 
     let result = eval(&rpn, context)?;

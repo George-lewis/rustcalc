@@ -60,7 +60,7 @@ pub fn tokenize<'a>(
     string: &str,
     context: &EvaluationContext<'a>,
 ) -> Result<Vec<Token<'a>>, Error> {
-    let mut vec: Vec<Token> = Vec::new();
+    let mut tokens: Vec<Token> = Vec::new();
     let mut explicit_paren = 0;
 
     // Indicates that the current operator would be unary
@@ -141,11 +141,11 @@ pub fn tokenize<'a>(
         };
 
         idx += len;
-        vec.push(token);
+        tokens.push(token);
         unary = unary_;
     }
     if explicit_paren == 0 {
-        Ok(vec)
+        Ok(tokens)
     } else {
         Err(Error::MismatchingParens)
     }
