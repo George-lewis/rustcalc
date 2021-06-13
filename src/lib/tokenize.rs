@@ -1,5 +1,4 @@
 use crate::model::{
-    self,
     functions::{Function, Functions},
     EvaluationContext,
 };
@@ -8,7 +7,7 @@ use super::{
     model::{
         constants::Constant,
         errors::Error,
-        operators::{Associativity, Operator, OperatorType},
+        operators::{Operator, OperatorType},
         tokens::ParenType,
         tokens::Token,
         variables::Variable,
@@ -24,10 +23,11 @@ enum TokenType {
     Paren,
     Constant,
     Variable,
+    Comma,
 }
 
-fn _type(s: &str) -> Result<TokenType, ()> {
-    Ok(if Token::is_next_number(s) {
+fn _type(s: &str) -> Option<TokenType> {
+    Some(if Token::is_next_number(s) {
         TokenType::Number
     } else if Operator::is(s) {
         TokenType::Operator
@@ -39,8 +39,10 @@ fn _type(s: &str) -> Result<TokenType, ()> {
         TokenType::Variable
     } else if Function::is(s) {
         TokenType::Function
+    } else if Token::is_next_comma(s) {
+        TokenType::Comma
     } else {
-        return Err(());
+        return None;
     })
 }
 
@@ -58,11 +60,8 @@ pub fn tokenize<'a>(
     string: &str,
     context: &EvaluationContext<'a>,
 ) -> Result<Vec<Token<'a>>, Error> {
-    let mut vec: Vec<Token> = Vec::new();
+    let mut tokens: Vec<Token> = Vec::new();
     let mut explicit_paren = 0;
-
-    // Indicates the possibility of an implicit coefficient
-    let mut coeff = false;
 
     // Indicates that the current operator would be unary
     let mut unary = true;
@@ -76,130 +75,77 @@ pub fn tokenize<'a>(
         let c = slice.chars().next().unwrap();
 
         // Ignore whitespace and commas
-        if c.is_whitespace() || c == ',' {
+        if c.is_whitespace() {
             idx += 1;
-            coeff = coeff && c != ',';
             continue;
         }
 
-        if coeff {
-            // No coefficient if the current character is an r-paren
-            let is_r_paren = Token::paren_type(c) == Some(ParenType::Right);
-            if !is_r_paren {
-                let opt = Operator::by_repr(&slice);
-                let is_left_assoc_or_pow = opt.map_or(false, |(op, _)| {
-                    op.associativity == Associativity::Left || op.kind == OperatorType::Pow
-                });
+        let kind: TokenType = _type(&slice).ok_or(Error::Parsing(idx))?;
 
-                // Only a coefficient if the next (current) token is not
-                // A left-associative function or pow
-                if !is_left_assoc_or_pow {
-                    vec.push(Token::operator(OperatorType::Mul));
-                }
-            }
-            coeff = false;
-        }
-
-        let kind: TokenType = match _type(&slice) {
-            Ok(k) => k,
-            Err(()) => {
-                return Err(Error::Parsing(idx));
-            }
-        };
-
-        match kind {
+        let (token, len, unary_) = match kind {
             TokenType::Operator => {
                 let unar = Operator::unary(&slice);
 
-                unary = if unary && unar.is_some() {
+                if unary && unar.is_some() {
                     // Current token is a unary operator
-                    let (a, b) = unar.unwrap();
-                    idx += b;
-                    vec.push(Token::operator(*a));
+                    let (kind, len) = unar.unwrap();
 
                     // Support for consecutive unary ops
-                    true
+                    (Token::operator(*kind), len, true)
                 } else {
-                    let (operator, n) = Operator::by_repr(&slice).unwrap();
-
-                    idx += n;
-                    vec.push(Token::Operator {
-                        inner: model::functions::Functions::Builtin(operator),
-                    });
+                    let (operator, len) = Operator::by_repr(&slice).unwrap();
+                    let token = Token::Operator {
+                        inner: Functions::Builtin(operator),
+                    };
 
                     // The next token cannot be unary if this operator is factorial
                     // ATM this is the only postfix operator we support
-                    operator.kind != OperatorType::Factorial
-                };
+                    (token, len, operator.kind != OperatorType::Factorial)
+                }
             }
             TokenType::Function => {
-                let x = context.funcs;
-                let search = Function::next_function(&slice[1..], x);
-                let (func, n) = match search {
-                    Some(x) => x,
-                    None => return Err(Error::UnknownFunction(idx)),
-                };
-                vec.push(Token::Operator {
+                let (func, len) = Function::next_function(&slice[1..], context.funcs)
+                    .ok_or(Error::UnknownFunction(idx))?;
+                let token = Token::Operator {
                     inner: Functions::User(func),
-                });
-                idx += n + 1;
-                if func.arity() == 0 {
-                    unary = false;
-                    coeff = true;
-                } else {
-                    unary = true;
-                }
+                };
+                (token, len + 1, func.arity() > 0)
             }
             TokenType::Paren => {
-                let (t, kind) = Token::paren(c).unwrap();
-                match kind {
-                    ParenType::Left => {
-                        // Covers cases like `sin(-x)`
-                        unary = true;
-                        explicit_paren += 1;
-                    }
-                    ParenType::Right => {
-                        // Covers cases like `sin(x) y => sin(x) * y`
-                        coeff = true;
-                        explicit_paren -= 1;
-                    }
-                }
-
-                vec.push(t);
-                idx += 1;
+                let (token, kind) = Token::paren(c).unwrap();
+                let (paren_mod, unary_) = match kind {
+                    ParenType::Left => (1, true),
+                    ParenType::Right => (-1, unary),
+                };
+                explicit_paren += paren_mod;
+                (token, 1, unary_)
             }
             TokenType::Number => {
-                let (t, n) = match Token::number(&slice) {
-                    Some(a) => a,
-                    None => return Err(Error::Parsing(idx)),
-                };
-                idx += n;
-                vec.push(t);
-                coeff = true;
-                unary = false;
+                let (token, len) = Token::number(&slice).ok_or(Error::Parsing(idx))?;
+                (token, len, false)
             }
             TokenType::Constant => {
-                let (constant, n) = Constant::by_repr(&slice).unwrap();
-                idx += n;
-                vec.push(Token::Constant { inner: constant });
-                coeff = true;
-                unary = false;
+                let (constant, len) = Constant::by_repr(&slice).unwrap();
+                let token = Token::Constant { inner: constant };
+                (token, len, false)
             }
             TokenType::Variable => {
-                let (variable, n) = match Variable::next_variable(&slice[1..], context.vars) {
-                    // [1..] to ignore the $ prefix
-                    Some(a) => a,
-                    None => return Err(Error::UnknownVariable(idx)),
-                };
-                idx += n + 1; // +1 to account for '$'
-                vec.push(Token::Variable { inner: variable });
-                coeff = true;
-                unary = false;
+                // [1..] to ignore the $ prefix
+                let (variable, len) = Variable::next_variable(&slice[1..], context.vars)
+                    .ok_or(Error::UnknownVariable(idx))?;
+                let token = Token::Variable { inner: variable };
+                // len + 1 to account for '$'
+                (token, len + 1, false)
             }
-        }
+            TokenType::Comma => (Token::Comma, 1, true),
+        };
+
+        idx += len;
+        tokens.push(token);
+        unary = unary_;
     }
     if explicit_paren == 0 {
-        Ok(vec)
+        Ok(tokens)
     } else {
         Err(Error::MismatchingParens)
     }
@@ -208,11 +154,10 @@ pub fn tokenize<'a>(
 #[cfg(test)]
 mod tests {
 
+    use crate::model::errors::ErrorContext;
+
     use super::OperatorType::{Add, Factorial};
-    use super::{
-        model::errors::ErrorContext, tokenize, Error, EvaluationContext, OperatorType, ParenType,
-        Token, Variable,
-    };
+    use super::{tokenize, Error, EvaluationContext, OperatorType, ParenType, Token, Variable};
 
     #[test]
     fn test_tokenize_simple_ok() {
@@ -331,31 +276,6 @@ mod tests {
         assert!(matches!(result, Err(Error::UnknownVariable(0))));
         let result = tokenize("1 * $x", &context);
         assert!(matches!(result, Err(Error::UnknownVariable(4))));
-    }
-
-    #[test]
-    fn test_tokenize_implicit_coeff() {
-        let vars = [Variable {
-            repr: "q".to_string(),
-            value: 1.0,
-        }];
-        let context = EvaluationContext {
-            vars: &vars,
-            funcs: &[],
-            depth: 0,
-            context: ErrorContext::Main,
-        };
-
-        let mul = Token::operator(OperatorType::Mul);
-
-        let tokens = tokenize("1 2 3", &context).unwrap();
-        assert_eq!(tokens[1], mul);
-        assert_eq!(tokens[3], mul);
-
-        let tokens = tokenize("1 $q sin(pi) e", &context).unwrap();
-        assert_eq!(tokens[1], mul);
-        assert_eq!(tokens[3], mul);
-        assert_eq!(tokens[8], mul);
     }
 
     #[test]

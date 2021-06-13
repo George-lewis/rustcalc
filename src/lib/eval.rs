@@ -47,7 +47,7 @@ pub fn eval(tokens: &[Token], context: EvaluationContext) -> Result<f64, Context
                 // Push the result of the evaluation
                 stack.push(Token::Number { value: result });
             }
-            Token::Paren { .. } => {}
+            Token::Paren { .. } | Token::Comma => {}
         }
     }
 

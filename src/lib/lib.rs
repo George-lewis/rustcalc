@@ -7,6 +7,7 @@ pub mod utils;
 mod eval;
 mod rpn;
 mod tokenize;
+mod transform;
 
 pub mod model;
 
@@ -14,6 +15,9 @@ use eval::eval;
 use model::EvaluationContext;
 use rpn::rpn;
 pub use tokenize::tokenize;
+use transform::implicit_coeffs;
+
+use crate::transform::implicit_parens;
 
 use self::model::{
     errors::{ContextualError, Error},
@@ -21,6 +25,26 @@ use self::model::{
 };
 
 pub const RECURSION_LIMIT: u8 = 25;
+
+/// Tokenize a string and perform transformations on it, e.g. adding implicit parentheses and coefficients
+///
+/// * `string` - The input to tokenize
+/// * `context` - The evaluation context
+///
+/// ## Returns
+/// A transformed list of parsed tokens, or an error
+///
+/// ## Errors
+/// Reraises errors that occur during tokenization
+pub fn tokenize_and_transform<'a>(
+    string: &str,
+    context: &EvaluationContext<'a>,
+) -> Result<Vec<Token<'a>>, Error> {
+    let mut tokens = tokenize(string, context)?;
+    implicit_parens(&mut tokens);
+    implicit_coeffs(&mut tokens);
+    Ok(tokens)
+}
 
 /// Evaluate a string containing a mathematical expression
 ///
@@ -41,14 +65,17 @@ pub fn doeval<'a>(
         return Err(Error::RecursionLimit.with_context(context.context));
     }
 
-    let tokens = match tokenize(string, &context) {
+    let mut tokens = match tokenize(string, &context) {
         Ok(tokens) => tokens,
         Err(err) => return Err(err.with_context(context.context)),
     };
 
+    implicit_parens(&mut tokens);
+    implicit_coeffs(&mut tokens);
+
     let rpn = match rpn(&tokens) {
-        Ok(e) => e,
-        Err(e) => return Err(e.with_context(context.context)),
+        Ok(tokens) => tokens,
+        Err(error) => return Err(error.with_context(context.context)),
     };
 
     let result = eval(&rpn, context)?;
@@ -110,8 +137,14 @@ mod tests {
             tokens,
             [
                 Token::operator(OperatorType::Sin,),
+                Token::Paren {
+                    kind: ParenType::Left
+                },
                 Token::Constant {
                     inner: Constant::by_type(ConstantType::PI),
+                },
+                Token::Paren {
+                    kind: ParenType::Right
                 },
             ]
         );

@@ -33,17 +33,18 @@ pub fn assign_var_command(
     vars: &mut Vec<Variable>,
     funcs: &[Function],
 ) -> Result<String, Error> {
-    // Variable assignment/reassignment
+    // Variable assignment / reassignment
 
     let sides: Vec<&str> = input.split('=').collect();
     let trimmed_left = sides[0].trim(); // Trim here to remove space between end of variable name and = sign
 
     if sides.len() != 2 {
-        // Multiple = signs || Assigning without using a $ prefix
+        // Multiple = signs or Assigning without using a $ prefix
         return Err(Error::Assignment);
     }
 
-    let user_repr: String = trimmed_left[1..].to_string(); // Trim again to remove whitespace between end of variable name and = sign
+    // Trim again to remove whitespace between end of variable name and = sign
+    let user_repr: String = trimmed_left[1..].to_string();
 
     let context = EvaluationContext {
         vars,

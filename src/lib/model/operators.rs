@@ -29,6 +29,15 @@ pub enum OperatorType {
 
 /// Unary operators
 const UNARY_OPERATORS: &[OperatorType] = &[OperatorType::Positive, OperatorType::Negative];
+pub const FUNCTIONAL_STYLE_OPERATORS: &[OperatorType] = &[
+    OperatorType::Sin,
+    OperatorType::Cos,
+    OperatorType::Tan,
+    OperatorType::Max,
+    OperatorType::Min,
+    OperatorType::RandomFloat,
+    OperatorType::RandomInt,
+];
 
 impl Representable for OperatorType {
     fn repr(&self) -> &'static [&'static str] {
