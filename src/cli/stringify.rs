@@ -144,11 +144,7 @@ where
         .map(|(token, space)| {
             let ideal = ideal_repr(token);
             let colored = colorize(&ideal, token);
-            let space = if space {
-                " "
-            } else {
-                ""
-            };
+            let space = if space { " " } else { "" };
             format!("{}{}", colored, space)
         })
         .collect()

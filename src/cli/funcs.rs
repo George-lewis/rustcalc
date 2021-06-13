@@ -55,7 +55,11 @@ pub fn format_funcs(funcs: &[Function], vars: &[Variable]) -> String {
     funcs.iter().map(|f| format_func(f, funcs, vars)).join("\n")
 }
 
-pub fn assign_func_command(input: &str, funcs: &mut Vec<Function>, vars: &[Variable]) -> Result<String, Error> {
+pub fn assign_func_command(
+    input: &str,
+    funcs: &mut Vec<Function>,
+    vars: &[Variable],
+) -> Result<String, Error> {
     let sides: Vec<&str> = input.split('=').map(str::trim).collect();
 
     if sides.len() != 2 {

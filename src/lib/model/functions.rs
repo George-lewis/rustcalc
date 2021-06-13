@@ -74,14 +74,10 @@ impl Function {
     /// The list is created such that arguments always come before globals. This is important for correct varible-name resolution.
     pub fn create_variables(&self, args: &[f64], vars: &[Variable]) -> Vec<Variable> {
         // Create the arguments for the function
-        let args = self
-            .args
-            .iter()
-            .zip(args)
-            .map(|(name, value)| Variable {
-                repr: name.clone(),
-                value: *value,
-            });
+        let args = self.args.iter().zip(args).map(|(name, value)| Variable {
+            repr: name.clone(),
+            value: *value,
+        });
 
         // Create a cloned iteration of the global variables
         let global = vars.iter().cloned();
