@@ -14,20 +14,6 @@ pub fn implicit_parens(tokens: &mut Vec<Token>) {
             (iter.nth(idx).unwrap(), iter.next())
         };
 
-        let wants_implicit_paren = match cur {
-            Token::Operator { inner } => match inner {
-                Functions::Builtin(op) => [
-                    OperatorType::Sin,
-                    OperatorType::Cos,
-                    OperatorType::Tan,
-                    OperatorType::Sqrt,
-                ]
-                .contains(&op.kind),
-                Functions::User(func) => func.arity() <= 1,
-            },
-            _ => false,
-        };
-
         let preclude = matches!(
             next,
             Some(Token::Paren {
@@ -35,16 +21,7 @@ pub fn implicit_parens(tokens: &mut Vec<Token>) {
             })
         );
 
-        if wants_implicit_paren && !preclude {
-            tokens.insert(
-                idx + 1,
-                Token::Paren {
-                    kind: ParenType::Left,
-                },
-            );
-            implicit_paren += 1;
-            idx += 1;
-        } else if matches!(
+        if matches!(
             cur,
             Token::Number { .. } | Token::Variable { .. } | Token::Constant { .. }
         ) {
@@ -58,9 +35,53 @@ pub fn implicit_parens(tokens: &mut Vec<Token>) {
             }
             idx += implicit_paren as usize;
             implicit_paren = 0;
+        } else if !preclude {
+            let wants_implicit_paren = match cur {
+                Token::Operator { inner } => match inner {
+                    Functions::Builtin(op) => [
+                        OperatorType::Sin,
+                        OperatorType::Cos,
+                        OperatorType::Tan,
+                        OperatorType::Sqrt,
+                    ]
+                    .contains(&op.kind),
+                    Functions::User(func) => {
+                        if func.arity() == 1 {
+                            true
+                        } else {
+                            tokens.insert(
+                                idx + 1,
+                                Token::Paren {
+                                    kind: ParenType::Left,
+                                },
+                            );
+                            tokens.insert(
+                                idx + 2,
+                                Token::Paren {
+                                    kind: ParenType::Right,
+                                },
+                            );
+                            idx += 2;
+                            false
+                        }
+                    }
+                },
+                _ => false,
+            };
+            if wants_implicit_paren {
+                tokens.insert(
+                    idx + 1,
+                    Token::Paren {
+                        kind: ParenType::Left,
+                    },
+                );
+                implicit_paren += 1;
+                idx += 1;
+            }
         }
         idx += 1;
     }
+    dbg!(tokens);
 }
 
 #[allow(clippy::unnested_or_patterns)]

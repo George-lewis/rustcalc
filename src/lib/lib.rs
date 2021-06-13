@@ -50,8 +50,8 @@ pub fn doeval<'a>(
         Err(err) => return Err(err.with_context(context.context)),
     };
 
-    implicit_coeffs(&mut tokens);
     implicit_parens(&mut tokens);
+    implicit_coeffs(&mut tokens);
 
     let rpn = match rpn(&tokens) {
         Ok(e) => e,
