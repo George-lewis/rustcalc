@@ -9,6 +9,7 @@ mod stringify;
 mod utils;
 mod vars;
 
+use itertools::Itertools;
 use lib::{doeval, model::EvaluationContext};
 pub use rustmatheval as lib;
 
@@ -23,16 +24,28 @@ use cli::{handle_errors, handle_input};
 pub fn main() -> ! {
     let args = env::args();
     if args.len() > 1 {
+        // Combine all of the args into a string
+        let fold = |acc: String, x: String| format!("{} {}", acc, x);
         let input: String = args
             .skip(1)
-            .fold(String::new(), |acc, x| format!("{} {}", acc, x));
-        let code = match doeval(&input, EvaluationContext::default()) {
+            .fold1(fold).unwrap_or_default();
+
+        // Evaluate
+        let context = EvaluationContext::default();
+        let code = match doeval(&input, context) {
             Ok((result, _)) => {
                 println!("{:.3}", result);
                 0
             }
-            Err(_) => 1,
+            Err(ce) => {
+                let error = Error::Library(ce);
+                let msg = handle_errors(error, &input);
+                eprintln!("{}", msg);
+                1
+            }
         };
+
+        // Exit
         process::exit(code);
     }
 
