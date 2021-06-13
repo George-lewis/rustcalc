@@ -9,17 +9,33 @@ mod stringify;
 mod utils;
 mod vars;
 
+use lib::{doeval, model::EvaluationContext};
 pub use rustmatheval as lib;
 
 use config::HISTORY_FILE;
 use rustyline::Editor;
 
 use error::Error;
-use std::process;
+use std::{env, process};
 
 use cli::{handle_errors, handle_input};
 
 pub fn main() -> ! {
+    let args = env::args();
+    if args.len() > 1 {
+        let input: String = args
+            .skip(1)
+            .fold(String::new(), |acc, x| format!("{} {}", acc, x));
+        let code = match doeval(&input, EvaluationContext::default()) {
+            Ok((result, _)) => {
+                println!("{:.3}", result);
+                0
+            }
+            Err(_) => 1,
+        };
+        process::exit(code);
+    }
+
     let mut editor = Editor::<()>::new();
 
     if let Some(path) = HISTORY_FILE.as_deref() {
