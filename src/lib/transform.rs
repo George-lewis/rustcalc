@@ -9,7 +9,7 @@ use crate::model::{
 /// or function-like operators that accept 0 or 1 arguments
 /// Ex: sin sin 2^5 + 9 => sin(sin(2^5)) + 9
 pub fn implicit_parens(tokens: &mut Vec<Token>) {
-    let mut implicit_paren: u8 = 0;
+    let mut implicit_paren: usize = 0;
 
     let mut idx = 0;
     while idx < tokens.len() {
