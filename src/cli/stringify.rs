@@ -15,6 +15,7 @@ pub fn stringify(tokens: &[Token]) -> String {
     _stringify(tokens, color_cli)
 }
 
+/// Construct the ideal representation of a `Token`
 fn ideal_repr(tok: &Token) -> String {
     match tok {
         Token::Number { value } => value.to_string(),
