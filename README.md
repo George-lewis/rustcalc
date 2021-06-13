@@ -73,6 +73,20 @@ Tip: Functions are lazily evaluated, so you can define them out-of-order!
 
 ![](screenshots/functions-4.png)
 
+Functions can access global variables! Just make sure that they're defined when you call.
+
+(`$ans` is only defined after a statement is executed)
+
+![](screenshots/functions-6.png)
+
+However, arguments will take precedence over globals:
+
+![](screenshots/functions-7.png)
+
+Multi-argument functions!
+
+![](screenshots/functions-5.png)
+
 ## RCFile
 
 Rustcalc supports running a script at runtime. On first run, Rustcalc will generate a default RCFile.
