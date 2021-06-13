@@ -39,7 +39,7 @@ pub fn handle_input<'a>(
             return if funcs.is_empty() {
                 Ok("No funcs".to_string())
             } else {
-                Ok(format_funcs(funcs))
+                Ok(format_funcs(funcs, vars))
             };
         }
     }
@@ -49,7 +49,7 @@ pub fn handle_input<'a>(
             // Assign / Reassign variable command
             assign_var_command(input, vars, funcs)
         } else if Function::is(input) {
-            assign_func_command(input, funcs)
+            assign_func_command(input, funcs, vars)
         } else {
             Err(Error::Assignment)
         }

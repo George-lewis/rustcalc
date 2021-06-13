@@ -12,21 +12,25 @@ fn color_arg(arg: impl AsRef<str>) -> ColoredString {
     arg.as_ref().yellow()
 }
 
-fn stringify_func_code(func: &Function, funcs: &[Function]) -> String {
-    let vars: Vec<_> = func
-        .args
-        .iter()
-        .map(|arg| Variable {
-            repr: arg.clone(),
-            value: 0.0,
-        })
-        .collect();
+fn stringify_func_code(func: &Function, funcs: &[Function], vars: &[Variable]) -> String {
+    // We don't care about the actual value of the arguments here
+    // Because we're just going to tokenize it
+    let args = [0.0].repeat(func.arity());
+
+    // Creates args and merges with globals
+    let vars = func.create_variables(&args, vars);
+
+    // Depth and context also don't matter here
     let context = EvaluationContext {
         vars: &vars,
         funcs,
         depth: 0,
         context: ErrorContext::Main,
     };
+
+    // If the function code references variables or other functions
+    // That don't exist right now, the tokenize will fail
+    // So we just fall back to a copy of the function's code
     match tokenize_and_transform(&func.code, &context) {
         Ok(tokens) => stringify(&tokens),
         Err(_) => func.code.clone(),
@@ -37,21 +41,21 @@ pub fn format_func_name(name: &str) -> ColoredString {
     format!("#{}", name.magenta().bold()).normal()
 }
 
-fn format_func(func: &Function, funcs: &[Function]) -> String {
+fn format_func(func: &Function, funcs: &[Function], vars: &[Variable]) -> String {
     format!(
         "[ {}({}) = {} ]",
         format_func_name(&func.name),
         func.args.iter().map(color_arg).join(", "),
-        stringify_func_code(func, funcs)
+        stringify_func_code(func, funcs, vars)
     )
 }
 
 #[allow(clippy::module_name_repetitions)]
-pub fn format_funcs(funcs: &[Function]) -> String {
-    funcs.iter().map(|f| format_func(f, funcs)).join("\n")
+pub fn format_funcs(funcs: &[Function], vars: &[Variable]) -> String {
+    funcs.iter().map(|f| format_func(f, funcs, vars)).join("\n")
 }
 
-pub fn assign_func_command(input: &str, funcs: &mut Vec<Function>) -> Result<String, Error> {
+pub fn assign_func_command(input: &str, funcs: &mut Vec<Function>, vars: &[Variable]) -> Result<String, Error> {
     let sides: Vec<&str> = input.split('=').map(str::trim).collect();
 
     if sides.len() != 2 {
@@ -72,7 +76,7 @@ pub fn assign_func_command(input: &str, funcs: &mut Vec<Function>) -> Result<Str
 
     assign_func(func.clone(), funcs);
 
-    let formatted = format_func(&func, funcs);
+    let formatted = format_func(&func, funcs, vars);
 
     Ok(formatted)
 }

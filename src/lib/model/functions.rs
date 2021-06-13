@@ -70,6 +70,28 @@ impl Function {
         self.args.len()
     }
 
+    /// Create the variables required to evaluate this function, including both arguments and global variables.
+    /// The list is created such that arguments always come before globals. This is important for correct varible-name resolution.
+    pub fn create_variables(&self, args: &[f64], vars: &[Variable]) -> Vec<Variable> {
+        // Create the arguments for the function
+        let args = self
+            .args
+            .iter()
+            .zip(args)
+            .map(|(name, value)| Variable {
+                repr: name.clone(),
+                value: *value,
+            });
+
+        // Create a cloned iteration of the global variables
+        let global = vars.iter().cloned();
+
+        // Merge the function arguments withthe globals
+        // It's important that the function variables are first
+        // So that variable name resolution prioritizes args
+        args.chain(global).collect()
+    }
+
     /// Apply this function to a set of arguments
     ///
     /// # Errors
@@ -79,25 +101,15 @@ impl Function {
         args: &[f64],
         context: &EvaluationContext<'a>,
     ) -> Result<f64, ContextualError> {
-        let vars: Vec<_> = self
-            .args
-            .iter()
-            .zip(args)
-            .map(|(name, value)| Variable {
-                repr: name.clone(),
-                value: *value,
-            })
-            .collect();
+        let vars = self.create_variables(args, context.vars);
+
         let context = EvaluationContext {
             vars: &vars,
             funcs: context.funcs,
             depth: context.depth + 1,
             context: ErrorContext::Scoped(self.clone()),
         };
-        let result = doeval(&self.code, context);
-        match result {
-            Ok((a, _)) => Ok(a),
-            Err(e) => Err(e),
-        }
+
+        doeval(&self.code, context).map(|(a, _)| a)
     }
 }
