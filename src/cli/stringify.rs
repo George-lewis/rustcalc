@@ -55,9 +55,9 @@ fn color_cli(string: &str, token: &Token) -> ColoredString {
     }
 }
 
-/// Determine if (and how many) spaces should be come after `cur` in a string representation.
+/// Determine if a space should be come after `cur` in a string representation.
 #[allow(clippy::unnested_or_patterns)]
-fn spaces(cur: &Token) -> usize {
+fn spaces(cur: &Token) -> bool {
     // Cases:
     // - Spaces after value types: numbers, variables, and constants
     // - Spaces after r_parens and commas
@@ -74,20 +74,20 @@ fn spaces(cur: &Token) -> usize {
         | Token::Number { .. }
         | Token::Variable { .. }
         | Token::Constant { .. }
-        | Token::Comma => 1,
+        | Token::Comma => true,
 
         // Otherwise none
-        _ => 0,
+        _ => false,
     }
 }
 
-/// Determine if there can or cannot be a space between `cur` and `next` in a string representation
+/// Determine if there can or cannot be a space before `next` in a string representation
 ///
 /// ## Returns
 /// True -> There cannot be a space between these tokens
 ///
 /// False -> Spaces are permitted between these tokens
-fn exclude_space(_cur: &Token, next: &Token) -> bool {
+fn exclude_space(next: &Token) -> bool {
     // Cases:
     // - No spaces before an r_paren
     // - No spaces before certain operators: pow, and factorial
@@ -118,7 +118,7 @@ where
         tokens
             .last()
             .expect("Expected `tokens` to contain at least one token"),
-        0,
+        false,
     ));
 
     // Windows of size two let us determine if we want to insert a space
@@ -131,19 +131,25 @@ where
 
             // `exclude_space` determines if any conditions prevent there from being a space
             // and then `spaces` determines the number of spaces to insert, if they are permitted
-            let spaces = if exclude_space(cur, next) {
-                0
+            let space = if exclude_space(next) {
+                false
             } else {
                 spaces(cur)
             };
-            (cur, spaces)
+            (cur, space)
         })
         // Insert the last token
         .chain(last)
         // Color
         .map(|(token, space)| {
-            let colored = colorize(&ideal_repr(token), token);
-            format!("{}{}", colored, " ".repeat(space))
+            let ideal = ideal_repr(token);
+            let colored = colorize(&ideal, token);
+            let space = if space {
+                " "
+            } else {
+                ""
+            };
+            format!("{}{}", colored, space)
         })
         .collect()
 }
