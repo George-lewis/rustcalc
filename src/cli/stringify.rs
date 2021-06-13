@@ -60,7 +60,7 @@ fn color_cli(string: &str, token: &Token) -> ColoredString {
 fn spaces(cur: &Token, next: &Token) -> usize {
     // Cases:
     // - Spaces after value types: numbers, variables, and constants
-    // - Spaces are r_parens
+    // - Spaces after r_parens and commas
     // - Spaces after all operators except function-style ones: sin, cos, tan, sqrt
     // - Otherwise no spaces
     match (cur, next) {
@@ -84,7 +84,8 @@ fn spaces(cur: &Token, next: &Token) -> usize {
         )
         | (Token::Number { .. }, _)
         | (Token::Variable { .. }, _)
-        | (Token::Constant { .. }, _) => 1,
+        | (Token::Constant { .. }, _)
+        | (Token::Comma, _) => 1,
 
         // Otherwise none
         _ => 0,

@@ -117,7 +117,6 @@ mod tests {
     fn test_coeff() {
         let mut tokens = tokenize("1 (2) 3!", &EvaluationContext::default()).unwrap();
         implicit_coeffs(&mut tokens);
-        dbg!(tokens);
 
         let funcs = [Function {
             name: "fixed".to_string(),
@@ -133,14 +132,12 @@ mod tests {
         let mut tokens = tokenize("#fixed()^2", &context).unwrap();
         tokens.remove(1);
         implicit_coeffs(&mut tokens);
-        dbg!(tokens);
     }
 
     #[test]
     fn test_implicit_parens() {
         let mut tokens = tokenize("sin 5 cos 5", &EvaluationContext::default()).unwrap();
         implicit_parens(&mut tokens);
-        dbg!(&tokens);
 
         let funcs = [Function {
             name: "ident".to_string(),
@@ -153,6 +150,5 @@ mod tests {
         };
         let mut tokens = tokenize("#ident 5 + #ident(7) + sin(88)", &context).unwrap();
         implicit_parens(&mut tokens);
-        dbg!(&tokens);
     }
 }
