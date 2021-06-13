@@ -17,7 +17,7 @@ pub fn rpn<'a>(tokens: &'a [Token]) -> Result<Vec<Token<'a>>, Error> {
         match token {
             Token::Comma => {}
             Token::Number { .. } | Token::Constant { .. } | Token::Variable { .. } => {
-                output.push(*token)
+                output.push(*token);
             }
             Token::Operator { inner: op1 } => {
                 while !operator_stack.is_empty() {

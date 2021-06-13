@@ -1,5 +1,4 @@
 #![warn(clippy::pedantic, clippy::nursery)]
-#![allow(clippy::must_use_candidate, clippy::missing_panics_doc)]
 
 mod cli;
 mod config;
@@ -33,7 +32,7 @@ pub fn main() -> ! {
     if let Err(inner) = rcfile::load(&mut vars, &mut funcs) {
         match inner {
             Error::Io(inner) => {
-                println!("Error loading RCFile: {:#?}", inner)
+                println!("Error loading RCFile: {:#?}", inner);
             }
             _ => unreachable!(),
         }

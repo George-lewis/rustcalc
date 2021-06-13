@@ -106,7 +106,7 @@ impl Operator {
 fn _factorial(x: f64) -> f64 {
     let mut out: f64 = 1.0;
     for i in 1..=(x as i64) {
-        out *= i as f64
+        out *= i as f64;
     }
     out
 }
@@ -267,19 +267,17 @@ mod tests {
 
     #[test]
     fn test_factorial_normal() {
-        [
+        for &(a, b) in &[
             (1.0, 1.0),
             (0.0, 1.0),
             (2.0, 2.0),
             (3.0, 6.0),
             (5.0, 120.0),
             (10.0, 3_628_800.0),
-        ]
-        .iter()
-        .for_each(|&(a, b)| {
+        ] {
             let result = factorial(a);
             assert_same!(b, result);
-        })
+        }
     }
 
     #[test]
@@ -302,7 +300,7 @@ mod tests {
     #[test]
     fn test_by_type() {
         let cons = Operator::by_type(OperatorType::Add);
-        assert!(cons.repr.contains(&"+"))
+        assert!(cons.repr.contains(&"+"));
     }
 
     #[test]

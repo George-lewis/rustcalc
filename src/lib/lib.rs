@@ -274,7 +274,7 @@ mod tests {
             assert_eq!(
                 doeval(a, EvaluationContext::default()).unwrap_err().error,
                 *b
-            )
+            );
         });
     }
 
@@ -355,7 +355,7 @@ mod tests {
                 assert_eq!(
                     doeval(a, EvaluationContext::default()).unwrap_err().error,
                     *b
-                )
+                );
             });
     }
 }

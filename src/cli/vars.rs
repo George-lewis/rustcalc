@@ -90,5 +90,5 @@ pub fn assign_var(var: Variable, vars: &mut Vec<Variable>) {
     let repr = var.repr.clone();
     let cmp = |v: &Variable| repr.cmp(&v.repr);
 
-    insert_or_swap_sort(vars, var, cmp)
+    insert_or_swap_sort(vars, var, cmp);
 }

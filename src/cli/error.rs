@@ -1,3 +1,5 @@
+#![allow(clippy::module_name_repetitions)]
+
 pub use super::lib::model::errors::{ContextualError as ContextualLibError, Error as LibError};
 pub use std::io::Error as IoError;
 

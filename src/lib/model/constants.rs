@@ -67,7 +67,7 @@ mod tests {
     #[test]
     fn test_by_type() {
         let cons = Constant::by_type(ConstantType::PI);
-        assert!(cons.repr.contains(&"pi"))
+        assert!(cons.repr.contains(&"pi"));
     }
 
     #[test]
