@@ -1,8 +1,61 @@
+use rustmatheval::model::{functions::Function, variables::Variable};
 use rustyline::completion::Completer;
 
 use crate::{funcs::format_func_with_args, utils::find_last, vars::format_var_name};
 
 use super::{MyCandidate, MyHelper};
+
+fn find_candidates<Item: Named>(line: &str, items: &[Item]) -> Option<(usize, Vec<MyCandidate>)> {
+    if let Some(pos) = find_last(Item::prefix(), line) {
+        // +1 because of `key`
+        let line = &line[pos + 1..];
+        let stride = line.len() - pos;
+        let matches: Vec<MyCandidate> = items
+            .iter()
+            .filter(|it| it.name().starts_with(line))
+            // -1 because of `key`
+            .map(|it| MyCandidate(it.name()[stride - 1..].to_string(), it.format()))
+            .collect();
+        if !matches.is_empty() {
+            return Some((stride, matches));
+        }
+    }
+    None
+}
+
+trait Named {
+    fn name(&self) -> &str;
+    fn format(&self) -> String;
+    fn prefix() -> char;
+}
+
+impl Named for Function {
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn format(&self) -> String {
+        format_func_with_args(self)
+    }
+
+    fn prefix() -> char {
+        '#'
+    }
+}
+
+impl Named for Variable {
+    fn name(&self) -> &str {
+        &self.repr
+    }
+
+    fn format(&self) -> String {
+        format_var_name(&self.repr).to_string()
+    }
+
+    fn prefix() -> char {
+        '$'
+    }
+}
 
 impl Completer for MyHelper<'_> {
     type Candidate = MyCandidate;
@@ -13,46 +66,20 @@ impl Completer for MyHelper<'_> {
         pos: usize,
         _ctx: &rustyline::Context<'_>,
     ) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
-        if let Some(npos) = find_last('#', &line[..pos]) {
-            let line = &line[npos + 1..pos];
-            let funcs = self.funcs.borrow();
+        let line = &line[..pos];
 
-            let matches: Vec<_> = funcs
-                .iter()
-                .filter(|f| f.name.starts_with(line))
-                .map(|f| {
-                    MyCandidate(
-                        f.name[pos - npos - 1..].to_string(),
-                        format_func_with_args(f),
-                    )
-                })
-                .collect();
+        let funcs = self.funcs.borrow();
+        let vars = self.vars.borrow();
 
-            if !matches.is_empty() {
-                return rustyline::Result::Ok((pos - npos, matches));
-            }
-        } else if let Some(npos) = find_last('$', &line[..pos]) {
-            let line = &line[npos + 1..pos];
-            let vars = self.vars.borrow();
+        let candidates = if let Some(candidates) = find_candidates(line, &funcs) {
+            candidates
+        } else if let Some(candidates) = find_candidates(line, &vars) {
+            candidates
+        } else {
+            (0, vec![])
+        };
 
-            let matches: Vec<_> = vars
-                .iter()
-                .filter(|v| v.repr.starts_with(line))
-                .map(|v| {
-                    MyCandidate(
-                        v.repr[pos - npos - 1..].to_string(),
-                        format_var_name(&v.repr).to_string(),
-                    )
-                })
-                .collect();
-
-            if !matches.is_empty() {
-                // return Some(MyCandidate(var.repr[pos-npos-1..].to_string()));
-                return rustyline::Result::Ok((pos - npos, matches));
-            }
-        }
-
-        rustyline::Result::Ok((0, vec![]))
+        rustyline::Result::Ok(candidates)
     }
 
     fn update(&self, line: &mut rustyline::line_buffer::LineBuffer, start: usize, elected: &str) {
