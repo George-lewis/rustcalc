@@ -24,15 +24,15 @@ use crate::cli::handle_library_errors;
 
 pub fn main() -> ! {
     // One-shot mode
-    let mut args = env::args();
+    let args = env::args();
 
-    // Look for "-c" in the arguments
-    // If found, `any` returns true and the iterator is advanced
-    // to the position of the "-c", so then we can just fold
-    if args.any(|arg| arg == "-c") {
+    // Usually the first argument is the path to the executable
+    // So if there's more than one argument we interpret that as a one-shot
+    if args.len() > 1 {
         // Combine all of the args into a string
         let fold = |acc: String, x: String| format!("{} {}", acc, x);
         let input: String = args
+            .skip(1)
             .fold(String::new(), fold);
 
         // Evaluate
