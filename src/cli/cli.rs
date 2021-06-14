@@ -169,7 +169,7 @@ pub fn handle_library_errors(contextual_error: &ContextualLibError, input: &str)
 pub fn handle_errors(error: &Error, input: &str) -> String {
     match error {
         Error::Assignment => {
-            "Couldn't assign to variable. Malformed assignment statement.".to_string()
+            "Couldn't assign. Malformed assignment statement.".to_string()
         }
         Error::Library(contextual_error) => handle_library_errors(contextual_error, input),
         Error::Io(..) => unreachable!(),
