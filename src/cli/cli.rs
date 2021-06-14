@@ -124,9 +124,7 @@ pub fn handle_library_errors(contextual_error: &ContextualLibError, input: &str)
         ErrorContext::Scoped(func) => &func.code,
     };
     let msg = match error {
-        LibError::Parsing(idx) => {
-            make_highlighted_error("Couldn't parse the token", code, *idx)
-        }
+        LibError::Parsing(idx) => make_highlighted_error("Couldn't parse the token", code, *idx),
         LibError::Operand(op) => {
             let msg = match op {
                 InnerFunction::Builtin(kind) => format!(
@@ -143,12 +141,8 @@ pub fn handle_library_errors(contextual_error: &ContextualLibError, input: &str)
         }
         LibError::EmptyStack => "Couldn't evalutate. Stack was empty?".to_string(),
         LibError::MismatchingParens => "Couldn't evaluate. Mismatched parens.".to_string(),
-        LibError::UnknownVariable(idx) => {
-            make_highlighted_error("Unknown variable", code, *idx)
-        }
-        LibError::UnknownFunction(idx) => {
-            make_highlighted_error("Unknown function", code, *idx)
-        }
+        LibError::UnknownVariable(idx) => make_highlighted_error("Unknown variable", code, *idx),
+        LibError::UnknownFunction(idx) => make_highlighted_error("Unknown function", code, *idx),
         LibError::RecursionLimit => "Exceeded recursion limit.".to_string(),
     };
     if let ErrorContext::Scoped(func) = context {
@@ -168,9 +162,7 @@ pub fn handle_library_errors(contextual_error: &ContextualLibError, input: &str)
 /// Does not handle `Error::Io`
 pub fn handle_errors(error: &Error, input: &str) -> String {
     match error {
-        Error::Assignment => {
-            "Couldn't assign. Malformed assignment statement.".to_string()
-        }
+        Error::Assignment => "Couldn't assign. Malformed assignment statement.".to_string(),
         Error::Library(contextual_error) => handle_library_errors(contextual_error, input),
         Error::Io(..) => unreachable!(),
     }

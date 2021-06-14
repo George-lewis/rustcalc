@@ -31,9 +31,7 @@ pub fn main() -> ! {
     if args.len() > 1 {
         // Combine all of the args into a string
         let fold = |acc: String, x: String| format!("{} {}", acc, x);
-        let input: String = args
-            .skip(1)
-            .fold(String::new(), fold);
+        let input: String = args.skip(1).fold(String::new(), fold);
 
         // Evaluate
         let context = EvaluationContext::default();
