@@ -47,7 +47,7 @@ pub fn load(vars: &mut Vec<Variable>, funcs: &mut Vec<Function>) -> Result<(), E
     // Succesfully executing statements are silent
     for (n, line) in lines {
         if let Err(inner) = handle_input(line, vars, funcs) {
-            let message = handle_errors(inner, line);
+            let message = handle_errors(&inner, line);
             println!(
                 "Error in RCFile on line [{}]: {}",
                 format!("{}", n).red(),
