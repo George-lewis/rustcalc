@@ -8,6 +8,8 @@ use super::{
     EvaluationContext,
 };
 
+pub const PREFIX: char = '#';
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Functions<'a> {
     Builtin(&'a Operator),

@@ -1,10 +1,11 @@
 use rustyline::hint::{Hint, Hinter};
 
 use super::{
-    finder::{find_items, Named},
+    finder::{find_items, Findable},
     MyHelper,
 };
 
+#[derive(Debug)]
 pub struct MyHint(String);
 
 impl Hint for MyHint {
@@ -17,7 +18,7 @@ impl Hint for MyHint {
     }
 }
 
-pub fn find_hint<Item: Named>(line: &str, items: &[Item]) -> Option<MyHint> {
+pub fn find_hint<Item: Findable>(line: &str, items: &[Item]) -> Option<MyHint> {
     let create_item = |stride: usize, item: &Item| MyHint(item.name()[stride..].to_string());
     let create_output = |_, hints: Vec<MyHint>| hints;
     let hints = find_items(line, items, create_item, create_output);

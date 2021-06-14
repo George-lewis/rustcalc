@@ -1,9 +1,11 @@
 use rustyline::completion::{Candidate, Completer};
 
 use super::{
-    finder::{find_items, Named},
+    finder::{find_items, Findable},
     MyHelper,
 };
+
+#[derive(Debug)]
 pub struct MyCandidate(String, String);
 
 impl Candidate for MyCandidate {
@@ -16,7 +18,7 @@ impl Candidate for MyCandidate {
     }
 }
 
-fn find_candidates<Item: Named>(line: &str, items: &[Item]) -> Option<(usize, Vec<MyCandidate>)> {
+fn find_candidates<Item: Findable>(line: &str, items: &[Item]) -> Option<(usize, Vec<MyCandidate>)> {
     let create_item = |stride: usize, item: &Item| {
         let replacement = item.name()[stride..].to_string();
         let formatted = item.format();
