@@ -21,11 +21,12 @@ pub struct EvaluationContext<'a> {
 mod tests {
 
     use super::{
-        errors::{ContextualError, Error},
+        errors::{ContextualError, Error, ErrorContext},
         functions::{Function, Functions},
         operators::{Associativity, Operator, OperatorType},
         tokens::Token,
         variables::Variable,
+        EvaluationContext
     };
 
     /// Outputs `size_of` information for a list of types
@@ -43,13 +44,17 @@ mod tests {
     fn size_of() {
         sizeof! {
             ContextualError,
+            EvaluationContext,
             Function,
+            ErrorContext,
             Variable,
             Token,
             Functions,
             &Functions,
             Error,
-            Operator, OperatorType, Associativity
+            Operator,
+            OperatorType,
+            Associativity
         }
     }
 }
