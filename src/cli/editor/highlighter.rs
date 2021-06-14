@@ -14,7 +14,7 @@ impl Highlighter for MyHelper<'_> {
         &'s self,
         prompt: &'p str,
         _default: bool,
-    ) -> std::borrow::Cow<'b, str> { 
+    ) -> std::borrow::Cow<'b, str> {
         Cow::Borrowed(prompt)
     }
 

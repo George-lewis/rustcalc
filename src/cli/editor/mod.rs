@@ -15,10 +15,7 @@ pub fn editor<'a>(
 ) -> Editor<MyHelper<'a>> {
     let mut editor = Editor::<MyHelper>::new();
 
-    let helper = MyHelper {
-        funcs,
-        vars,
-    };
+    let helper = MyHelper { funcs, vars };
 
     editor.set_helper(Some(helper));
 
@@ -29,7 +26,7 @@ pub fn editor<'a>(
 
 pub struct MyHelper<'cell> {
     pub funcs: &'cell RefCell<Vec<Function>>,
-    pub vars: &'cell RefCell<Vec<Variable>>
+    pub vars: &'cell RefCell<Vec<Variable>>,
 }
 
 impl Helper for MyHelper<'_> {}

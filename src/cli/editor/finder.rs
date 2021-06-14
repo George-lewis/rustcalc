@@ -50,7 +50,7 @@ pub fn find_last(c: char, str: &str) -> Option<usize> {
 pub(super) fn find_items<Item, Intermediate, ToIntermediate>(
     line: &str,
     items: &[Item],
-    create_intermediate: ToIntermediate
+    create_intermediate: ToIntermediate,
 ) -> Option<Vec<Intermediate>>
 where
     Item: Findable,
