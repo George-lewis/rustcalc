@@ -26,7 +26,7 @@ mod tests {
         operators::{Associativity, Operator, OperatorType},
         tokens::Token,
         variables::Variable,
-        EvaluationContext
+        EvaluationContext,
     };
 
     /// Outputs `size_of` information for a list of types
