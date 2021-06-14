@@ -1,4 +1,4 @@
-use rustmatheval::{model::EvaluationContext, tokenize};
+
 use rustyline::validate::{ValidationResult, Validator};
 
 use super::MyHelper;
@@ -6,7 +6,7 @@ use super::MyHelper;
 impl Validator for MyHelper<'_> {
     fn validate(
         &self,
-        ctx: &mut rustyline::validate::ValidationContext,
+        _ctx: &mut rustyline::validate::ValidationContext,
     ) -> rustyline::Result<ValidationResult> {
         // let line = ctx.input();
         // let context = EvaluationContext::default();
