@@ -42,7 +42,11 @@ pub fn format_func_name(name: &str) -> ColoredString {
 }
 
 pub fn format_func_with_args(func: &Function) -> String {
-    format!("{}({})", format_func_name(&func.name), func.args.iter().map(color_arg).join(", "))
+    format!(
+        "{}({})",
+        format_func_name(&func.name),
+        func.args.iter().map(color_arg).join(", ")
+    )
 }
 
 fn format_func(func: &Function, funcs: &[Function], vars: &[Variable]) -> String {

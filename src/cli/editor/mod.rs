@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 
 use rustmatheval::model::{functions::Function, variables::Variable};
-use rustyline::{Editor, Helper, completion::Candidate, config::Configurer, hint::Hint};
+use rustyline::{completion::Candidate, config::Configurer, hint::Hint, Editor, Helper};
 
 mod candidate;
 
