@@ -38,8 +38,8 @@ pub fn assign_var_command(
     let sides: Vec<&str> = input.split('=').collect();
     let trimmed_left = sides[0].trim(); // Trim here to remove space between end of variable name and = sign
 
-    if sides.len() != 2 {
-        // Multiple = signs or Assigning without using a $ prefix
+    if sides.len() != 2 || sides[1].is_empty() {
+        // Multiple = signs or Assigning without using a $ prefix or no expression
         return Err(Error::Assignment);
     }
 

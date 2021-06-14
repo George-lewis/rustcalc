@@ -76,6 +76,10 @@ pub fn assign_func_command(
     let args: Vec<String> = split.map(|arg| arg[1..].to_string()).collect();
     let code = right.to_string();
 
+    if code.is_empty() {
+        return Err(Error::Assignment);
+    }
+
     let func = Function { name, args, code };
 
     assign_func(func.clone(), funcs);
