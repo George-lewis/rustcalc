@@ -63,7 +63,7 @@ impl Searchable for Function {
 
 impl Function {
     pub fn is(text: &str) -> bool {
-        text.starts_with('#')
+        text.starts_with(PREFIX)
     }
     pub fn next_function<'a>(text: &str, funcs: &'a [Self]) -> Option<(&'a Self, usize)> {
         get_by_repr(text, funcs)

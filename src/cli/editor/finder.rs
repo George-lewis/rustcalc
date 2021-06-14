@@ -8,9 +8,10 @@ use crate::vars::format_var_name;
 /// ## Examples
 ///
 /// ```
-/// let s = "abc #foo bar";
-/// let pos = find_last('#', s).unwrap();
-/// assert_eq!(s.chars().nth(pos), '#');
+/// use  rustmatheval::model::functions::PREFIX;
+/// let s = format1("abc {}foo bar", PREFIX);
+/// let pos = find_last(PREFIX, s).unwrap();
+/// assert_eq!(s.chars().nth(pos), PREFIX);
 /// ```
 pub fn find_last(c: char, str: &str) -> Option<usize> {
     str.chars()

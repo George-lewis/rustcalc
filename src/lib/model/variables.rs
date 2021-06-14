@@ -31,7 +31,7 @@ impl Variable {
 
     /// Returns whether or not the given representation could reference a valid variable
     pub fn is(repr: &str) -> bool {
-        repr.starts_with('$')
+        repr.starts_with(PREFIX)
     }
 }
 
