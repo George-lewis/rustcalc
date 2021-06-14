@@ -22,13 +22,13 @@ fn find_candidates<Item: Findable>(
     line: &str,
     items: &[Item],
 ) -> Option<(usize, Vec<MyCandidate>)> {
-    let create_item = |stride: usize, item: &Item| {
+    let create_intermediate = |stride: usize, item: &Item| {
         let replacement = item.name()[stride..].to_string();
         let formatted = item.format();
         MyCandidate(replacement, formatted)
     };
     let create_output = |stride: usize, candidates: Vec<MyCandidate>| (stride, candidates);
-    find_items(line, items, create_item, create_output)
+    find_items(line, items, create_intermediate, create_output)
 }
 
 impl Completer for MyHelper<'_> {

@@ -19,9 +19,9 @@ impl Hint for MyHint {
 }
 
 pub fn find_hint<Item: Findable>(line: &str, items: &[Item]) -> Option<MyHint> {
-    let create_item = |stride: usize, item: &Item| MyHint(item.name()[stride..].to_string());
+    let create_intermediate = |stride: usize, item: &Item| MyHint(item.name()[stride..].to_string());
     let create_output = |_, hints: Vec<MyHint>| hints;
-    let hints = find_items(line, items, create_item, create_output);
+    let hints = find_items(line, items, create_intermediate, create_output);
     hints.and_then(|hints| hints.into_iter().max_by_key(|hint| hint.0.len()))
 }
 

@@ -24,10 +24,38 @@ pub fn find_last(c: char, str: &str) -> Option<usize> {
         .map(|pos| str.chars().count() - pos - 1)
 }
 
+/// Find all possibly completable `Item`s in `line` at the position closest to the end as indicated by [`Findable::prefix`]
+/// and perform transformations on it using the two `Fn` parameters.
+///
+/// ## Parameters
+/// * `Item` - A [`Findable`] type to search for in `line`
+/// * `Intermediate` - A type that is part of the desired result.
+/// * `Output` - This type is used to construct the output of the function
+/// * `ToIntermediate` - A `Fn` type capable of converting `Item`s to `Intermediate`
+/// * `ToOutput` - A `Fn` type capable of converting `Intermediate`s to `Output`
+///
+/// ## Arguments
+/// * `line` - The string to find items within
+/// * `items` - A slice of items, these are candidates for the search
+/// * `create_intermediate` - A `Fn` that:
+///   * accepts:
+///     * `stride: usize`: The length of the matching string in `line` according to the prefix
+///     * `item: &Item`: The matching item
+///   * and produces an `Intermediate`
+/// * `create_output` - a `FnOnce` that:
+///   * accepts:
+///     * `stride: usize` - ""
+///     * `intermediates: Vec<Intermediate>` - A list of intermediates
+///   * and produces the final output of the function (which is then wrapped in an Option, see the Returns subheader)
+///
+/// ## Returns
+/// Returns `None` if there are no possible matches inside the input string. There are two reasons this could occur:
+///   * There is no prefix in the string, and thus no matches are possible
+///   * There is a prefix in the string, but none of the items could possibly complete the identifier
 pub(super) fn find_items<Item, Intermediate, Output, ToIntermediate, ToOutput>(
     line: &str,
     items: &[Item],
-    create_item: ToIntermediate,
+    create_intermediate: ToIntermediate,
     create_output: ToOutput,
 ) -> Option<Output>
 where
@@ -42,7 +70,7 @@ where
         let matches: Vec<Intermediate> = items
             .iter()
             .filter(|it| it.name().starts_with(line))
-            .map(|it| create_item(stride, it))
+            .map(|it| create_intermediate(stride, it))
             .collect();
         if !matches.is_empty() {
             // +1 because of prefix
@@ -52,11 +80,11 @@ where
     None
 }
 
+/// Represents a type that can be found (using [`find_items`])
 pub trait Findable {
     fn name(&self) -> &str;
     fn format(&self) -> String;
     fn prefix() -> char;
-    // fn replacement(stride: usize)
 }
 
 impl Findable for Function {
