@@ -7,7 +7,7 @@ use super::{
 
 fn find_candidates<Item: Findable>(line: &str, items: &[Item]) -> Option<Vec<Pair>> {
     let create_intermediate = |stride, item: &Item| {
-        let replacement = item.name()[stride..].to_string();
+        let replacement = item.replacement()[stride..].to_string();
         let display = item.format();
         Pair {
             display,

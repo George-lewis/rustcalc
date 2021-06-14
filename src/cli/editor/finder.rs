@@ -1,3 +1,5 @@
+use std::{borrow::Cow, fmt::format};
+
 use rustmatheval::model::{
     functions::{Function, PREFIX as FUNCTION_PREFIX},
     variables::{Variable, PREFIX as VARIABLE_PREFIX},
@@ -77,6 +79,7 @@ where
 /// Represents a type that can be found (using [`find_items`])
 pub trait Findable {
     fn name(&self) -> &str;
+    fn replacement(&self) -> Cow<'_, str>;
     fn format(&self) -> String;
     fn prefix() -> char;
 }
@@ -84,6 +87,17 @@ pub trait Findable {
 impl Findable for Function {
     fn name(&self) -> &str {
         &self.name
+    }
+
+    fn replacement(&self) -> Cow<'_, str> {
+        let appendix = if self.arity() == 0 {
+            // If the function takes no arguments we can just open and close the parens
+            "()"
+        } else {
+            "("
+        };
+        let formatted = format!("{}{}", &self.name, appendix);
+        Cow::Owned(formatted)
     }
 
     fn format(&self) -> String {
@@ -98,6 +112,10 @@ impl Findable for Function {
 impl Findable for Variable {
     fn name(&self) -> &str {
         &self.repr
+    }
+
+    fn replacement(&self) -> Cow<'_, str> {
+        Cow::Borrowed(&self.repr)
     }
 
     fn format(&self) -> String {

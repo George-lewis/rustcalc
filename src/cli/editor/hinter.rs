@@ -6,7 +6,7 @@ use super::{
 };
 
 pub fn find_hint<Item: Findable>(line: &str, items: &[Item]) -> Option<String> {
-    let create_intermediate = |stride, item: &Item| item.name()[stride..].to_string();
+    let create_intermediate = |stride, item: &Item| item.replacement()[stride..].to_string();
     let hints = find_items(line, items, create_intermediate);
     hints.and_then(|hints| hints.into_iter().max_by_key(String::len))
 }
