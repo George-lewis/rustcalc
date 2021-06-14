@@ -1,4 +1,4 @@
-use rustyline::completion::{Candidate, Completer, Pair};
+use rustyline::completion::{Completer, Pair};
 
 use super::{
     finder::{find_items, Findable},
