@@ -9,21 +9,46 @@ mod stringify;
 mod utils;
 mod vars;
 
+use lib::{doeval, model::EvaluationContext};
 pub use rustmatheval as lib;
 
 use config::HISTORY_FILE;
 use rustyline::Editor;
 
 use error::Error;
-use std::process;
+use std::{env, process};
 
 use cli::{handle_errors, handle_input};
 
-pub fn main() -> ! {
-    let mut editor = Editor::<()>::new();
+use crate::cli::handle_library_errors;
 
-    if let Some(path) = HISTORY_FILE.as_deref() {
-        editor.load_history(path).ok();
+pub fn main() -> ! {
+    // One-shot mode
+    let args = env::args();
+
+    // Usually the first argument is the path to the executable
+    // So if there's more than one argument we interpret that as a one-shot
+    if args.len() > 1 {
+        // Combine all of the args into a string
+        let fold = |acc: String, x: String| format!("{} {}", acc, x);
+        let input: String = args.skip(1).fold(String::new(), fold);
+
+        // Evaluate
+        let context = EvaluationContext::default();
+        let code = match doeval(&input, context) {
+            Ok((result, _)) => {
+                println!("{:.3}", result);
+                0
+            }
+            Err(contextual_error) => {
+                let msg = handle_library_errors(&contextual_error, &input);
+                eprintln!("{}", msg);
+                1
+            }
+        };
+
+        // Exit
+        process::exit(code);
     }
 
     let mut vars = vec![];
@@ -37,6 +62,12 @@ pub fn main() -> ! {
             _ => unreachable!(),
         }
     };
+
+    let mut editor = Editor::<()>::new();
+
+    if let Some(path) = HISTORY_FILE.as_deref() {
+        editor.load_history(path).ok();
+    }
 
     loop {
         #[allow(clippy::single_match_else)]
@@ -60,7 +91,7 @@ pub fn main() -> ! {
         match handle_input(&input, &mut vars, &mut funcs) {
             Ok(formatted) => println!("{}", formatted),
             Err(error) => {
-                let msg = handle_errors(error, &input);
+                let msg = handle_errors(&error, &input);
                 println!("{}", msg);
             }
         }

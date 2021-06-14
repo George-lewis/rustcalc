@@ -112,6 +112,46 @@ fn make_highlighted_error(msg: &str, input_str: &str, idx: usize) -> String {
     )
 }
 
+/// Produce an error message for a given [`super::lib::ContextualError`] and input string
+/// * `error` - The error
+/// * `input` - The user's input
+pub fn handle_library_errors(contextual_error: &ContextualLibError, input: &str) -> String {
+    let error = &contextual_error.error;
+    let context = &contextual_error.context;
+
+    let code = match context {
+        ErrorContext::Main => input,
+        ErrorContext::Scoped(func) => &func.code,
+    };
+    let msg = match error {
+        LibError::Parsing(idx) => make_highlighted_error("Couldn't parse the token", code, *idx),
+        LibError::Operand(op) => {
+            let msg = match op {
+                InnerFunction::Builtin(kind) => format!(
+                    "Operator [{}] requires an operand",
+                    format!("{:?}", kind).green()
+                ),
+                InnerFunction::User(f) => format!(
+                    "Function {} requires [{}] arguments",
+                    format_func_name(&f.name),
+                    format!("{}", f.args.len()).red()
+                ),
+            };
+            format!("Couldn't evaluate. {}.", msg)
+        }
+        LibError::EmptyStack => "Couldn't evalutate. Stack was empty?".to_string(),
+        LibError::MismatchingParens => "Couldn't evaluate. Mismatched parens.".to_string(),
+        LibError::UnknownVariable(idx) => make_highlighted_error("Unknown variable", code, *idx),
+        LibError::UnknownFunction(idx) => make_highlighted_error("Unknown function", code, *idx),
+        LibError::RecursionLimit => "Exceeded recursion limit.".to_string(),
+    };
+    if let ErrorContext::Scoped(func) = context {
+        format!("In function {}: {}", format_func_name(&func.name), msg)
+    } else {
+        msg
+    }
+}
+
 /// Produces an error message to show to the user
 /// * `error` - The `Error`
 /// * `input` - The user's input
@@ -120,48 +160,10 @@ fn make_highlighted_error(msg: &str, input_str: &str, idx: usize) -> String {
 ///
 /// ## Panics
 /// Does not handle `Error::Io`
-pub fn handle_errors(error: Error, input: &str) -> String {
+pub fn handle_errors(error: &Error, input: &str) -> String {
     match error {
         Error::Assignment => "Couldn't assign. Malformed assignment statement.".to_string(),
-        Error::Library(ContextualLibError { context, error }) => {
-            let code = match &context {
-                ErrorContext::Main => input,
-                ErrorContext::Scoped(func) => &func.code,
-            };
-            let msg = match error {
-                LibError::Parsing(idx) => {
-                    make_highlighted_error("Couldn't parse the token", code, idx)
-                }
-                LibError::Operand(op) => {
-                    let msg = match op {
-                        InnerFunction::Builtin(kind) => format!(
-                            "Operator [{}] requires an operand",
-                            format!("{:?}", kind).green()
-                        ),
-                        InnerFunction::User(f) => format!(
-                            "Function {} requires [{}] arguments",
-                            format_func_name(&f.name),
-                            format!("{}", f.args.len()).red()
-                        ),
-                    };
-                    format!("Couldn't evaluate. {}.", msg)
-                }
-                LibError::EmptyStack => "Couldn't evalutate. Stack was empty?".to_string(),
-                LibError::MismatchingParens => "Couldn't evaluate. Mismatched parens.".to_string(),
-                LibError::UnknownVariable(idx) => {
-                    make_highlighted_error("Unknown variable", code, idx)
-                }
-                LibError::UnknownFunction(idx) => {
-                    make_highlighted_error("Unknown function", code, idx)
-                }
-                LibError::RecursionLimit => "Exceeded recursion limit.".to_string(),
-            };
-            if let ErrorContext::Scoped(func) = &context {
-                format!("In function {}: {}", format_func_name(&func.name), msg)
-            } else {
-                msg
-            }
-        }
+        Error::Library(contextual_error) => handle_library_errors(contextual_error, input),
         Error::Io(..) => unreachable!(),
     }
 }
