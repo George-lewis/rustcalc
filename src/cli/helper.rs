@@ -17,4 +17,3 @@ use rustyline::{
 };
 
 use crate::utils::find_last;
-

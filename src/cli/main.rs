@@ -2,6 +2,7 @@
 
 mod cli;
 mod config;
+mod editor;
 mod error;
 mod funcs;
 mod helper;
@@ -9,7 +10,6 @@ mod rcfile;
 mod stringify;
 mod utils;
 mod vars;
-mod editor;
 
 use lib::{doeval, model::EvaluationContext};
 pub use rustmatheval as lib;

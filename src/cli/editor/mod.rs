@@ -1,18 +1,21 @@
 use std::cell::RefCell;
 
 use rustmatheval::model::{functions::Function, variables::Variable};
-use rustyline::{Editor, Helper, completion::Candidate, hint::Hint};
+use rustyline::{completion::Candidate, hint::Hint, Editor, Helper};
 
 use super::config::HISTORY_FILE;
 
 mod candidate;
 
-mod hinter;
 mod completer;
 mod highlighter;
+mod hinter;
 mod validator;
 
-pub fn editor<'a>(funcs: &'a RefCell<Vec<Function>>, vars: &'a RefCell<Vec<Variable>>) -> Editor<MyHelper<'a>> {
+pub fn editor<'a>(
+    funcs: &'a RefCell<Vec<Function>>,
+    vars: &'a RefCell<Vec<Variable>>,
+) -> Editor<MyHelper<'a>> {
     let mut editor = Editor::<MyHelper>::new();
 
     let helper = MyHelper {
@@ -25,7 +28,6 @@ pub fn editor<'a>(funcs: &'a RefCell<Vec<Function>>, vars: &'a RefCell<Vec<Varia
     editor.set_helper(Some(helper));
 
     editor
-
 }
 
 pub struct MyHelper<'cell> {
