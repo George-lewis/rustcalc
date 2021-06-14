@@ -1,4 +1,3 @@
-
 use rustyline::validate::{ValidationResult, Validator};
 
 use super::MyHelper;
