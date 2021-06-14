@@ -1,7 +1,7 @@
 use rustyline::completion::{Candidate, Completer};
 
 use super::{
-    common::{find_items, Named},
+    finder::{find_items, Named},
     MyHelper,
 };
 pub struct MyCandidate(String, String);

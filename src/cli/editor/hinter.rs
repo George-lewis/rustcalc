@@ -1,7 +1,7 @@
 use rustyline::hint::{Hint, Hinter};
 
 use super::{
-    common::{find_items, Named},
+    finder::{find_items, Named},
     MyHelper,
 };
 
