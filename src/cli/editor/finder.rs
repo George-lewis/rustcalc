@@ -64,7 +64,7 @@ where
 
         let matches: Vec<Intermediate> = items
             .iter()
-            .filter(|it| it.name().starts_with(line) && it.name() != line)
+            .filter(|it| it.name().starts_with(line))
             .map(|it| create_intermediate(stride, it))
             .collect();
         if !matches.is_empty() {
