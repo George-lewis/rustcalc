@@ -229,7 +229,13 @@ A function assignment is formed:
 #function_name $arg_one $arg_two ... = expression
 ```
 
-Where `#`, `$`, and `=` are literal, `function_name` is the desired name of the function, `arg_one` and `arg_two` are arguments to the function, and `expression` is the function body. The function body has access to the function's arguments using familiar variable syntax, and access to other functions (including itself), and variables from outer scopes.
+Where `#`, `$`, and `=` are literal, `function_name` is the desired name of the function, `arg_one` and `arg_two` are arguments to the function, `...` represents where additional arguments would be added, and `expression` is the function body. The function body has access to the function's arguments using familiar variable syntax, and access to other functions (including itself), and variables from outer scopes.
+
+On success, Rustcalc will output in the following format:
+
+```
+[ #function_name(arg_one, arg_two, ...) = an idealized representation of the expression ]
+```
 
 ### Example
 
