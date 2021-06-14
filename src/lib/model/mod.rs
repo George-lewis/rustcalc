@@ -16,3 +16,40 @@ pub struct EvaluationContext<'a> {
     pub context: ErrorContext,
     pub depth: u8,
 }
+
+#[cfg(test)]
+mod tests {
+
+    use super::{
+        errors::{ContextualError, Error},
+        functions::{Function, Functions},
+        operators::{Associativity, Operator, OperatorType},
+        tokens::Token,
+        variables::Variable,
+    };
+
+    /// Outputs `size_of` information for a list of types
+    macro_rules! sizeof {
+        ($($type_:ty),+) => {
+            $(
+                println!("sizeof({}): {} bytes", stringify!($type_), std::mem::size_of::<$type_>());
+            )+
+        };
+    }
+
+    // Sizes of our data types
+    // Mostly for curiosity
+    #[test]
+    fn size_of() {
+        sizeof! {
+            ContextualError,
+            Function,
+            Variable,
+            Token,
+            Functions,
+            &Functions,
+            Error,
+            Operator, OperatorType, Associativity
+        }
+    }
+}
