@@ -64,16 +64,22 @@ where
     ToOutput: FnOnce(usize, Vec<Intermediate>) -> Output,
 {
     if let Some(pos) = find_last(Item::prefix(), line) {
-        // +1 because of prefix
+        // dbg!(line, line.len(), pos, &line[pos + 1..].len());
+        // let stride = line.len() - pos;
+
+        // +1 removes prefix
+        // e.g. "#foobar" => "foobar"
         let line = &line[pos + 1..];
-        let stride = line.len() - pos;
+        let stride = line.len();
+        
         let matches: Vec<Intermediate> = items
             .iter()
-            .filter(|it| it.name().starts_with(line))
+            .filter(|it| it.name().starts_with(line) && it.name() != line)
             .map(|it| create_intermediate(stride, it))
             .collect();
         if !matches.is_empty() {
-            // +1 because of prefix
+            // +1 because the replacement length needs to include the prefix
+            // for some reason otherwise it's discarded on [`rustyline::completion::Completer::update`] 
             return Some(create_output(stride + 1, matches));
         }
     }

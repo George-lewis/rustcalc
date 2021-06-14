@@ -1,38 +1,26 @@
-use rustyline::completion::{Candidate, Completer};
+use rustyline::completion::{Candidate, Completer, Pair};
 
 use super::{
     finder::{find_items, Findable},
     MyHelper,
 };
 
-#[derive(Debug)]
-pub struct MyCandidate(String, String);
-
-impl Candidate for MyCandidate {
-    fn display(&self) -> &str {
-        &self.1
-    }
-
-    fn replacement(&self) -> &str {
-        &self.0
-    }
-}
-
 fn find_candidates<Item: Findable>(
     line: &str,
     items: &[Item],
-) -> Option<(usize, Vec<MyCandidate>)> {
+) -> Option<(usize, Vec<Pair>)> {
     let create_intermediate = |stride: usize, item: &Item| {
         let replacement = item.name()[stride..].to_string();
-        let formatted = item.format();
-        MyCandidate(replacement, formatted)
+        let display = item.format();
+        Pair { display, replacement }
     };
-    let create_output = |stride: usize, candidates: Vec<MyCandidate>| (stride, candidates);
-    find_items(line, items, create_intermediate, create_output)
+    let create_output = |stride: usize, candidates: Vec<Pair>| (stride, candidates);
+    let c = find_items(line, items, create_intermediate, create_output);
+    c
 }
 
 impl Completer for MyHelper<'_> {
-    type Candidate = MyCandidate;
+    type Candidate = Pair;
 
     fn complete(
         &self,
@@ -58,6 +46,8 @@ impl Completer for MyHelper<'_> {
 
     fn update(&self, line: &mut rustyline::line_buffer::LineBuffer, start: usize, elected: &str) {
         let end = line.pos();
+        // let x: String = line.lines().collect();
+        // dbg!(x, start, end, elected);
         line.replace(start..end, elected);
     }
 }
