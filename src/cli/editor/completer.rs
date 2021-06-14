@@ -1,6 +1,6 @@
 use rustyline::completion::Completer;
 
-use crate::utils::find_last;
+use crate::{funcs::format_func_with_args, utils::find_last, vars::format_var_name};
 
 use super::{MyCandidate, MyHelper};
 
@@ -17,21 +17,27 @@ impl Completer for MyHelper<'_> {
             let line = &line[npos + 1..pos];
             let funcs = self.funcs.borrow();
 
-            if let Some(func) = funcs.iter().find(|f| f.name.starts_with(line)) {
+            let matches: Vec<_> = funcs.iter().filter(|f| f.name.starts_with(line))
+            .map(|f| MyCandidate(f.name[pos - npos - 1..].to_string(), format_func_with_args(f))).collect();
+
+            if !matches.is_empty() {
                 return rustyline::Result::Ok((
                     pos - npos,
-                    vec![MyCandidate(func.name[pos - npos - 1..].to_string())],
+                    matches,
                 ));
             }
         } else if let Some(npos) = find_last('$', &line[..pos]) {
             let line = &line[npos + 1..pos];
             let vars = self.vars.borrow();
 
-            if let Some(var) = vars.iter().find(|v| v.repr.starts_with(line)) {
+            let matches: Vec<_> = vars.iter().filter(|v| v.repr.starts_with(line))
+            .map(|v| MyCandidate(v.repr[pos - npos - 1..].to_string(), format_var_name(&v.repr).to_string())).collect();
+
+            if !matches.is_empty() {
                 // return Some(MyCandidate(var.repr[pos-npos-1..].to_string()));
                 return rustyline::Result::Ok((
                     pos - npos,
-                    vec![MyCandidate(var.repr[pos - npos - 1..].to_string())],
+                    matches,
                 ));
             }
         }

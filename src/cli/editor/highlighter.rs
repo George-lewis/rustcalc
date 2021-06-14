@@ -32,8 +32,8 @@ impl Highlighter for MyHelper<'_> {
         candidate: &'c str,
         _completion: rustyline::CompletionType,
     ) -> std::borrow::Cow<'c, str> {
-        let form = candidate.red();
-        Cow::Owned(form.to_string())
+        // We don't highlight the candidate because the completer formats with color
+        Cow::Borrowed(candidate)
     }
 
     fn highlight_char(&self, _line: &str, _pos: usize) -> bool {

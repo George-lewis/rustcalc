@@ -8,18 +8,18 @@ impl Validator for MyHelper<'_> {
         &self,
         ctx: &mut rustyline::validate::ValidationContext,
     ) -> rustyline::Result<ValidationResult> {
-        let line = ctx.input();
-        let context = EvaluationContext::default();
+        // let line = ctx.input();
+        // let context = EvaluationContext::default();
 
-        // dbg!(line);
+        // // dbg!(line);
 
-        let (valid_, result) = if tokenize(line, &context).is_err() {
-            (false, ValidationResult::Incomplete)
-        } else {
-            (true, ValidationResult::Valid(None))
-        };
-        *self.valid.borrow_mut() = valid_;
-        rustyline::Result::Ok(result);
+        // let (valid_, result) = if tokenize(line, &context).is_err() {
+        //     (false, ValidationResult::Incomplete)
+        // } else {
+        //     (true, ValidationResult::Valid(None))
+        // };
+        // *self.valid.borrow_mut() = valid_;
+        // rustyline::Result::Ok(result)
         Ok(rustyline::validate::ValidationResult::Valid(None))
     }
 

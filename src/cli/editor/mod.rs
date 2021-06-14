@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 
 use rustmatheval::model::{functions::Function, variables::Variable};
-use rustyline::{completion::Candidate, hint::Hint, Editor, Helper};
+use rustyline::{Editor, Helper, completion::Candidate, config::Configurer, hint::Hint};
 
 mod candidate;
 
@@ -20,10 +20,12 @@ pub fn editor<'a>(
         funcs,
         vars,
 
-        valid: RefCell::new(false),
+        valid: RefCell::new(true),
     };
 
     editor.set_helper(Some(helper));
+
+    editor.set_completion_type(rustyline::CompletionType::List);
 
     editor
 }
@@ -37,11 +39,11 @@ pub struct MyHelper<'cell> {
 
 impl Helper for MyHelper<'_> {}
 
-pub struct MyCandidate(String);
+pub struct MyCandidate(String, String);
 
 impl Candidate for MyCandidate {
     fn display(&self) -> &str {
-        &self.0
+        &self.1
     }
 
     fn replacement(&self) -> &str {
@@ -49,7 +51,9 @@ impl Candidate for MyCandidate {
     }
 }
 
-impl Hint for MyCandidate {
+pub struct MyHint(String);
+
+impl Hint for MyHint {
     fn display(&self) -> &str {
         &self.0
     }
