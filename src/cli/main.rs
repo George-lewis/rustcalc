@@ -9,7 +9,6 @@ mod stringify;
 mod utils;
 mod vars;
 
-use itertools::Itertools;
 use lib::{doeval, model::EvaluationContext};
 pub use rustmatheval as lib;
 
@@ -21,15 +20,16 @@ use std::{env, process};
 
 use cli::{handle_errors, handle_input};
 
+use crate::cli::handle_library_errors;
+
 pub fn main() -> ! {
     // One-shot mode
-    let args = env::args();
-    if args.len() > 1 {
+    let mut args = env::args();
+    if args.any(|arg| arg == "-c") {
         // Combine all of the args into a string
         let fold = |acc: String, x: String| format!("{} {}", acc, x);
         let input: String = args
-            .skip(1)
-            .fold1(fold).unwrap_or_default();
+            .fold(String::new(), fold);
 
         // Evaluate
         let context = EvaluationContext::default();
@@ -38,9 +38,8 @@ pub fn main() -> ! {
                 println!("{:.3}", result);
                 0
             }
-            Err(ce) => {
-                let error = Error::Library(ce);
-                let msg = handle_errors(error, &input);
+            Err(contextual_error) => {
+                let msg = handle_library_errors(&contextual_error, &input);
                 eprintln!("{}", msg);
                 1
             }
@@ -90,7 +89,7 @@ pub fn main() -> ! {
         match handle_input(&input, &mut vars, &mut funcs) {
             Ok(formatted) => println!("{}", formatted),
             Err(error) => {
-                let msg = handle_errors(error, &input);
+                let msg = handle_errors(&error, &input);
                 println!("{}", msg);
             }
         }
