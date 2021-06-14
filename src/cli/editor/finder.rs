@@ -39,12 +39,11 @@ pub fn find_last(c: char, str: &str) -> Option<usize> {
 /// * `items` - A slice of items, these are candidates for the search
 /// * `create_intermediate` - A `Fn` that:
 ///   * accepts:
-///     * `stride: usize`: The length of the matching string in `line` according to the prefix
 ///     * `item: &Item`: The matching item
 ///   * and produces an `Intermediate`
 /// * `create_output` - a `FnOnce` that:
 ///   * accepts:
-///     * `stride: usize` - ""
+///     * `start: usize` - The positon immediately after the prefix
 ///     * `intermediates: Vec<Intermediate>` - A list of intermediates
 ///   * and produces the final output of the function (which is then wrapped in an Option, see the Returns subheader)
 ///
@@ -52,21 +51,16 @@ pub fn find_last(c: char, str: &str) -> Option<usize> {
 /// Returns `None` if there are no possible matches inside the input string. There are two reasons this could occur:
 ///   * There is no prefix in the string, and thus no matches are possible
 ///   * There is a prefix in the string, but none of the items could possibly complete the identifier
-pub(super) fn find_items<Item, Intermediate, Output, ToIntermediate, ToOutput>(
+pub(super) fn find_items<Item, Intermediate, ToIntermediate>(
     line: &str,
     items: &[Item],
-    create_intermediate: ToIntermediate,
-    create_output: ToOutput,
-) -> Option<Output>
+    create_intermediate: ToIntermediate
+) -> Option<Vec<Intermediate>>
 where
     Item: Findable,
     ToIntermediate: Fn(usize, &Item) -> Intermediate,
-    ToOutput: FnOnce(usize, Vec<Intermediate>) -> Output,
 {
     if let Some(pos) = find_last(Item::prefix(), line) {
-        // dbg!(line, line.len(), pos, &line[pos + 1..].len());
-        // let stride = line.len() - pos;
-
         // +1 removes prefix
         // e.g. "#foobar" => "foobar"
         let line = &line[pos + 1..];
@@ -78,9 +72,7 @@ where
             .map(|it| create_intermediate(stride, it))
             .collect();
         if !matches.is_empty() {
-            // +1 because the replacement length needs to include the prefix
-            // for some reason otherwise it's discarded on [`rustyline::completion::Completer::update`]
-            return Some(create_output(stride + 1, matches));
+            return Some(matches);
         }
     }
     None

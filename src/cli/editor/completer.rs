@@ -5,8 +5,8 @@ use super::{
     MyHelper,
 };
 
-fn find_candidates<Item: Findable>(line: &str, items: &[Item]) -> Option<(usize, Vec<Pair>)> {
-    let create_intermediate = |stride: usize, item: &Item| {
+fn find_candidates<Item: Findable>(line: &str, items: &[Item]) -> Option<Vec<Pair>> {
+    let create_intermediate = |stride, item: &Item| {
         let replacement = item.name()[stride..].to_string();
         let display = item.format();
         Pair {
@@ -14,9 +14,7 @@ fn find_candidates<Item: Findable>(line: &str, items: &[Item]) -> Option<(usize,
             replacement,
         }
     };
-    let create_output = |stride: usize, candidates: Vec<Pair>| (stride, candidates);
-    let c = find_items(line, items, create_intermediate, create_output);
-    c
+    find_items(line, items, create_intermediate)
 }
 
 impl Completer for MyHelper<'_> {
@@ -34,9 +32,9 @@ impl Completer for MyHelper<'_> {
         let vars = self.vars.borrow();
 
         let candidates = if let Some(candidates) = find_candidates(line, &funcs) {
-            candidates
+            (pos, candidates)
         } else if let Some(candidates) = find_candidates(line, &vars) {
-            candidates
+            (pos, candidates)
         } else {
             (0, vec![])
         };
@@ -46,8 +44,6 @@ impl Completer for MyHelper<'_> {
 
     fn update(&self, line: &mut rustyline::line_buffer::LineBuffer, start: usize, elected: &str) {
         let end = line.pos();
-        // let x: String = line.lines().collect();
-        // dbg!(x, start, end, elected);
         line.replace(start..end, elected);
     }
 }
