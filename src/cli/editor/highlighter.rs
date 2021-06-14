@@ -14,13 +14,8 @@ impl Highlighter for MyHelper<'_> {
         &'s self,
         prompt: &'p str,
         _default: bool,
-    ) -> std::borrow::Cow<'b, str> {
-        let valid = *self.valid.borrow();
-        if valid {
-            Cow::Borrowed(prompt)
-        } else {
-            Cow::Owned(prompt.red().to_string())
-        }
+    ) -> std::borrow::Cow<'b, str> { 
+        Cow::Borrowed(prompt)
     }
 
     fn highlight_hint<'h>(&self, hint: &'h str) -> std::borrow::Cow<'h, str> {

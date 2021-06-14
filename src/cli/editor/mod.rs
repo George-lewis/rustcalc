@@ -18,8 +18,6 @@ pub fn editor<'a>(
     let helper = MyHelper {
         funcs,
         vars,
-
-        valid: RefCell::new(true),
     };
 
     editor.set_helper(Some(helper));
@@ -31,9 +29,7 @@ pub fn editor<'a>(
 
 pub struct MyHelper<'cell> {
     pub funcs: &'cell RefCell<Vec<Function>>,
-    pub vars: &'cell RefCell<Vec<Variable>>,
-
-    pub valid: RefCell<bool>,
+    pub vars: &'cell RefCell<Vec<Variable>>
 }
 
 impl Helper for MyHelper<'_> {}
