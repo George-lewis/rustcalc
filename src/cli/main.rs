@@ -22,6 +22,7 @@ use std::{env, process};
 use cli::{handle_errors, handle_input};
 
 pub fn main() -> ! {
+    // One-shot mode
     let args = env::args();
     if args.len() > 1 {
         // Combine all of the args into a string
