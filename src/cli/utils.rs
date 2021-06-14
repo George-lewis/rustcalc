@@ -25,5 +25,9 @@ where
 /// assert_eq!(s.chars().nth(pos), '#');
 /// ```
 pub fn find_last(c: char, str: &str) -> Option<usize> {
-    str.chars().into_iter().rev().position(|ch| ch == c).map(|pos| str.chars().count() - pos - 1)
+    str.chars()
+        .into_iter()
+        .rev()
+        .position(|ch| ch == c)
+        .map(|pos| str.chars().count() - pos - 1)
 }

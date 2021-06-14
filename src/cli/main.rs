@@ -4,11 +4,11 @@ mod cli;
 mod config;
 mod error;
 mod funcs;
+mod helper;
 mod rcfile;
 mod stringify;
 mod utils;
 mod vars;
-mod helper;
 
 use lib::{doeval, model::EvaluationContext};
 pub use rustmatheval as lib;
@@ -70,7 +70,7 @@ pub fn main() -> ! {
         funcs: &funcs,
         vars: &vars,
 
-        valid: RefCell::new(false)
+        valid: RefCell::new(false),
     };
 
     editor.set_helper(Some(helper));

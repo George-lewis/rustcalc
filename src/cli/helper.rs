@@ -3,9 +3,18 @@
 use std::{borrow::Cow, cell::RefCell};
 
 use colored::Colorize;
-use rustmatheval::{model::{EvaluationContext, functions::Function, variables::Variable}, tokenize};
+use rustmatheval::{
+    model::{functions::Function, variables::Variable, EvaluationContext},
+    tokenize,
+};
 
-use rustyline::{Helper, completion::{Candidate, Completer}, highlight::Highlighter, hint::{Hint, Hinter}, validate::{ValidationResult, Validator}};
+use rustyline::{
+    completion::{Candidate, Completer},
+    highlight::Highlighter,
+    hint::{Hint, Hinter},
+    validate::{ValidationResult, Validator},
+    Helper,
+};
 
 use crate::utils::find_last;
 
@@ -14,7 +23,7 @@ pub struct MyHelper<'cell> {
     pub funcs: &'cell RefCell<Vec<Function>>,
     pub vars: &'cell RefCell<Vec<Variable>>,
 
-    pub valid: RefCell<bool>
+    pub valid: RefCell<bool>,
 }
 
 pub struct MyCandidate(String);
@@ -53,7 +62,10 @@ impl Completer for MyHelper<'_> {
             let funcs = self.funcs.borrow();
 
             if let Some(func) = funcs.iter().find(|f| f.name.starts_with(line)) {
-                return rustyline::Result::Ok((pos-npos, vec![MyCandidate(func.name[pos-npos-1..].to_string())]));
+                return rustyline::Result::Ok((
+                    pos - npos,
+                    vec![MyCandidate(func.name[pos - npos - 1..].to_string())],
+                ));
             }
         } else if let Some(npos) = find_last('$', &line[..pos]) {
             let line = &line[npos + 1..pos];
@@ -61,7 +73,10 @@ impl Completer for MyHelper<'_> {
 
             if let Some(var) = vars.iter().find(|v| v.repr.starts_with(line)) {
                 // return Some(MyCandidate(var.repr[pos-npos-1..].to_string()));
-                return rustyline::Result::Ok((pos-npos, vec![MyCandidate(var.repr[pos-npos-1..].to_string())]));
+                return rustyline::Result::Ok((
+                    pos - npos,
+                    vec![MyCandidate(var.repr[pos - npos - 1..].to_string())],
+                ));
             }
         }
 
@@ -83,14 +98,14 @@ impl Hinter for MyHelper<'_> {
             let funcs = self.funcs.borrow();
 
             if let Some(func) = funcs.iter().find(|f| f.name.starts_with(line)) {
-                return Some(MyCandidate(func.name[pos-npos-1..].to_string()));
+                return Some(MyCandidate(func.name[pos - npos - 1..].to_string()));
             }
         } else if let Some(npos) = find_last('$', &line[..pos]) {
             let line = &line[npos + 1..pos];
             let vars = self.vars.borrow();
 
             if let Some(var) = vars.iter().find(|v| v.repr.starts_with(line)) {
-                return Some(MyCandidate(var.repr[pos-npos-1..].to_string()));
+                return Some(MyCandidate(var.repr[pos - npos - 1..].to_string()));
             }
         }
 
@@ -135,7 +150,10 @@ impl Highlighter for MyHelper<'_> {
 }
 
 impl Validator for MyHelper<'_> {
-    fn validate(&self, ctx: &mut rustyline::validate::ValidationContext) -> rustyline::Result<ValidationResult> {
+    fn validate(
+        &self,
+        ctx: &mut rustyline::validate::ValidationContext,
+    ) -> rustyline::Result<ValidationResult> {
         let line = ctx.input();
         let context = EvaluationContext::default();
 
