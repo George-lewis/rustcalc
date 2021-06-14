@@ -5,14 +5,14 @@ use super::{
     MyHelper,
 };
 
-fn find_candidates<Item: Findable>(
-    line: &str,
-    items: &[Item],
-) -> Option<(usize, Vec<Pair>)> {
+fn find_candidates<Item: Findable>(line: &str, items: &[Item]) -> Option<(usize, Vec<Pair>)> {
     let create_intermediate = |stride: usize, item: &Item| {
         let replacement = item.name()[stride..].to_string();
         let display = item.format();
-        Pair { display, replacement }
+        Pair {
+            display,
+            replacement,
+        }
     };
     let create_output = |stride: usize, candidates: Vec<Pair>| (stride, candidates);
     let c = find_items(line, items, create_intermediate, create_output);

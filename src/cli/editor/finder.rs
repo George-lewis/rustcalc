@@ -71,7 +71,7 @@ where
         // e.g. "#foobar" => "foobar"
         let line = &line[pos + 1..];
         let stride = line.len();
-        
+
         let matches: Vec<Intermediate> = items
             .iter()
             .filter(|it| it.name().starts_with(line) && it.name() != line)
@@ -79,7 +79,7 @@ where
             .collect();
         if !matches.is_empty() {
             // +1 because the replacement length needs to include the prefix
-            // for some reason otherwise it's discarded on [`rustyline::completion::Completer::update`] 
+            // for some reason otherwise it's discarded on [`rustyline::completion::Completer::update`]
             return Some(create_output(stride + 1, matches));
         }
     }
