@@ -13,23 +13,32 @@ use super::lib::model::{
 /// Creates a colored string representation of the input tokens
 pub fn stringify<'a, FormatToken>(tokens: &'a [FormatToken]) -> String
 where
-FormatToken: TokenToString + Borrow<Token<'a>> {
+FormatToken: StringableToken + Borrow<Token<'a>> {
     _stringify(tokens, color_cli)
 }
 
-pub trait TokenToString {
+pub trait StringableToken {
     fn to_string(&self) -> Cow<'_, str>;
+    fn spaces(&self, other: &Self) -> usize;
 }
 
-impl TokenToString for Token<'_> {
+impl StringableToken for Token<'_> {
     fn to_string(&self) -> Cow<'_, str> {
         Cow::Owned(ideal_repr(self))
     }
+
+    fn spaces(&self, _other: &Self) -> usize {
+        spaces(self)
+    }
 }
 
-impl TokenToString for StringToken<'_> {
+impl StringableToken for StringToken<'_> {
     fn to_string(&self) -> Cow<'_, str> {
         Cow::Borrowed(&self.repr)
+    }
+
+    fn spaces(&self, other: &Self) -> usize {
+        other.offset
     }
 }
 
@@ -128,7 +137,7 @@ fn _stringify<'a, Colorize, Formatted, FormatToken>(tokens: &'a [FormatToken], c
 where
     Colorize: Fn(&str, &Token) -> Formatted,
     Formatted: Display,
-    FormatToken: TokenToString + Borrow<Token<'a>>
+    FormatToken: StringableToken + Borrow<Token<'a>>
 {
     // The last element of the slice
     // `std::slice::windows` does not include the last element as its own window
