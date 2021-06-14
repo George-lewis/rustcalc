@@ -122,9 +122,7 @@ fn make_highlighted_error(msg: &str, input_str: &str, idx: usize) -> String {
 /// Does not handle `Error::Io`
 pub fn handle_errors(error: Error, input: &str) -> String {
     match error {
-        Error::Assignment => {
-            "Couldn't assign. Malformed assignment statement.".to_string()
-        }
+        Error::Assignment => "Couldn't assign. Malformed assignment statement.".to_string(),
         Error::Library(ContextualLibError { context, error }) => {
             let code = match &context {
                 ErrorContext::Main => input,
