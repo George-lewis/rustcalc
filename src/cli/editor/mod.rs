@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use rustmatheval::model::{functions::Function, variables::Variable};
 use rustyline::{completion::Candidate, hint::Hint, Editor, Helper};
 
-use super::config::HISTORY_FILE;
+
 
 mod candidate;
 

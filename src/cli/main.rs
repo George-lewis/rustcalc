@@ -14,7 +14,7 @@ use lib::{doeval, model::EvaluationContext};
 pub use rustmatheval as lib;
 
 use config::HISTORY_FILE;
-use rustyline::Editor;
+
 
 use error::Error;
 use std::{cell::RefCell, env, process};

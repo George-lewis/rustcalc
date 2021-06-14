@@ -11,7 +11,7 @@ impl Completer for MyHelper<'_> {
         &self,
         line: &str,
         pos: usize,
-        ctx: &rustyline::Context<'_>,
+        _ctx: &rustyline::Context<'_>,
     ) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
         if let Some(npos) = find_last('#', &line[..pos]) {
             let line = &line[npos + 1..pos];
