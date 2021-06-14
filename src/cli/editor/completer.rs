@@ -14,7 +14,11 @@ fn find_candidates<Item: Named>(line: &str, items: &[Item]) -> Option<(usize, Ve
             .iter()
             .filter(|it| it.name().starts_with(line))
             // -1 because of `key`
-            .map(|it| MyCandidate(it.name()[stride - 1..].to_string(), it.format()))
+            .map(|it| {
+                let replacement = it.name()[stride - 1..].to_string();
+                let formatted = it.format();
+                MyCandidate(replacement, formatted)
+            })
             .collect();
         if !matches.is_empty() {
             return Some((stride, matches));
