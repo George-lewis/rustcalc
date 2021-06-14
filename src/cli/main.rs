@@ -9,6 +9,7 @@ mod rcfile;
 mod stringify;
 mod utils;
 mod vars;
+mod editor;
 
 use lib::{doeval, model::EvaluationContext};
 pub use rustmatheval as lib;
@@ -21,7 +22,7 @@ use std::{cell::RefCell, env, process};
 
 use cli::{handle_errors, handle_input};
 
-use crate::{cli::handle_library_errors, helper::MyHelper};
+use crate::{cli::handle_library_errors, editor::editor};
 
 pub fn main() -> ! {
     // One-shot mode
@@ -64,16 +65,7 @@ pub fn main() -> ! {
         }
     };
 
-    let mut editor = Editor::<MyHelper>::new();
-
-    let helper = MyHelper {
-        funcs: &funcs,
-        vars: &vars,
-
-        valid: RefCell::new(false),
-    };
-
-    editor.set_helper(Some(helper));
+    let mut editor = editor(&funcs, &vars);
 
     if let Some(path) = HISTORY_FILE.as_deref() {
         editor.load_history(path).ok();
