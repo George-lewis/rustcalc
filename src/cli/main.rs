@@ -8,6 +8,7 @@ mod rcfile;
 mod stringify;
 mod utils;
 mod vars;
+mod helper;
 
 use lib::{doeval, model::EvaluationContext};
 pub use rustmatheval as lib;
