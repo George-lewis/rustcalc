@@ -65,13 +65,10 @@ pub fn doeval<'a>(
         return Err(Error::RecursionLimit.with_context(context.context));
     }
 
-    let mut tokens = match tokenize(string, &context) {
+    let tokens = match tokenize_and_transform(string, &context) {
         Ok(tokens) => tokens,
         Err(err) => return Err(err.with_context(context.context)),
     };
-
-    implicit_parens(&mut tokens);
-    implicit_coeffs(&mut tokens);
 
     let rpn = match rpn(&tokens) {
         Ok(tokens) => tokens,

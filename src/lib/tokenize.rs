@@ -115,7 +115,7 @@ pub fn tokenize<'a>(
                 let (token, kind) = Token::paren(c).unwrap();
                 let (paren_mod, unary_) = match kind {
                     ParenType::Left => (1, true),
-                    ParenType::Right => (-1, unary),
+                    ParenType::Right => (-1, false),
                 };
                 explicit_paren += paren_mod;
                 (token, 1, unary_)
