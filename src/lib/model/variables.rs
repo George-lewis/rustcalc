@@ -1,5 +1,7 @@
 use super::representable::{get_by_repr, Searchable};
 
+pub const PREFIX: char = '$';
+
 #[derive(Clone, Debug, PartialEq)]
 /// Represents a variable, a value with a name
 pub struct Variable {
@@ -29,7 +31,7 @@ impl Variable {
 
     /// Returns whether or not the given representation could reference a valid variable
     pub fn is(repr: &str) -> bool {
-        repr.starts_with('$')
+        repr.starts_with(PREFIX)
     }
 }
 

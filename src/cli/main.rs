@@ -2,6 +2,7 @@
 
 mod cli;
 mod config;
+mod editor;
 mod error;
 mod funcs;
 mod rcfile;
@@ -13,14 +14,13 @@ use lib::{doeval, model::EvaluationContext};
 pub use rustmatheval as lib;
 
 use config::HISTORY_FILE;
-use rustyline::Editor;
 
 use error::Error;
-use std::{env, process};
+use std::{cell::RefCell, env, process};
 
 use cli::{handle_errors, handle_input};
 
-use crate::cli::handle_library_errors;
+use crate::{cli::handle_library_errors, editor::editor};
 
 pub fn main() -> ! {
     // One-shot mode
@@ -51,10 +51,10 @@ pub fn main() -> ! {
         process::exit(code);
     }
 
-    let mut vars = vec![];
-    let mut funcs = vec![];
+    let vars = RefCell::new(vec![]);
+    let funcs = RefCell::new(vec![]);
 
-    if let Err(inner) = rcfile::load(&mut vars, &mut funcs) {
+    if let Err(inner) = rcfile::load(&mut vars.borrow_mut(), &mut funcs.borrow_mut()) {
         match inner {
             Error::Io(inner) => {
                 println!("Error loading RCFile: {:#?}", inner);
@@ -63,7 +63,7 @@ pub fn main() -> ! {
         }
     };
 
-    let mut editor = Editor::<()>::new();
+    let mut editor = editor(&funcs, &vars);
 
     if let Some(path) = HISTORY_FILE.as_deref() {
         editor.load_history(path).ok();
@@ -88,7 +88,7 @@ pub fn main() -> ! {
         // Add the line to the history
         editor.add_history_entry(&input);
 
-        match handle_input(&input, &mut vars, &mut funcs) {
+        match handle_input(&input, &mut vars.borrow_mut(), &mut funcs.borrow_mut()) {
             Ok(formatted) => println!("{}", formatted),
             Err(error) => {
                 let msg = handle_errors(&error, &input);
