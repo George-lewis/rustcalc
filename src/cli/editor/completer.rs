@@ -31,13 +31,10 @@ impl Completer for MyHelper<'_> {
         let funcs = self.funcs.borrow();
         let vars = self.vars.borrow();
 
-        let candidates = if let Some(candidates) = find_candidates(line, &funcs) {
-            (pos, candidates)
-        } else if let Some(candidates) = find_candidates(line, &vars) {
-            (pos, candidates)
-        } else {
-            (0, vec![])
-        };
+        // Get (pos, candidates) or default to (0, [])
+        let candidates = find_candidates(line, &funcs)
+            .or_else(|| find_candidates(line, &vars))
+            .map_or((0, vec![]), |candidates| (pos, candidates));
 
         rustyline::Result::Ok(candidates)
     }
