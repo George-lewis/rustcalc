@@ -25,6 +25,10 @@ use crate::cli::handle_library_errors;
 pub fn main() -> ! {
     // One-shot mode
     let mut args = env::args();
+
+    // Look for "-c" in the arguments
+    // If found, `any` returns true and the iterator is advanced
+    // to the position of the "-c", so then we can just fold
     if args.any(|arg| arg == "-c") {
         // Combine all of the args into a string
         let fold = |acc: String, x: String| format!("{} {}", acc, x);
@@ -49,12 +53,6 @@ pub fn main() -> ! {
         process::exit(code);
     }
 
-    let mut editor = Editor::<()>::new();
-
-    if let Some(path) = HISTORY_FILE.as_deref() {
-        editor.load_history(path).ok();
-    }
-
     let mut vars = vec![];
     let mut funcs = vec![];
 
@@ -66,6 +64,12 @@ pub fn main() -> ! {
             _ => unreachable!(),
         }
     };
+
+    let mut editor = Editor::<()>::new();
+
+    if let Some(path) = HISTORY_FILE.as_deref() {
+        editor.load_history(path).ok();
+    }
 
     loop {
         #[allow(clippy::single_match_else)]
