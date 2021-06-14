@@ -29,28 +29,24 @@ pub fn find_last(c: char, str: &str) -> Option<usize> {
 ///
 /// ## Parameters
 /// * `Item` - A [`Findable`] type to search for in `line`
-/// * `Intermediate` - A type that is part of the desired result.
-/// * `Output` - This type is used to construct the output of the function
+/// * `Intermediate` - The output type
 /// * `ToIntermediate` - A `Fn` type capable of converting `Item`s to `Intermediate`
-/// * `ToOutput` - A `Fn` type capable of converting `Intermediate`s to `Output`
 ///
 /// ## Arguments
 /// * `line` - The string to find items within
 /// * `items` - A slice of items, these are candidates for the search
 /// * `create_intermediate` - A `Fn` that:
 ///   * accepts:
+///     * `stride: usize`: The stride of the matching section
 ///     * `item: &Item`: The matching item
 ///   * and produces an `Intermediate`
-/// * `create_output` - a `FnOnce` that:
-///   * accepts:
-///     * `start: usize` - The positon immediately after the prefix
-///     * `intermediates: Vec<Intermediate>` - A list of intermediates
-///   * and produces the final output of the function (which is then wrapped in an Option, see the Returns subheader)
 ///
 /// ## Returns
-/// Returns `None` if there are no possible matches inside the input string. There are two reasons this could occur:
+/// Returns `None` if there are no possible matches inside the input stringThere are two reasons this could occur:
 ///   * There is no prefix in the string, and thus no matches are possible
 ///   * There is a prefix in the string, but none of the items could possibly complete the identifier
+///
+/// Otherwise: Returns a vector of intermediates
 pub(super) fn find_items<Item, Intermediate, ToIntermediate>(
     line: &str,
     items: &[Item],
