@@ -17,7 +17,14 @@ pub enum ParenType {
     Right,
 }
 
-#[derive(Clone, Debug, Copy, PartialEq)]
+#[derive(Debug, Clone)]
+pub struct StringToken<'a> {
+    pub inner: Token<'a>,
+    pub repr: String,
+    pub offset: usize,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Token<'a> {
     Number { value: f64 },
     Operator { inner: Functions<'a> },

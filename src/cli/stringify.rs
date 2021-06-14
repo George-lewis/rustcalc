@@ -1,7 +1,7 @@
-use std::{fmt::Display, iter};
+use std::{borrow::{Borrow, Cow}, fmt::Display, iter};
 
 use colored::{ColoredString, Colorize};
-use rustmatheval::model::{functions::Functions, operators::FUNCTIONAL_STYLE_OPERATORS};
+use rustmatheval::model::{functions::Functions, operators::FUNCTIONAL_STYLE_OPERATORS, tokens::StringToken};
 
 use crate::{funcs::format_func_name, vars::format_var_name};
 
@@ -11,8 +11,26 @@ use super::lib::model::{
 };
 
 /// Creates a colored string representation of the input tokens
-pub fn stringify(tokens: &[Token]) -> String {
+pub fn stringify<'a, FormatToken>(tokens: &'a [FormatToken]) -> String
+where
+FormatToken: TokenToString + Borrow<Token<'a>> {
     _stringify(tokens, color_cli)
+}
+
+pub trait TokenToString {
+    fn to_string(&self) -> Cow<'_, str>;
+}
+
+impl TokenToString for Token<'_> {
+    fn to_string(&self) -> Cow<'_, str> {
+        Cow::Owned(ideal_repr(self))
+    }
+}
+
+impl TokenToString for StringToken<'_> {
+    fn to_string(&self) -> Cow<'_, str> {
+        Cow::Borrowed(&self.repr)
+    }
 }
 
 /// Construct the ideal representation of a `Token`
@@ -57,7 +75,7 @@ fn color_cli(string: &str, token: &Token) -> ColoredString {
 
 /// Determine if a space should be come after `cur` in a string representation.
 #[allow(clippy::unnested_or_patterns)]
-fn spaces(cur: &Token) -> bool {
+fn spaces(cur: &Token) -> usize {
     // Cases:
     // - Spaces after value types: numbers, variables, and constants
     // - Spaces after r_parens and commas
@@ -74,10 +92,10 @@ fn spaces(cur: &Token) -> bool {
         | Token::Number { .. }
         | Token::Variable { .. }
         | Token::Constant { .. }
-        | Token::Comma => true,
+        | Token::Comma => 1,
 
         // Otherwise none
-        _ => false,
+        _ => 0,
     }
 }
 
@@ -104,9 +122,13 @@ fn exclude_space(next: &Token) -> bool {
     }
 }
 
-fn _stringify<F, T: Display>(tokens: &[Token], colorize: F) -> String
+
+
+fn _stringify<'a, Colorize, Formatted, FormatToken>(tokens: &'a [FormatToken], colorize: Colorize) -> String
 where
-    F: Fn(&str, &Token) -> T,
+    Colorize: Fn(&str, &Token) -> Formatted,
+    Formatted: Display,
+    FormatToken: TokenToString + Borrow<Token<'a>>
 {
     // The last element of the slice
     // `std::slice::windows` does not include the last element as its own window
@@ -118,7 +140,7 @@ where
         tokens
             .last()
             .expect("Expected `tokens` to contain at least one token"),
-        false,
+        0,
     ));
 
     // Windows of size two let us determine if we want to insert a space
@@ -131,10 +153,10 @@ where
 
             // `exclude_space` determines if any conditions prevent there from being a space
             // and then `spaces` determines the number of spaces to insert, if they are permitted
-            let space = if exclude_space(next) {
-                false
+            let space = if exclude_space(next.borrow()) {
+                0
             } else {
-                spaces(cur)
+                spaces(cur.borrow())
             };
             (cur, space)
         })
@@ -142,10 +164,9 @@ where
         .chain(last)
         // Color
         .map(|(token, space)| {
-            let ideal = ideal_repr(token);
-            let colored = colorize(&ideal, token);
-            let space = if space { " " } else { "" };
-            format!("{}{}", colored, space)
+            let formatted = token.to_string();
+            let colored = colorize(&formatted, token.borrow());
+            format!("{}{}", colored, " ".repeat(space))
         })
         .collect()
 }
