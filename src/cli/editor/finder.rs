@@ -1,4 +1,4 @@
-use std::{borrow::Cow, fmt::format};
+use std::borrow::Cow;
 
 use rustmatheval::model::{
     functions::{Function, PREFIX as FUNCTION_PREFIX},
