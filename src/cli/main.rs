@@ -5,7 +5,6 @@ mod config;
 mod editor;
 mod error;
 mod funcs;
-mod helper;
 mod rcfile;
 mod stringify;
 mod utils;
