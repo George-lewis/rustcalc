@@ -9,10 +9,10 @@ mod highlighter;
 mod hinter;
 mod validator;
 
-pub fn editor<'a>(
-    funcs: &'a RefCell<Vec<Function>>,
-    vars: &'a RefCell<Vec<Variable>>,
-) -> Editor<MyHelper<'a>> {
+pub fn editor<'cell>(
+    funcs: &'cell RefCell<Vec<Function>>,
+    vars: &'cell RefCell<Vec<Variable>>,
+) -> Editor<MyHelper<'cell>> {
     let mut editor = Editor::<MyHelper>::new();
 
     let helper = MyHelper { funcs, vars };
