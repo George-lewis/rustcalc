@@ -85,9 +85,6 @@ pub fn main() -> ! {
             continue;
         }
 
-        // Add the line to the history
-        editor.add_history_entry(&input);
-
         match handle_input(&input, &mut vars.borrow_mut(), &mut funcs.borrow_mut()) {
             Ok(formatted) => println!("{}", formatted),
             Err(error) => {

@@ -20,6 +20,7 @@ pub fn editor<'a>(
     editor.set_helper(Some(helper));
 
     editor.set_completion_type(rustyline::CompletionType::List);
+    editor.set_auto_add_history(true);
 
     editor
 }
