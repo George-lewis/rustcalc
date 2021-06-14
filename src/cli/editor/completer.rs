@@ -1,64 +1,29 @@
-use rustmatheval::model::{functions::Function, variables::Variable};
-use rustyline::completion::Completer;
+use rustyline::completion::{Candidate, Completer};
 
-use crate::{funcs::format_func_with_args, utils::find_last, vars::format_var_name};
+use super::{
+    common::{find_items, Named},
+    MyHelper,
+};
+pub struct MyCandidate(String, String);
 
-use super::{MyCandidate, MyHelper};
+impl Candidate for MyCandidate {
+    fn display(&self) -> &str {
+        &self.1
+    }
+
+    fn replacement(&self) -> &str {
+        &self.0
+    }
+}
 
 fn find_candidates<Item: Named>(line: &str, items: &[Item]) -> Option<(usize, Vec<MyCandidate>)> {
-    if let Some(pos) = find_last(Item::prefix(), line) {
-        // +1 because of `key`
-        let line = &line[pos + 1..];
-        let stride = line.len() - pos;
-        let matches: Vec<MyCandidate> = items
-            .iter()
-            .filter(|it| it.name().starts_with(line))
-            .map(|it| {
-                // -1 because of `key`
-                let replacement = it.name()[stride - 1..].to_string();
-                let formatted = it.format();
-                MyCandidate(replacement, formatted)
-            })
-            .collect();
-        if !matches.is_empty() {
-            return Some((stride, matches));
-        }
-    }
-    None
-}
-
-trait Named {
-    fn name(&self) -> &str;
-    fn format(&self) -> String;
-    fn prefix() -> char;
-}
-
-impl Named for Function {
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    fn format(&self) -> String {
-        format_func_with_args(self)
-    }
-
-    fn prefix() -> char {
-        '#'
-    }
-}
-
-impl Named for Variable {
-    fn name(&self) -> &str {
-        &self.repr
-    }
-
-    fn format(&self) -> String {
-        format_var_name(&self.repr).to_string()
-    }
-
-    fn prefix() -> char {
-        '$'
-    }
+    let create_item = |stride: usize, item: &Item| {
+        let replacement = item.name()[stride..].to_string();
+        let formatted = item.format();
+        MyCandidate(replacement, formatted)
+    };
+    let create_output = |stride: usize, candidates: Vec<MyCandidate>| (stride, candidates);
+    find_items(line, items, create_item, create_output)
 }
 
 impl Completer for MyHelper<'_> {

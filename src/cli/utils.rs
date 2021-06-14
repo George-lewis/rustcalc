@@ -14,20 +14,3 @@ where
         }
     }
 }
-
-/// Find the position of the last instance of `c`
-///
-/// ## Examples
-///
-/// ```
-/// let s = "abc #foo bar";
-/// let pos = find_last('#', s).unwrap();
-/// assert_eq!(s.chars().nth(pos), '#');
-/// ```
-pub fn find_last(c: char, str: &str) -> Option<usize> {
-    str.chars()
-        .into_iter()
-        .rev()
-        .position(|ch| ch == c)
-        .map(|pos| str.chars().count() - pos - 1)
-}

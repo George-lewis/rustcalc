@@ -1,10 +1,11 @@
 use std::cell::RefCell;
 
 use rustmatheval::model::{functions::Function, variables::Variable};
-use rustyline::{completion::Candidate, config::Configurer, hint::Hint, Editor, Helper};
+use rustyline::{config::Configurer, Editor, Helper};
 
 mod candidate;
 
+mod common;
 mod completer;
 mod highlighter;
 mod hinter;
@@ -38,27 +39,3 @@ pub struct MyHelper<'cell> {
 }
 
 impl Helper for MyHelper<'_> {}
-
-pub struct MyCandidate(String, String);
-
-impl Candidate for MyCandidate {
-    fn display(&self) -> &str {
-        &self.1
-    }
-
-    fn replacement(&self) -> &str {
-        &self.0
-    }
-}
-
-pub struct MyHint(String);
-
-impl Hint for MyHint {
-    fn display(&self) -> &str {
-        &self.0
-    }
-
-    fn completion(&self) -> Option<&str> {
-        Some(&self.0)
-    }
-}

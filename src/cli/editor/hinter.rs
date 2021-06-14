@@ -1,31 +1,38 @@
-use rustyline::hint::Hinter;
+use rustyline::hint::{Hint, Hinter};
 
-use crate::utils::find_last;
+use super::{
+    common::{find_items, Named},
+    MyHelper,
+};
 
-use super::{MyHelper, MyHint};
+pub struct MyHint(String);
+
+impl Hint for MyHint {
+    fn display(&self) -> &str {
+        &self.0
+    }
+
+    fn completion(&self) -> Option<&str> {
+        Some(&self.0)
+    }
+}
+
+pub fn find_hint<Item: Named>(line: &str, items: &[Item]) -> Option<MyHint> {
+    let create_item = |stride: usize, item: &Item| MyHint(item.name()[stride..].to_string());
+    let create_output = |_, hints: Vec<MyHint>| hints;
+    let hints = find_items(line, items, create_item, create_output);
+    hints.and_then(|hints| hints.into_iter().max_by_key(|hint| hint.0.len()))
+}
 
 impl Hinter for MyHelper<'_> {
     type Hint = MyHint;
 
     fn hint(&self, line: &str, pos: usize, _ctx: &rustyline::Context<'_>) -> Option<Self::Hint> {
-        if let Some(npos) = find_last('#', &line[..pos]) {
-            let line = &line[npos + 1..pos];
-            let funcs = self.funcs.borrow();
+        let line = &line[..pos];
 
-            if let Some(func) = funcs.iter().find(|f| f.name.starts_with(line)) {
-                let s = func.name[pos - npos - 1..].to_string();
-                return Some(MyHint(s));
-            }
-        } else if let Some(npos) = find_last('$', &line[..pos]) {
-            let line = &line[npos + 1..pos];
-            let vars = self.vars.borrow();
+        let funcs = self.funcs.borrow();
+        let vars = self.vars.borrow();
 
-            if let Some(var) = vars.iter().find(|v| v.repr.starts_with(line)) {
-                let s = var.repr[pos - npos - 1..].to_string();
-                return Some(MyHint(s));
-            }
-        }
-
-        None
+        find_hint(line, &funcs).or_else(|| find_hint(line, &vars))
     }
 }
