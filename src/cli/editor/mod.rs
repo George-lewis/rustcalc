@@ -3,8 +3,8 @@ use std::cell::RefCell;
 use rustmatheval::model::{functions::Function, variables::Variable};
 use rustyline::{config::Configurer, Editor, Helper};
 
-mod finder;
 mod completer;
+mod finder;
 mod highlighter;
 mod hinter;
 mod validator;

@@ -18,7 +18,10 @@ impl Candidate for MyCandidate {
     }
 }
 
-fn find_candidates<Item: Findable>(line: &str, items: &[Item]) -> Option<(usize, Vec<MyCandidate>)> {
+fn find_candidates<Item: Findable>(
+    line: &str,
+    items: &[Item],
+) -> Option<(usize, Vec<MyCandidate>)> {
     let create_item = |stride: usize, item: &Item| {
         let replacement = item.name()[stride..].to_string();
         let formatted = item.format();

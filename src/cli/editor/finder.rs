@@ -1,4 +1,7 @@
-use rustmatheval::model::{functions::{Function, PREFIX as FUNCTION_PREFIX}, variables::{Variable, PREFIX as VARIABLE_PREFIX}};
+use rustmatheval::model::{
+    functions::{Function, PREFIX as FUNCTION_PREFIX},
+    variables::{Variable, PREFIX as VARIABLE_PREFIX},
+};
 
 use crate::funcs::format_func_with_args;
 use crate::vars::format_var_name;
@@ -53,7 +56,7 @@ pub trait Findable {
     fn name(&self) -> &str;
     fn format(&self) -> String;
     fn prefix() -> char;
-    // fn replacement(stride: usize) 
+    // fn replacement(stride: usize)
 }
 
 impl Findable for Function {
