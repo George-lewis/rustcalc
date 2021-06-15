@@ -1,7 +1,13 @@
-use std::{borrow::{Borrow, Cow}, fmt::Display, iter};
+use std::{
+    borrow::Cow,
+    fmt::Display,
+    iter,
+};
 
 use colored::{ColoredString, Colorize};
-use rustmatheval::model::{functions::Functions, operators::FUNCTIONAL_STYLE_OPERATORS, tokens::StringToken};
+use rustmatheval::model::{
+    functions::Functions, operators::FUNCTIONAL_STYLE_OPERATORS, tokens::StringToken,
+};
 
 use crate::{funcs::format_func_name, vars::format_var_name};
 
@@ -11,15 +17,17 @@ use super::lib::model::{
 };
 
 /// Creates a colored string representation of the input tokens
-pub fn stringify<'a, FormatToken>(tokens: &'a [FormatToken]) -> String
+pub fn stringify<FormatToken>(tokens: &[FormatToken]) -> String
 where
-FormatToken: StringableToken + Borrow<Token<'a>> {
+    FormatToken: StringableToken,
+{
     _stringify(tokens, color_cli)
 }
 
 pub trait StringableToken {
     fn to_string(&self) -> Cow<'_, str>;
     fn spaces(&self, other: &Self) -> usize;
+    fn token(&self) -> Option<&Token<'_>>;
 }
 
 impl StringableToken for Token<'_> {
@@ -27,8 +35,16 @@ impl StringableToken for Token<'_> {
         Cow::Owned(ideal_repr(self))
     }
 
-    fn spaces(&self, _other: &Self) -> usize {
-        spaces(self)
+    fn spaces(&self, other: &Self) -> usize {
+        if exclude_space(other) {
+            0
+        } else {
+            spaces(self)
+        }
+    }
+
+    fn token(&self) -> Option<&Token<'_>> {
+        Some(self)
     }
 }
 
@@ -39,6 +55,10 @@ impl StringableToken for StringToken<'_> {
 
     fn spaces(&self, other: &Self) -> usize {
         other.offset
+    }
+
+    fn token(&self) -> Option<&Token<'_>> {
+        self.inner.as_ref()
     }
 }
 
@@ -131,13 +151,24 @@ fn exclude_space(next: &Token) -> bool {
     }
 }
 
+trait FromBorrowedStr {
+    fn convert(s: &str) -> Self;
+}
 
+impl FromBorrowedStr for ColoredString {
+    fn convert(s: &str) -> Self {
+        s.into()
+    }
+}
 
-fn _stringify<'a, Colorize, Formatted, FormatToken>(tokens: &'a [FormatToken], colorize: Colorize) -> String
+fn _stringify<'a, Colorize, Formatted, FormatToken>(
+    tokens: &'a [FormatToken],
+    colorize: Colorize,
+) -> String
 where
     Colorize: Fn(&str, &Token) -> Formatted,
-    Formatted: Display,
-    FormatToken: StringableToken + Borrow<Token<'a>>
+    Formatted: Display + for<'b> From<&'b str>,
+    FormatToken: StringableToken,
 {
     // The last element of the slice
     // `std::slice::windows` does not include the last element as its own window
@@ -162,11 +193,9 @@ where
 
             // `exclude_space` determines if any conditions prevent there from being a space
             // and then `spaces` determines the number of spaces to insert, if they are permitted
-            let space = if exclude_space(next.borrow()) {
-                0
-            } else {
-                spaces(cur.borrow())
-            };
+            #[allow(clippy::collapsible_else_if)]
+            let space = cur.spaces(next);
+
             (cur, space)
         })
         // Insert the last token
@@ -174,7 +203,13 @@ where
         // Color
         .map(|(token, space)| {
             let formatted = token.to_string();
-            let colored = colorize(&formatted, token.borrow());
+
+            #[allow(clippy::option_if_let_else)]
+            let colored = if let Some(token) = token.token() {
+                colorize(&formatted, token)
+            } else {
+                formatted.as_ref().into()
+            };
             format!("{}{}", colored, " ".repeat(space))
         })
         .collect()

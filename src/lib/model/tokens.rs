@@ -19,7 +19,7 @@ pub enum ParenType {
 
 #[derive(Debug, Clone)]
 pub struct StringToken<'a> {
-    pub inner: Token<'a>,
+    pub inner: Option<Token<'a>>,
     pub repr: String,
     pub offset: usize,
 }
