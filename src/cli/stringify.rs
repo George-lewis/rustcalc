@@ -157,14 +157,13 @@ impl FromBorrowedStr for ColoredString {
     }
 }
 
-fn _stringify<'a, Colorize, Formatted, FormatToken>(
-    tokens: &'a [FormatToken],
+fn _stringify<'a, Colorize, Formatted>(
+    tokens: &'a [impl StringableToken],
     colorize: Colorize,
 ) -> String
 where
     Colorize: Fn(&str, &Token) -> Formatted,
     Formatted: Display + for<'b> From<&'b str>,
-    FormatToken: StringableToken,
 {
     // The last element of the slice
     // `std::slice::windows` does not include the last element as its own window
