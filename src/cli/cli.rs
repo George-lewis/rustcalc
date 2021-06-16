@@ -124,7 +124,7 @@ pub fn handle_library_errors(contextual_error: &ContextualLibError, input: &str)
         ErrorContext::Scoped(func) => &func.code,
     };
     let msg = match error {
-        LibError::Parsing(idx) => make_highlighted_error("Couldn't parse the token", code, *idx),
+        LibError::Parsing => make_highlighted_error("Couldn't parse the token", code, 0),
         LibError::Operand(op) => {
             let msg = match op {
                 InnerFunction::Builtin(kind) => format!(
@@ -141,8 +141,8 @@ pub fn handle_library_errors(contextual_error: &ContextualLibError, input: &str)
         }
         LibError::EmptyStack => "Couldn't evalutate. Stack was empty?".to_string(),
         LibError::MismatchingParens => "Couldn't evaluate. Mismatched parens.".to_string(),
-        LibError::UnknownVariable(idx) => make_highlighted_error("Unknown variable", code, *idx),
-        LibError::UnknownFunction(idx) => make_highlighted_error("Unknown function", code, *idx),
+        LibError::UnknownVariable => make_highlighted_error("Unknown variable", code, 0),
+        LibError::UnknownFunction => make_highlighted_error("Unknown function", code, 0),
         LibError::RecursionLimit => "Exceeded recursion limit.".to_string(),
     };
     if let ErrorContext::Scoped(func) = context {

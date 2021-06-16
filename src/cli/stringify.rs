@@ -50,11 +50,11 @@ impl StringableToken for StringToken<'_> {
     }
 
     fn spaces(&self, other: &Self) -> usize {
-        other.offset
+        other.idx - (self.idx + self.repr.len())
     }
 
     fn token(&self) -> Option<&Token<'_>> {
-        self.inner.as_ref()
+        self.inner.as_ref().ok()
     }
 }
 

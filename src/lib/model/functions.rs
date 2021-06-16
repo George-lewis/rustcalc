@@ -1,4 +1,6 @@
-use crate::doeval;
+use std::borrow::Cow;
+
+use crate::{DoEvalResult, doeval};
 
 use super::{
     errors::{ContextualError, ErrorContext},
@@ -51,10 +53,10 @@ pub struct Function {
 }
 
 impl Searchable for Function {
-    fn search<'a>(&'a self, search: &str) -> Option<(&'a Self, usize)> {
+    fn search<'a>(&'a self, search: &str) -> Option<(&'a Self, &'a str)> {
         // Case sensitive
         if search.starts_with(&self.name) {
-            Some((self, self.name.chars().count()))
+            Some((self, &self.name))
         } else {
             None
         }
@@ -65,7 +67,7 @@ impl Function {
     pub fn is(text: &str) -> bool {
         text.starts_with(PREFIX)
     }
-    pub fn next_function<'a>(text: &str, funcs: &'a [Self]) -> Option<(&'a Self, usize)> {
+    pub fn next_function<'a>(text: &str, funcs: &'a [Self]) -> Option<(&'a Self, &'a str)> {
         get_by_repr(text, funcs)
     }
     pub fn arity(&self) -> usize {
@@ -94,20 +96,35 @@ impl Function {
     ///
     /// # Errors
     /// This function calls into `lib::doeval` and bubbles up and errors occuring from within there.
-    pub fn apply<'a>(
-        &self,
+    pub fn apply<'var, 'func>(
+        &'func self,
         args: &[f64],
-        context: &EvaluationContext<'a>,
-    ) -> Result<f64, ContextualError> {
+        context: &EvaluationContext<'var, 'func>,
+    ) -> DoEvalResult<'_, 'func> {
         let vars = self.create_variables(args, context.vars);
 
-        let context = EvaluationContext {
+        // Return
+        //
+
+        // vars: &'_
+        // funcs: &'func
+        // context: &'func self
+        let context: EvaluationContext<'_, 'func> = EvaluationContext {
             vars: &vars,
             funcs: context.funcs,
             depth: context.depth + 1,
-            context: ErrorContext::Scoped(self.clone()),
+            context: ErrorContext::Scoped(self),
         };
 
-        doeval(&self.code, context).map(|(a, _)| a)
+        let res: DoEvalResult<'_, 'func> = doeval(&self.code, context);
+
+        res
+
+        // match doeval(&self.code, context) {
+        //     x @ DoEvalResult::RecursionLimit {..} => todo!(),
+        //     DoEvalResult::ParsingError { context, string_tokens } => todo!(),
+        //     DoEvalResult::EvalError { context, error } => todo!(),
+        //     a @ DoEvalResult::Ok {..} => a,
+        // }
     }
 }

@@ -1,13 +1,31 @@
 use std::borrow::Cow;
 
 use colored::Colorize;
+use rustmatheval::{model::EvaluationContext, tokenize};
 use rustyline::highlight::Highlighter;
+
+use crate::stringify::stringify;
 
 use super::MyHelper;
 
 impl Highlighter for MyHelper<'_> {
     fn highlight<'l>(&self, line: &'l str, _pos: usize) -> std::borrow::Cow<'l, str> {
-        Cow::Borrowed(line)
+        // Cow::Borrowed(line)
+        if line.trim().is_empty() {
+            return Cow::Borrowed(line);
+        }
+        let funcs = self.funcs.borrow();
+        let vars = self.vars.borrow();
+        let context = EvaluationContext {
+            vars: &vars,
+            funcs: &funcs,
+            context: rustmatheval::model::errors::ErrorContext::Main,
+            depth: 0,
+        };
+        let tokens = tokenize(line, &context);
+        // dbg!(&tokens);
+        let string = stringify(&tokens);
+        Cow::Owned(string)
     }
 
     fn highlight_prompt<'b, 's: 'b, 'p: 'b>(

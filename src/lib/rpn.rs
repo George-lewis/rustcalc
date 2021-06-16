@@ -9,7 +9,7 @@ use super::model::{
 ///
 /// Returns a `Vec` of token in RPN or an `Error::MismatchingParens`. This function will catch
 /// some instances of parentheses-mismatch, but not all.
-pub fn rpn<'a>(tokens: &'a [Token]) -> Result<Vec<Token<'a>>, Error> {
+pub fn rpn<'a, 'b, 'c>(tokens: &[Token<'a, 'c>]) -> Result<Vec<Token<'a, 'c>>, Error<'b>> {
     let mut operator_stack: Vec<Token> = Vec::new();
     let mut output: Vec<Token> = Vec::with_capacity(tokens.len());
 

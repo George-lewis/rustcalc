@@ -56,12 +56,12 @@ pub fn assign_var_command(
     // Get value for variable
     let result = doeval(sides[1], context);
     if let Err(ContextualLibError {
-        error: LibError::Parsing(idx),
+        error: LibError::Parsing,
         ..
     }) = result
     {
         return Err(Error::Library(
-            LibError::Parsing(idx + sides[0].len() + 1).with_context(ErrorContext::Main),
+            LibError::Parsing.with_context(ErrorContext::Main),
         ));
         // Length of untrimmed lefthand side
         // Offset is added so that highlighting can be added to expressions that come after an '=' during assignment

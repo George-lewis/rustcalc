@@ -1,8 +1,5 @@
 use itertools::Itertools;
-use rustmatheval::{
-    model::{errors::ErrorContext, functions::Function, variables::Variable, EvaluationContext},
-    tokenize_and_transform,
-};
+use rustmatheval::{model::{errors::ErrorContext, functions::Function, variables::Variable, EvaluationContext}, tokenize};
 
 use colored::{ColoredString, Colorize};
 
@@ -31,10 +28,11 @@ fn stringify_func_code(func: &Function, funcs: &[Function], vars: &[Variable]) -
     // If the function code references variables or other functions
     // That don't exist right now, the tokenize will fail
     // So we just fall back to a copy of the function's code
-    match tokenize_and_transform(&func.code, &context) {
-        Ok(tokens) => stringify(&tokens),
-        Err(_) => func.code.clone(),
-    }
+    let tokens = tokenize(&func.code, &context);
+    //     Ok(tokens) => stringify(&tokens),
+    //     Err(_) => func.code.clone(),
+    // }
+    stringify(&tokens)
 }
 
 pub fn format_func_name(name: &str) -> ColoredString {

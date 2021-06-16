@@ -49,7 +49,7 @@ impl Constant {
     }
 
     /// Get a `Constant` by one of its string representations
-    pub fn by_repr(repr: &str) -> Option<(&'static Self, usize)> {
+    pub fn by_repr(repr: &str) -> Option<(&'static Self, &'static str)> {
         get_by_repr(repr, CONSTANTS)
     }
 
@@ -74,7 +74,7 @@ mod tests {
     fn test_by_repr() {
         let cons = Constant::by_repr("pie").unwrap();
         assert_eq!(cons.0.kind, ConstantType::PI);
-        assert_eq!(cons.1, 2);
+        assert_eq!(cons.1, "pi");
     }
 
     #[test]

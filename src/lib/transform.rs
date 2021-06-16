@@ -155,63 +155,63 @@ pub fn implicit_coeffs(tokens: &mut Vec<Token>) {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    #![allow(clippy::missing_const_for_fn)]
+// #[cfg(test)]
+// mod tests {
+//     #![allow(clippy::missing_const_for_fn)]
 
-    use super::{implicit_coeffs, implicit_parens};
+//     use super::{implicit_coeffs, implicit_parens};
 
-    use crate::{
-        model::{
-            errors::ErrorContext, functions::Function, operators::OperatorType, tokens::Token,
-            variables::Variable, EvaluationContext,
-        },
-        tokenize,
-    };
+//     use crate::{
+//         model::{
+//             errors::ErrorContext, functions::Function, operators::OperatorType, tokens::Token,
+//             variables::Variable, EvaluationContext,
+//         },
+//         tokenize,
+//     };
 
-    #[test]
-    fn test_coeff() {
-        let vars = [Variable {
-            repr: "q".to_string(),
-            value: 1.0,
-        }];
-        let context = EvaluationContext {
-            vars: &vars,
-            funcs: &[],
-            depth: 0,
-            context: ErrorContext::Main,
-        };
+//     #[test]
+//     fn test_coeff() {
+//         let vars = [Variable {
+//             repr: "q".to_string(),
+//             value: 1.0,
+//         }];
+//         let context = EvaluationContext {
+//             vars: &vars,
+//             funcs: &[],
+//             depth: 0,
+//             context: ErrorContext::Main,
+//         };
 
-        let mul = Token::operator(OperatorType::Mul);
+//         let mul = Token::operator(OperatorType::Mul);
 
-        let mut tokens = tokenize("1 2 3", &context).unwrap();
-        implicit_coeffs(&mut tokens);
-        assert_eq!(tokens[1], mul);
-        assert_eq!(tokens[3], mul);
+//         let mut tokens = tokenize("1 2 3", &context).unwrap();
+//         implicit_coeffs(&mut tokens);
+//         assert_eq!(tokens[1], mul);
+//         assert_eq!(tokens[3], mul);
 
-        let mut tokens = tokenize("1 $q sin(pi) e", &context).unwrap();
-        implicit_coeffs(&mut tokens);
+//         let mut tokens = tokenize("1 $q sin(pi) e", &context).unwrap();
+//         implicit_coeffs(&mut tokens);
 
-        assert_eq!(tokens[1], mul);
-        assert_eq!(tokens[3], mul);
-        assert_eq!(tokens[8], mul);
-    }
+//         assert_eq!(tokens[1], mul);
+//         assert_eq!(tokens[3], mul);
+//         assert_eq!(tokens[8], mul);
+//     }
 
-    #[test]
-    fn test_implicit_parens() {
-        let mut tokens = tokenize("sin 5 cos 5", &EvaluationContext::default()).unwrap();
-        implicit_parens(&mut tokens);
+//     #[test]
+//     fn test_implicit_parens() {
+//         let mut tokens = tokenize("sin 5 cos 5", &EvaluationContext::default()).unwrap();
+//         implicit_parens(&mut tokens);
 
-        let funcs = [Function {
-            name: "ident".to_string(),
-            args: vec!["a".to_string()],
-            code: "$a".to_string(),
-        }];
-        let context = EvaluationContext {
-            funcs: &funcs,
-            ..EvaluationContext::default()
-        };
-        let mut tokens = tokenize("#ident 5 + #ident(7) + sin(88)", &context).unwrap();
-        implicit_parens(&mut tokens);
-    }
-}
+//         let funcs = [Function {
+//             name: "ident".to_string(),
+//             args: vec!["a".to_string()],
+//             code: "$a".to_string(),
+//         }];
+//         let context = EvaluationContext {
+//             funcs: &funcs,
+//             ..EvaluationContext::default()
+//         };
+//         let mut tokens = tokenize("#ident 5 + #ident(7) + sin(88)", &context).unwrap();
+//         implicit_parens(&mut tokens);
+//     }
+// }
