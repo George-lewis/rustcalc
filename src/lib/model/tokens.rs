@@ -13,9 +13,9 @@ pub enum ParenType {
 }
 
 #[derive(Debug, Clone)]
-pub struct StringToken<'var, 'func> {
+pub struct StringToken<'repr, 'var, 'func> {
     pub inner: Result<Token<'var, 'func>, ParserError>,
-    pub repr: String,
+    pub repr: &'repr str,
     pub idx: usize,
 }
 
@@ -40,7 +40,7 @@ impl Token<'_, '_> {
             _ => None,
         }
     }
-    pub fn number(string: &str) -> Option<(Self, String)> {
+    pub fn number(string: &str) -> Option<(Self, &str)> {
         let repr = Self::next_number(string);
         match repr.parse::<f64>() {
             Ok(value) => Some((Self::Number { value }, repr)),
@@ -57,11 +57,12 @@ impl Token<'_, '_> {
             inner: Constant::by_type(kind),
         }
     }
-    fn next_number(string: &str) -> String {
-        string
+    fn next_number(string: &str) -> &str {
+        let len = string
             .chars()
             .take_while(|c| NUMBER_CHARACTERS.contains(c))
-            .collect::<String>()
+            .count();
+        &string[..len]
     }
     fn is_next_t(string: &str, list: &[char]) -> bool {
         string.chars().next().map_or(false, |c| list.contains(&c))

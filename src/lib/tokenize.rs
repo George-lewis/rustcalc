@@ -59,17 +59,17 @@ fn _type(s: &str) -> Option<TokenType> {
     clippy::too_many_lines,
     clippy::missing_errors_doc
 )]
-pub fn tokenize<'var, 'func>(
-    string: &str,
+pub fn tokenize<'str, 'var, 'func>(
+    string: &'str str,
     context: &EvaluationContext<'var, 'func>,
-) -> Vec<StringToken<'var, 'func>> {
+) -> Vec<StringToken<'str, 'var, 'func>> {
     let mut tokens: Vec<StringToken> = Vec::new();
 
     // Indicates that the current operator would be unary
     let mut unary = true;
 
-    let mut spaces: usize = 0;
-    let mut partial_token = String::new();
+    // let mut spaces: usize = 0;
+    let mut partial_token: Option<usize> = None;
     let mut current_error: Option<Error> = None;
 
     let mut idx = 0;
@@ -83,26 +83,25 @@ pub fn tokenize<'var, 'func>(
         // Ignore whitespace and commas
         if c.is_whitespace() {
             idx += 1;
-            spaces += 1;
             continue;
         }
 
         let kind: TokenType = match _type(&slice) {
             Some(kind) => kind,
             None => {
-                partial_token.push(c);
+                partial_token = Some(idx);
                 idx += 1;
                 continue
             },
         };
 
-        if !partial_token.is_empty() {
+        if let Some(idx_) = partial_token {
             tokens.push(StringToken {
                 inner: Err(Error::UnknownToken),
-                repr: partial_token.clone(),
-                idx: idx - partial_token.len(),
+                repr: &string[idx_..idx],
+                idx: idx_,
             });
-            partial_token.clear();
+            partial_token = None;
         }
 
         let result  = match kind {
@@ -114,7 +113,7 @@ pub fn tokenize<'var, 'func>(
                     let (kind, len) = unar.unwrap();
 
                     // Support for consecutive unary ops
-                    Ok((Token::operator(*kind), Borrowed(len), true))
+                    Ok((Token::operator(*kind), len, true))
                 } else {
                     let (operator, len) = Operator::by_repr(&slice).unwrap();
                     let token = Token::Operator {
@@ -123,7 +122,7 @@ pub fn tokenize<'var, 'func>(
 
                     // The next token cannot be unary if this operator is factorial
                     // ATM this is the only postfix operator we support
-                    Ok((token, Borrowed(len), operator.kind != OperatorType::Factorial))
+                    Ok((token, len, operator.kind != OperatorType::Factorial))
                 }
             }
             TokenType::Function => {
@@ -132,7 +131,7 @@ pub fn tokenize<'var, 'func>(
                         let token = Token::Operator {
                             inner: Functions::User(func),
                         };
-                        Ok((token, Borrowed(len), func.arity() > 0))
+                        Ok((token, len, func.arity() > 0))
                     },
                     None => Err(Error::UnknownFunction),
                 }
@@ -143,27 +142,27 @@ pub fn tokenize<'var, 'func>(
                     ParenType::Left => (true, "("),
                     ParenType::Right => (false, ")"),
                 };
-                Ok((token, Borrowed(s), unary_))
+                Ok((token, s, unary_))
             }
             TokenType::Number => {
                 match Token::number(&slice) {
-                    Some((token, len)) => Ok((token, Owned(len), false)),
+                    Some((token, len)) => Ok((token, len, false)),
                     None => Err(Error::UnknownToken),
                 }
             }
             TokenType::Constant => {
                 let (constant, len) = Constant::by_repr(&slice).unwrap();
                 let token = Token::Constant { inner: constant };
-                Ok((token, Borrowed(len), false))
+                Ok((token, len, false))
             }
             TokenType::Variable => {
                 // [1..] to ignore the $ prefix
                 match Variable::next_variable(&slice[1..], context.vars) {
-                    Some((variable, len)) => Ok((Token::Variable { inner: variable }, Borrowed(len), false)),
+                    Some((variable, len)) => Ok((Token::Variable { inner: variable }, len, false)),
                     None => Err(Error::UnknownVariable),
                 }
             }
-            TokenType::Comma => Ok((Token::Comma, Borrowed(","), true)),
+            TokenType::Comma => Ok((Token::Comma, ",", true)),
         };
 
         match result {
@@ -171,14 +170,14 @@ pub fn tokenize<'var, 'func>(
                 let len = cow.len();
                 tokens.push(StringToken {
                     inner: Ok(token),
-                    repr: cow.into_owned(),
+                    repr: cow,
                     idx,
                 });
                 idx += len;
                 unary = unary_;
             },
             Err(e) => {
-                partial_token.push(c);
+                // partial_token.push(c);
                 idx += 1;
                 // partial_token.push(c);
                 // if current_error.as_ref().map(|er| mem::discriminant(er) != mem::discriminant(&e)).unwrap_or(false) {
@@ -197,11 +196,11 @@ pub fn tokenize<'var, 'func>(
         // unary = unary_;
         // spaces = 0;
     }
-    if !partial_token.is_empty() {
+    if let Some(idx) = partial_token {
         tokens.push(StringToken {
             inner: Err(Error::UnknownToken),
-            repr: partial_token.clone(),
-            idx: idx - partial_token.len(),
+            repr: &string[idx..],
+            idx: string.len() - idx,
         })
     }
     tokens

@@ -10,7 +10,7 @@ use super::model::{
 /// * `tokens` - The tokens
 ///
 /// Returns the result as a 64-bit float or an `Error`
-pub fn eval<'v1, 'v2: 'v1, 'f1, 'f2: 'f1>(tokens: Vec<Token<'v1, 'f1>>, eval_context: EvaluationContext<'v1, 'f1>) -> Result<f64, DoEvalResult<'v2, 'f2>> 
+pub fn eval<'v1, 'v2: 'v1, 'f1, 'f2: 'f1>(tokens: Vec<Token<'v1, 'f1>>, eval_context: EvaluationContext<'v1, 'f1>) -> Result<f64, DoEvalResult<'f2, 'v2, 'f2>> 
 {
     // We need a mutable copy of the tokens
     // let mut stack: Vec<Token> = tokens.into_iter().rev().collect();

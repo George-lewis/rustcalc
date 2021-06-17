@@ -3,21 +3,21 @@ pub trait Representable {
 }
 
 pub trait Searchable {
-    fn search<'a>(&'a self, search: &str) -> Option<(&'a Self, &'a str)>;
+    fn search<'a, 'b>(&'a self, search: &'b str) -> Option<(&'a Self, &'b str)>;
 }
 
 impl<Repr: Representable> Searchable for Repr {
-    fn search<'a>(&'a self, search: &str) -> Option<(&'a Self, &'a str)> {
+    fn search<'this, 'str>(&'this self, search: &'str str) -> Option<(&'this Self, &'str str)> {
         self.repr()
             .iter()
             .find(|repr| search.to_lowercase().starts_with(&repr.to_lowercase()))
-            .map(|repr| (self, *repr))
+            .map(|repr| (self, &search[..repr.chars().count()]))
     }
 }
 
-pub(super) fn get_by_repr<'a, T: Searchable>(
-    search: &str,
-    list: &'a [T],
-) -> Option<(&'a T, &'a str)> {
+pub(super) fn get_by_repr<'list, 'str, T: Searchable>(
+    search: &'str str,
+    list: &'list [T],
+) -> Option<(&'list T, &'str str)> {
     list.iter().find_map(|t| t.search(search))
 }

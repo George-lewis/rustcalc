@@ -57,13 +57,13 @@ pub enum DoEvalError {
 
 }
 
-pub enum DoEvalResult<'var, 'func> {
+pub enum DoEvalResult<'str, 'var, 'func> {
     RecursionLimit {
         context: ErrorContext<'func>
     },
     ParsingError {
         context: ErrorContext<'func>,
-        string_tokens: Vec<StringToken<'var, 'func>>
+        string_tokens: Vec<StringToken<'str, 'var, 'func>>
     },
     EvalError {
         context: ErrorContext<'func>,
@@ -71,7 +71,7 @@ pub enum DoEvalResult<'var, 'func> {
         error: Error<'func>
     },
     Ok {
-        string_tokens: Vec<StringToken<'var, 'func>>,
+        string_tokens: Vec<StringToken<'str, 'var, 'func>>,
         result: f64
     },
 }
@@ -101,17 +101,17 @@ pub enum DoEvalResult<'var, 'func> {
 ///
 /// ## Errors
 /// Returns an error if the expression couldn't be computed
-pub fn doeval<'var, 'func, 'b>(
-    string: &str,
+pub fn doeval<'str, 'var, 'func, 'b>(
+    string: &'str str,
     context: EvaluationContext<'var, 'func>,
-) -> DoEvalResult<'var, 'func> {
+) -> DoEvalResult<'str, 'var, 'func> {
     if context.depth == RECURSION_LIMIT {
         return DoEvalResult::RecursionLimit {
             context: context.context,
         };
     }
 
-    let string_tokens: Vec<StringToken<'var, 'func>> = tokenize(string, &context);
+    let string_tokens: Vec<StringToken<'str, 'var, 'func>> = tokenize(string, &context);
 
     if string_tokens.iter().any(|st| st.inner.is_err()) {
         return DoEvalResult::ParsingError {

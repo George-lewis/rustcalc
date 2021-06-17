@@ -53,10 +53,10 @@ pub struct Function {
 }
 
 impl Searchable for Function {
-    fn search<'a>(&'a self, search: &str) -> Option<(&'a Self, &'a str)> {
+    fn search<'a, 'b>(&'a self, search: &'b str) -> Option<(&'a Self, &'b str)> {
         // Case sensitive
         if search.starts_with(&self.name) {
-            Some((self, &self.name))
+            Some((self, &search[..self.name.chars().count()]))
         } else {
             None
         }
@@ -67,7 +67,7 @@ impl Function {
     pub fn is(text: &str) -> bool {
         text.starts_with(PREFIX)
     }
-    pub fn next_function<'a>(text: &str, funcs: &'a [Self]) -> Option<(&'a Self, &'a str)> {
+    pub fn next_function<'a, 'b>(text: &'b str, funcs: &'a [Self]) -> Option<(&'a Self, &'b str)> {
         get_by_repr(text, funcs)
     }
     pub fn arity(&self) -> usize {
@@ -100,7 +100,7 @@ impl Function {
         &'func self,
         args: &[f64],
         context: &EvaluationContext<'var, 'func>,
-    ) -> DoEvalResult<'_, 'func> {
+    ) -> DoEvalResult<'func, '_, 'func> {
         let vars = self.create_variables(args, context.vars);
 
         // Return
@@ -116,7 +116,7 @@ impl Function {
             context: ErrorContext::Scoped(self),
         };
 
-        let res: DoEvalResult<'_, 'func> = doeval(&self.code, context);
+        let res: DoEvalResult<'func, '_, 'func> = doeval(&self.code, context);
 
         res
 
