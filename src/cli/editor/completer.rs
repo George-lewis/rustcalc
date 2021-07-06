@@ -1,3 +1,6 @@
+use std::{borrow::Borrow, rc::Rc};
+
+use rustmatheval::model::variables::Variable;
 use rustyline::completion::{Completer, Pair};
 
 use super::{
@@ -5,7 +8,7 @@ use super::{
     MyHelper,
 };
 
-fn find_candidates<Item: Findable>(line: &str, items: &[Item]) -> Option<Vec<Pair>> {
+fn find_candidates<Item: Findable, ItemItem: Borrow<Item>>(line: &str, items: &[ItemItem]) -> Option<Vec<Pair>> {
     let create_intermediate = |stride, item: &Item| {
         let replacement = item.replacement()[stride..].to_string();
         let display = item.format();
@@ -33,7 +36,7 @@ impl Completer for MyHelper<'_> {
 
         // Get (pos, candidates) or default to (0, [])
         let candidates = find_candidates(line, &funcs)
-            .or_else(|| find_candidates(line, &vars))
+            .or_else(|| find_candidates::<Variable, Rc<Variable>>(line, &vars))
             .map_or((0, vec![]), |candidates| (pos, candidates));
 
         rustyline::Result::Ok(candidates)

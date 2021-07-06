@@ -1,9 +1,7 @@
 use std::{borrow::Cow, fmt::Display, iter};
 
 use colored::{ColoredString, Colorize};
-use rustmatheval::model::{
-    functions::Functions, operators::FUNCTIONAL_STYLE_OPERATORS, tokens::StringToken,
-};
+use rustmatheval::model::{functions::Functions, operators::FUNCTIONAL_STYLE_OPERATORS, tokens::{PartialToken, StringToken}};
 
 use crate::{funcs::format_func_name, vars::format_var_name};
 
@@ -44,7 +42,21 @@ impl StringableToken for Token<'_> {
     }
 }
 
-impl StringableToken for StringToken<'_> {
+impl StringableToken for StringToken<'_, '_> {
+    fn to_string(&self) -> Cow<'_, str> {
+        Cow::Borrowed(self.repr)
+    }
+
+    fn spaces(&self, other: &Self) -> usize {
+        other.idx - (self.idx + self.repr.len())
+    }
+
+    fn token(&self) -> Option<&Token<'_>> {
+        Some(&self.inner)
+    }
+}
+
+impl StringableToken for PartialToken<'_, '_> {
     fn to_string(&self) -> Cow<'_, str> {
         Cow::Borrowed(&self.repr)
     }

@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::borrow::{Borrow, Cow};
 
 use rustmatheval::model::{
     functions::{Function, PREFIX as FUNCTION_PREFIX},
@@ -49,13 +49,14 @@ pub fn find_last(c: char, str: &str) -> Option<usize> {
 ///   * There is a prefix in the string, but none of the items could possibly complete the identifier
 ///
 /// Otherwise: Returns a vector of intermediates
-pub(super) fn find_items<Item, Intermediate, ToIntermediate>(
+pub(super) fn find_items<Item, ItemItem, Intermediate, ToIntermediate>(
     line: &str,
-    items: &[Item],
+    items: &[ItemItem],
     create_intermediate: ToIntermediate,
 ) -> Option<Vec<Intermediate>>
 where
     Item: Findable,
+    ItemItem: Borrow<Item>,
     ToIntermediate: Fn(usize, &Item) -> Intermediate,
 {
     if let Some(pos) = find_last(Item::prefix(), line) {
@@ -66,8 +67,8 @@ where
 
         let matches: Vec<Intermediate> = items
             .iter()
-            .filter(|it| it.name().starts_with(line))
-            .map(|it| create_intermediate(stride, it))
+            .filter(|it| <ItemItem as Borrow<Item>>::borrow(it).name().starts_with(line))
+            .map(|it| create_intermediate(stride, it.borrow()))
             .collect();
         if !matches.is_empty() {
             return Some(matches);

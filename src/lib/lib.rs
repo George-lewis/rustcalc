@@ -11,15 +11,16 @@ mod transform;
 
 pub mod model;
 
+use std::intrinsics::transmute;
+
 use eval::eval;
 use itertools::Itertools;
-use model::{EvaluationContext, errors::ErrorContext, tokens::StringToken};
+use model::{EvaluationContext, errors::{ErrorContext, EvalError, RpnError}, tokens::{PartialToken, StringToken}};
 use rpn::rpn;
 pub use tokenize::tokenize;
 use transform::implicit_coeffs;
 
 use self::model::{
-    errors::{ContextualError, Error},
     tokens::Token,
 };
 
@@ -57,21 +58,25 @@ pub enum DoEvalError {
 
 }
 
-pub enum DoEvalResult<'str, 'var, 'func> {
+pub enum DoEvalResult<'str, 'a> {
     RecursionLimit {
-        context: ErrorContext<'func>
+        context: ErrorContext<'a>
     },
     ParsingError {
-        context: ErrorContext<'func>,
-        string_tokens: Vec<StringToken<'str, 'var, 'func>>
+        context: ErrorContext<'a>,
+        partial_tokens: Vec<PartialToken<'str, 'a>>
+    },
+    RpnError {
+        context: ErrorContext<'a>,
+        error: RpnError
     },
     EvalError {
-        context: ErrorContext<'func>,
+        context: ErrorContext<'a>,
         // string_tokens: Vec<StringToken<'a>>,
-        error: Error<'func>
+        error: EvalError<'str, 'a>,
     },
     Ok {
-        string_tokens: Vec<StringToken<'str, 'var, 'func>>,
+        string_tokens: Vec<StringToken<'str, 'a>>,
         result: f64
     },
 }
@@ -101,52 +106,53 @@ pub enum DoEvalResult<'str, 'var, 'func> {
 ///
 /// ## Errors
 /// Returns an error if the expression couldn't be computed
-pub fn doeval<'str, 'var, 'func, 'b>(
+pub fn doeval<'str, 'a>(
     string: &'str str,
-    context: EvaluationContext<'var, 'func>,
-) -> DoEvalResult<'str, 'var, 'func> {
+    context: EvaluationContext<'a>,
+) -> DoEvalResult<'str, 'a> {
     if context.depth == RECURSION_LIMIT {
         return DoEvalResult::RecursionLimit {
             context: context.context,
         };
     }
 
-    let string_tokens: Vec<StringToken<'str, 'var, 'func>> = tokenize(string, &context);
+    let partial_tokens  = tokenize(string, &context);
 
-    if string_tokens.iter().any(|st| st.inner.is_err()) {
+    if partial_tokens.iter().any(|pt: &PartialToken| pt.inner.is_err()) {
         return DoEvalResult::ParsingError {
             context: context.context,
-            string_tokens
+            partial_tokens
         }
     }
 
-    let tokens: Vec<Token<'var, 'func>> = string_tokens.iter().map(|st| st.inner.unwrap()).collect();
+    let string_tokens: Vec<StringToken> = partial_tokens.into_iter().map(|pt: PartialToken| {
+        StringToken {
+            inner: pt.inner.unwrap(),
+            repr: pt.repr,
+            idx: pt.idx,
+        }
+    }).collect();
 
-    let rpn: Vec<Token<'var, 'func>> = match rpn(&tokens) {
+    // let tokens = string_tokens.iter().map(|st| st.inner).collect_vec();
+
+    let mut rpn = match rpn(&string_tokens) {
         Ok(rpn) => rpn,
-        Err(error) => return DoEvalResult::EvalError {
+        Err(error) => return DoEvalResult::RpnError {
             context: context.context,
-            // string_tokens,
             error,
         },
     };
 
-    // match eval(&rpn, context).map(|result| {
-    //     DoEvalResult::Ok {
-    //         string_tokens,
-    //         result
-    //     }
-    // }) {
-    //     Ok(x) | Err(x) => x
-    // }
-    match eval(rpn, context) {
+    match eval(&mut rpn, context) {
         Ok(result) => {
             DoEvalResult::Ok {
                 string_tokens,
                 result
             }
         },
-        Err(e) => e
+        Err(e) => unsafe {
+            transmute(e)
+        }
     }
 }
 
@@ -162,7 +168,7 @@ mod tests {
             constants::Constant, constants::ConstantType, errors::ErrorContext,
             operators::OperatorType, tokens::ParenType, variables::Variable, EvaluationContext,
         },
-        Error, Token,
+        Token,
     };
 
     macro_rules! context {

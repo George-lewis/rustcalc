@@ -1,10 +1,6 @@
-use crate::model::{
-    functions::{Function, Functions},
-    tokens::StringToken,
-    EvaluationContext,
-};
+use crate::model::{EvaluationContext, errors::ErrorContext, functions::{Function, Functions}, tokens::PartialToken};
 
-use std::{borrow::Cow::{Borrowed, Owned}, mem};
+use std::{borrow::Cow::{self, Borrowed, Owned}, intrinsics::transmute, mem};
 
 use super::{
     model::{
@@ -59,11 +55,11 @@ fn _type(s: &str) -> Option<TokenType> {
     clippy::too_many_lines,
     clippy::missing_errors_doc
 )]
-pub fn tokenize<'str, 'var, 'func>(
+pub fn tokenize<'str, 'a, 'b>(
     string: &'str str,
-    context: &EvaluationContext<'var, 'func>,
-) -> Vec<StringToken<'str, 'var, 'func>> {
-    let mut tokens: Vec<StringToken> = Vec::new();
+    context: &'b EvaluationContext<'a>,
+) -> Vec<PartialToken<'str, 'a>> {
+    let mut tokens: Vec<PartialToken> = Vec::new();
 
     // Indicates that the current operator would be unary
     let mut unary = true;
@@ -96,7 +92,7 @@ pub fn tokenize<'str, 'var, 'func>(
         };
 
         if let Some(idx_) = partial_token {
-            tokens.push(StringToken {
+            tokens.push(PartialToken {
                 inner: Err(Error::UnknownToken),
                 repr: &string[idx_..idx],
                 idx: idx_,
@@ -156,6 +152,7 @@ pub fn tokenize<'str, 'var, 'func>(
                 Ok((token, len, false))
             }
             TokenType::Variable => {
+                // Err(Error::UnknownVariable)
                 // [1..] to ignore the $ prefix
                 match Variable::next_variable(&slice[1..], context.vars) {
                     Some((variable, len)) => Ok((Token::Variable { inner: variable }, len, false)),
@@ -168,7 +165,7 @@ pub fn tokenize<'str, 'var, 'func>(
         match result {
             Ok((token, cow, unary_)) => {
                 let len = cow.len();
-                tokens.push(StringToken {
+                tokens.push(PartialToken {
                     inner: Ok(token),
                     repr: cow,
                     idx,
@@ -197,7 +194,7 @@ pub fn tokenize<'str, 'var, 'func>(
         // spaces = 0;
     }
     if let Some(idx) = partial_token {
-        tokens.push(StringToken {
+        tokens.push(PartialToken {
             inner: Err(Error::UnknownToken),
             repr: &string[idx..],
             idx: string.len() - idx,

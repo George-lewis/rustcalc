@@ -1,3 +1,6 @@
+use std::cell::Cell;
+use std::rc::Rc;
+
 use crate::funcs::{assign_func_command, format_funcs};
 
 use super::lib::model::{
@@ -6,10 +9,11 @@ use super::lib::model::{
 use super::lib::utils;
 
 use colored::Colorize;
+use rustmatheval::DoEvalResult;
 use rustmatheval::model::errors::InnerFunction;
 use utils::Pos;
 
-use super::error::{ContextualLibError, Error, LibError};
+use super::error::{Error};
 
 use super::vars::{assign_var, assign_var_command, format_vars};
 
@@ -23,10 +27,10 @@ use super::stringify::stringify;
 /// * `input` - The user submitted string to be interpreted
 /// * `vars` - The vector of `Variables` the user has already entered / will add to
 pub fn handle_input<'a>(
-    input: &str,
-    vars: &'a mut Vec<Variable>,
+    input: &'a str,
+    vars: &'a mut Vec<Rc<Variable>>,
     funcs: &'a mut Vec<Function>,
-) -> Result<String, Error> {
+) -> Result<String, Error<'a>> {
     if input.len() == 1 {
         if Variable::is(input) {
             // Variable list command
@@ -63,19 +67,24 @@ pub fn handle_input<'a>(
         };
         let result = doeval(input, context);
 
-        let (x, repr) = result?;
+        if let DoEvalResult::Ok {
+            string_tokens,
+            result
+        } = result {
+            let formatted = stringify(&string_tokens);
+            let eval_string = format!("[ {} ] => {}", formatted, format!("{:.3}", result).blue());
 
-        let formatted = stringify(&repr);
-        let eval_string = format!("[ {} ] => {}", formatted, format!("{:.3}", x).blue());
+            let ans = Variable {
+                repr: "ans".to_string(),
+                value: Cell::new(result),
+            };
 
-        let ans = Variable {
-            repr: "ans".to_string(),
-            value: x,
-        };
+            assign_var(ans, vars); // Set ans to new value
 
-        assign_var(ans, vars); // Set ans to new value
-
-        Ok(eval_string)
+            Ok(eval_string)
+        } else {
+            Err(Error::Library(result))
+        }
     }
 }
 
@@ -92,7 +101,7 @@ fn make_highlighted_error(msg: &str, input_str: &str, idx: usize) -> String {
     let first = if idx > 0 {
         utils::slice(input_str, 0, &Pos::Idx(idx))
     } else {
-        "".to_string()
+        ""
     };
     format!(
         "{} at index [{}]\n{}{}{}\n{}{}",
@@ -115,41 +124,48 @@ fn make_highlighted_error(msg: &str, input_str: &str, idx: usize) -> String {
 /// Produce an error message for a given [`super::lib::ContextualError`] and input string
 /// * `error` - The error
 /// * `input` - The user's input
-pub fn handle_library_errors(contextual_error: &ContextualLibError, input: &str) -> String {
-    let error = &contextual_error.error;
-    let context = &contextual_error.context;
-
-    let code = match context {
-        ErrorContext::Main => input,
-        ErrorContext::Scoped(func) => &func.code,
-    };
-    let msg = match error {
-        LibError::Parsing => make_highlighted_error("Couldn't parse the token", code, 0),
-        LibError::Operand(op) => {
-            let msg = match op {
-                InnerFunction::Builtin(kind) => format!(
-                    "Operator [{}] requires an operand",
-                    format!("{:?}", kind).green()
-                ),
-                InnerFunction::User(f) => format!(
-                    "Function {} requires [{}] arguments",
-                    format_func_name(&f.name),
-                    format!("{}", f.args.len()).red()
-                ),
-            };
-            format!("Couldn't evaluate. {}.", msg)
-        }
-        LibError::EmptyStack => "Couldn't evalutate. Stack was empty?".to_string(),
-        LibError::MismatchingParens => "Couldn't evaluate. Mismatched parens.".to_string(),
-        LibError::UnknownVariable => make_highlighted_error("Unknown variable", code, 0),
-        LibError::UnknownFunction => make_highlighted_error("Unknown function", code, 0),
-        LibError::RecursionLimit => "Exceeded recursion limit.".to_string(),
-    };
-    if let ErrorContext::Scoped(func) = context {
-        format!("In function {}: {}", format_func_name(&func.name), msg)
-    } else {
-        msg
+pub fn handle_library_errors(result: &DoEvalResult, input: &str) -> String {
+    match result {
+        DoEvalResult::RecursionLimit { context } => Owned(""),
+        DoEvalResult::ParsingError { context, partial_tokens } => todo!(),
+        DoEvalResult::RpnError { context, error } => todo!(),
+        DoEvalResult::EvalError { context, error } => todo!(),
+        DoEvalResult::Ok { .. } => panic!(),
     }
+    // let error = &contextual_error.error;
+    // let context = &contextual_error.context;
+
+    // let code = match context {
+    //     ErrorContext::Main => input,
+    //     ErrorContext::Scoped(func) => &func.code,
+    // };
+    // let msg = match error {
+    //     LibError::Parsing => make_highlighted_error("Couldn't parse the token", code, 0),
+    //     LibError::Operand(op) => {
+    //         let msg = match op {
+    //             InnerFunction::Builtin(kind) => format!(
+    //                 "Operator [{}] requires an operand",
+    //                 format!("{:?}", kind).green()
+    //             ),
+    //             InnerFunction::User(f) => format!(
+    //                 "Function {} requires [{}] arguments",
+    //                 format_func_name(&f.name),
+    //                 format!("{}", f.args.len()).red()
+    //             ),
+    //         };
+    //         format!("Couldn't evaluate. {}.", msg)
+    //     }
+    //     LibError::EmptyStack => "Couldn't evalutate. Stack was empty?".to_string(),
+    //     LibError::MismatchingParens => "Couldn't evaluate. Mismatched parens.".to_string(),
+    //     LibError::UnknownVariable => make_highlighted_error("Unknown variable", code, 0),
+    //     LibError::UnknownFunction => make_highlighted_error("Unknown function", code, 0),
+    //     LibError::RecursionLimit => "Exceeded recursion limit.".to_string(),
+    // };
+    // if let ErrorContext::Scoped(func) = context {
+    //     format!("In function {}: {}", format_func_name(&func.name), msg)
+    // } else {
+    //     msg
+    // }
 }
 
 /// Produces an error message to show to the user

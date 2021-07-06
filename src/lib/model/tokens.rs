@@ -1,6 +1,8 @@
 #![allow(clippy::non_ascii_literal, clippy::bind_instead_of_map)]
 
-use super::{constants::{Constant, ConstantType}, errors::{Error, ParserError}, functions::Functions, operators::{Operator, OperatorType}, variables::Variable};
+use std::{borrow::Cow, rc::Rc};
+
+use super::{constants::{Constant, ConstantType}, errors::{ParserError}, functions::Functions, operators::{Operator, OperatorType}, variables::Variable};
 
 const NUMBER_CHARACTERS: [char; 11] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'];
 const PAREN_CHARACTERS: [char; 2] = ['(', ')'];
@@ -13,23 +15,33 @@ pub enum ParenType {
 }
 
 #[derive(Debug, Clone)]
-pub struct StringToken<'repr, 'var, 'func> {
-    pub inner: Result<Token<'var, 'func>, ParserError>,
+pub struct StringTokenInterface<'repr, Inner> {
+    pub inner: Inner,
     pub repr: &'repr str,
     pub idx: usize,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Token<'var, 'func> {
+pub type PartialToken<'repr, 'a> = StringTokenInterface<'repr, Result<Token<'a>, ParserError>>;
+pub type StringToken<'repr, 'a> = StringTokenInterface<'repr, Token<'a>>;
+
+// #[allow(clippy::from_over_into)]
+// impl<'repr, 'tok> Into<Token<'tok>> for StringToken<'repr, 'tok> {
+//     fn into(self) -> Token<'tok> {
+//         self.inner
+//     }
+// }
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Token<'a> {
     Number { value: f64 },
-    Operator { inner: Functions<'func> },
+    Operator { inner: Functions<'a> },
     Paren { kind: ParenType },
     Constant { inner: &'static Constant },
-    Variable { inner: &'var Variable },
+    Variable { inner: Rc<Variable> },
     Comma,
-}
+}       
 
-impl Token<'_, '_> {
+impl Token<'_> {
     pub fn paren(c: char) -> Option<(Self, ParenType)> {
         Self::paren_type(c).map(|kind| (Self::Paren { kind }, kind))
     }

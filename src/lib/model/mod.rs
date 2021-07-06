@@ -1,3 +1,5 @@
+use std::{borrow::Cow, rc::Rc};
+
 use self::{errors::ErrorContext, functions::Function, variables::Variable};
 
 pub mod constants;
@@ -9,11 +11,11 @@ pub mod variables;
 
 mod representable;
 
-#[derive(Default, Clone)]
-pub struct EvaluationContext<'var, 'func> {
-    pub vars: &'var [Variable],
-    pub funcs: &'func [Function],
-    pub context: ErrorContext<'func>,
+#[derive(Clone, Default)]
+pub struct EvaluationContext<'a> {
+    pub vars: &'a [Rc<Variable>],
+    pub funcs: &'a [Function],
+    pub context: ErrorContext<'a>,
     pub depth: u8,
 }
 
@@ -21,7 +23,7 @@ pub struct EvaluationContext<'var, 'func> {
 mod tests {
 
     use super::{
-        errors::{ContextualError, Error, ErrorContext},
+        errors::{ErrorContext},
         functions::{Function, Functions},
         operators::{Associativity, Operator, OperatorType},
         tokens::Token,
@@ -43,7 +45,6 @@ mod tests {
     #[test]
     fn size_of() {
         sizeof! {
-            ContextualError,
             EvaluationContext,
             Function,
             ErrorContext,
@@ -51,7 +52,6 @@ mod tests {
             Token,
             Functions,
             &Functions,
-            Error,
             Operator,
             OperatorType,
             Associativity

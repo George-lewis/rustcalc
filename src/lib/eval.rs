@@ -1,36 +1,42 @@
-use crate::{DoEvalResult, model::EvaluationContext};
+use std::intrinsics::transmute;
+
+use crate::{DoEvalResult, model::{EvaluationContext, errors::EvalError, functions::Function, tokens::StringToken}};
 
 use super::model::{
-    errors::{ContextualError, Error, InnerFunction},
+    errors::{InnerFunction},
     functions::Functions,
     tokens::Token,
 };
+
+// enum EvalToken {
+//     StringToken(StringToken),
+//     Number9
+// }
 
 /// Evaluate a list of tokens
 /// * `tokens` - The tokens
 ///
 /// Returns the result as a 64-bit float or an `Error`
-pub fn eval<'v1, 'v2: 'v1, 'f1, 'f2: 'f1>(tokens: Vec<Token<'v1, 'f1>>, eval_context: EvaluationContext<'v1, 'f1>) -> Result<f64, DoEvalResult<'f2, 'v2, 'f2>> 
+pub fn eval<'a>(tokens: &mut Vec<StringToken<'a, 'a>>, eval_context: EvaluationContext<'a>) -> Result<f64, DoEvalResult<'a, 'a>> 
 {
     // We need a mutable copy of the tokens
     // let mut stack: Vec<Token> = tokens.into_iter().rev().collect();
     tokens.reverse();
-    let mut stack: Vec<Token<'v1, 'f1>> = tokens;
+    let mut stack  = tokens;
     let mut args: Vec<f64> = Vec::new();
 
-    // drop(tokens);
-
     while let Some(token) = stack.pop() {
-        let token: Token = token;
-        match token {
+        let token = token;
+        match token.inner {
             Token::Number { value } => {
                 args.push(value);
             }
             Token::Constant { inner } => {
                 args.push(inner.value);
             }
-            Token::Variable { inner } => args.push(inner.value),
+            Token::Variable { inner } => args.push(inner.value.get()),
             Token::Operator { inner: op } => {
+                // let op: Functions<'func> = op;
                 let start = if let Some(x) = args.len().checked_sub(op.arity()) {
                     x
                 } else {
@@ -40,7 +46,10 @@ pub fn eval<'v1, 'v2: 'v1, 'f1, 'f2: 'f1>(tokens: Vec<Token<'v1, 'f1>>, eval_con
                     };
                     return Err(DoEvalResult::EvalError {
                         context: eval_context.context,
-                        error: Error::Operand(inner)
+                        error: EvalError::Operand {
+                            op: inner,
+                            tok: token,
+                        }
                     });
                 };
 
@@ -50,17 +59,14 @@ pub fn eval<'v1, 'v2: 'v1, 'f1, 'f2: 'f1>(tokens: Vec<Token<'v1, 'f1>>, eval_con
 
                 let result = match op {
                     Functions::Builtin(b) => (b.doit)(&args_),
-                    Functions::User(f) => match f.apply(&args_, &eval_context) {
-                        DoEvalResult::Ok {
-                            result,
-                            ..
-                        } => result,
-                        other => return Err(other)
-                    },
+                    Functions::User(f) => {
+                        f.apply(&args_, &eval_context)?
+                    }
                 };
 
                 // Push the result of the evaluation
-                stack.push(Token::Number { value: result });
+                // stack.push(Token::Number { value: result });
+                args.push(result);
             }
             Token::Paren { .. } | Token::Comma => {}
         }
@@ -72,7 +78,7 @@ pub fn eval<'v1, 'v2: 'v1, 'f1, 'f2: 'f1>(tokens: Vec<Token<'v1, 'f1>>, eval_con
     } else {
         Err(DoEvalResult::EvalError {
             context: eval_context.context,
-            error: Error::EmptyStack,
+            error: EvalError::EmptyStack,
         })
     }
 }

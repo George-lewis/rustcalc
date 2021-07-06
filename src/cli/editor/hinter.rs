@@ -1,3 +1,6 @@
+use std::{borrow::Borrow, rc::Rc};
+
+use rustmatheval::model::variables::Variable;
 use rustyline::hint::Hinter;
 
 use super::{
@@ -5,7 +8,7 @@ use super::{
     MyHelper,
 };
 
-pub fn find_hint<Item: Findable>(line: &str, items: &[Item]) -> Option<String> {
+pub fn find_hint<Item: Findable, ItemItem: Borrow<Item>>(line: &str, items: &[ItemItem]) -> Option<String> {
     let create_intermediate = |stride, item: &Item| item.replacement()[stride..].to_string();
     let hints = find_items(line, items, create_intermediate);
     hints.and_then(|hints| hints.into_iter().max_by_key(String::len))
@@ -20,7 +23,7 @@ impl Hinter for MyHelper<'_> {
         let funcs = self.funcs.borrow();
         let vars = self.vars.borrow();
 
-        let hint = find_hint(line, &funcs).or_else(|| find_hint(line, &vars));
+        let hint = find_hint(line, &funcs).or_else(|| find_hint::<Variable, Rc<Variable>>(line, &vars));
         dbg!(&hint);
         hint
     }

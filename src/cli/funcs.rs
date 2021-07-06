@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use itertools::Itertools;
 use rustmatheval::{model::{errors::ErrorContext, functions::Function, variables::Variable, EvaluationContext}, tokenize};
 
@@ -9,13 +11,15 @@ fn color_arg(arg: impl AsRef<str>) -> ColoredString {
     arg.as_ref().yellow()
 }
 
-fn stringify_func_code(func: &Function, funcs: &[Function], vars: &[Variable]) -> String {
+fn stringify_func_code(func: &Function, funcs: &[Function], vars: &[Rc<Variable>]) -> String {
     // We don't care about the actual value of the arguments here
     // Because we're just going to tokenize it
     let args = [0.0].repeat(func.arity());
 
     // Creates args and merges with variables in-scope (`vars`)
-    let vars = func.create_variables(&args, vars);
+    let args = func.create_variables(&args);
+
+    let vars = args.into_iter().chain(vars.into_iter().map(Rc::clone)).collect_vec();
 
     // Depth and context also don't matter here
     let context = EvaluationContext {
@@ -47,7 +51,7 @@ pub fn format_func_with_args(func: &Function) -> String {
     )
 }
 
-fn format_func(func: &Function, funcs: &[Function], vars: &[Variable]) -> String {
+fn format_func(func: &Function, funcs: &[Function], vars: &[Rc<Variable>]) -> String {
     format!(
         "[ {} = {} ]",
         format_func_with_args(func),
@@ -56,15 +60,15 @@ fn format_func(func: &Function, funcs: &[Function], vars: &[Variable]) -> String
 }
 
 #[allow(clippy::module_name_repetitions)]
-pub fn format_funcs(funcs: &[Function], vars: &[Variable]) -> String {
+pub fn format_funcs(funcs: &[Function], vars: &[Rc<Variable>]) -> String {
     funcs.iter().map(|f| format_func(f, funcs, vars)).join("\n")
 }
 
-pub fn assign_func_command(
+pub fn assign_func_command<'a>(
     input: &str,
-    funcs: &mut Vec<Function>,
-    vars: &[Variable],
-) -> Result<String, Error> {
+    funcs: &'a mut Vec<Function>,
+    vars: &'a [Rc<Variable>],
+) -> Result<String, Error<'a>> {
     let sides: Vec<&str> = input.split('=').map(str::trim).collect();
 
     if sides.len() != 2 {

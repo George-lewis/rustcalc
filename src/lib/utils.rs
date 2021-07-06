@@ -38,7 +38,7 @@ pub enum Pos {
 /// assert_eq!(slice_, "bcdef");
 /// ```
 #[must_use]
-pub fn slice(string: &str, start: usize, end: &Pos) -> String {
+pub fn slice<'a>(string: &'a str, start: usize, end: &Pos) -> &'a str {
     let len = string.chars().count();
 
     let end = match end {
@@ -49,7 +49,10 @@ pub fn slice(string: &str, start: usize, end: &Pos) -> String {
 
     assert!(start + end <= len, "end ({}) > len ({})", start + end, len);
 
-    string.chars().skip(start).take(end).collect()
+    let mut x = string.char_indices().skip(start);
+    let a = x.next().unwrap();
+    let b = x.skip(end - 1).next().unwrap();
+    &string[a.0..b.0]
 }
 
 #[macro_export]

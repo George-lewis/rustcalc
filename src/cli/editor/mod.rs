@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, rc::Rc};
 
 use rustmatheval::model::{functions::Function, variables::Variable};
 use rustyline::{config::Configurer, Editor, Helper};
@@ -11,7 +11,7 @@ mod validator;
 
 pub fn editor<'cell>(
     funcs: &'cell RefCell<Vec<Function>>,
-    vars: &'cell RefCell<Vec<Variable>>,
+    vars: &'cell RefCell<Vec<Rc<Variable>>>,
 ) -> Editor<MyHelper<'cell>> {
     let mut editor = Editor::<MyHelper>::new();
 
@@ -27,7 +27,7 @@ pub fn editor<'cell>(
 
 pub struct MyHelper<'cell> {
     pub funcs: &'cell RefCell<Vec<Function>>,
-    pub vars: &'cell RefCell<Vec<Variable>>,
+    pub vars: &'cell RefCell<Vec<Rc<Variable>>>,
 }
 
 impl Helper for MyHelper<'_> {}
