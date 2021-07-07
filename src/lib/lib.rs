@@ -58,6 +58,7 @@ pub enum DoEvalError {
 
 }
 
+#[derive(Debug)]
 pub enum DoEvalResult<'str, 'a> {
     RecursionLimit {
         context: ErrorContext<'a>
@@ -116,24 +117,15 @@ pub fn doeval<'str, 'a>(
         };
     }
 
-    let partial_tokens  = tokenize(string, &context);
-
-    if partial_tokens.iter().any(|pt: &PartialToken| pt.inner.is_err()) {
-        return DoEvalResult::ParsingError {
-            context: context.context,
-            partial_tokens
-        }
-    }
-
-    let string_tokens: Vec<StringToken> = partial_tokens.into_iter().map(|pt: PartialToken| {
-        StringToken {
-            inner: pt.inner.unwrap(),
-            repr: pt.repr,
-            idx: pt.idx,
-        }
-    }).collect();
-
-    // let tokens = string_tokens.iter().map(|st| st.inner).collect_vec();
+    let string_tokens  = match tokenize(string, &context) {
+        Ok(string_tokens) => string_tokens,
+        Err(partial_tokens) => {
+            return DoEvalResult::ParsingError {
+                context: context.context,
+                partial_tokens,
+            };
+        },
+    };
 
     let mut rpn = match rpn(&string_tokens) {
         Ok(rpn) => rpn,

@@ -32,7 +32,7 @@ fn stringify_func_code(func: &Function, funcs: &[Function], vars: &[Rc<Variable>
     // If the function code references variables or other functions
     // That don't exist right now, the tokenize will fail
     // So we just fall back to a copy of the function's code
-    let tokens = tokenize(&func.code, &context);
+    let tokens = tokenize(&func.code, &context).expect("Function code is invalid?");
     //     Ok(tokens) => stringify(&tokens),
     //     Err(_) => func.code.clone(),
     // }

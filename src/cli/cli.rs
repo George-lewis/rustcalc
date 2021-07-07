@@ -1,4 +1,5 @@
 use std::cell::Cell;
+use std::intrinsics::transmute;
 use std::rc::Rc;
 
 use crate::funcs::{assign_func_command, format_funcs};
@@ -83,7 +84,7 @@ pub fn handle_input<'a>(
 
             Ok(eval_string)
         } else {
-            Err(Error::Library(result))
+            Err(Error::Library(unsafe {transmute(result)}))
         }
     }
 }
@@ -125,13 +126,17 @@ fn make_highlighted_error(msg: &str, input_str: &str, idx: usize) -> String {
 /// * `error` - The error
 /// * `input` - The user's input
 pub fn handle_library_errors(result: &DoEvalResult, input: &str) -> String {
-    match result {
-        DoEvalResult::RecursionLimit { context } => Owned(""),
-        DoEvalResult::ParsingError { context, partial_tokens } => todo!(),
-        DoEvalResult::RpnError { context, error } => todo!(),
-        DoEvalResult::EvalError { context, error } => todo!(),
-        DoEvalResult::Ok { .. } => panic!(),
-    }
+    dbg!(result);
+    // let ctx, msg = match result {
+    //     DoEvalResult::RecursionLimit { context } => (context, Borrowed("Exceeded recursion limit")),
+    //     DoEvalResult::ParsingError { context, partial_tokens } => todo!(),
+    //     DoEvalResult::RpnError { context, error } => todo!(),
+    //     DoEvalResult::EvalError { context, error } => todo!(),
+    //     DoEvalResult::Ok { .. } => panic!(),
+    // }
+
+
+
     // let error = &contextual_error.error;
     // let context = &contextual_error.context;
 
@@ -166,6 +171,7 @@ pub fn handle_library_errors(result: &DoEvalResult, input: &str) -> String {
     // } else {
     //     msg
     // }
+    "".to_string()
 }
 
 /// Produces an error message to show to the user

@@ -1,4 +1,6 @@
-use crate::model::{EvaluationContext, errors::ErrorContext, functions::{Function, Functions}, tokens::PartialToken};
+use itertools::Itertools;
+
+use crate::model::{EvaluationContext, errors::ErrorContext, functions::{Function, Functions}, tokens::{PartialToken, StringToken}};
 
 use std::{borrow::Cow::{self, Borrowed, Owned}, intrinsics::transmute, mem};
 
@@ -58,7 +60,7 @@ fn _type(s: &str) -> Option<TokenType> {
 pub fn tokenize<'str, 'a, 'b>(
     string: &'str str,
     context: &'b EvaluationContext<'a>,
-) -> Vec<PartialToken<'str, 'a>> {
+) -> Result<Vec<StringToken<'str, 'a>>, Vec<PartialToken<'str, 'a>>> {
     let mut tokens: Vec<PartialToken> = Vec::new();
 
     // Indicates that the current operator would be unary
@@ -66,7 +68,7 @@ pub fn tokenize<'str, 'a, 'b>(
 
     // let mut spaces: usize = 0;
     let mut partial_token: Option<usize> = None;
-    let mut current_error: Option<Error> = None;
+    // let mut current_error: Option<Error> = None;
 
     let mut idx = 0;
     let end = string.chars().count();
@@ -82,10 +84,14 @@ pub fn tokenize<'str, 'a, 'b>(
             continue;
         }
 
-        let kind: TokenType = match _type(&slice) {
+        let kind: TokenType = match _type(slice) {
             Some(kind) => kind,
             None => {
-                partial_token = Some(idx);
+                dbg!("bad:", slice);
+                if partial_token.is_none() {
+                    partial_token = Some(idx);
+                }
+                
                 idx += 1;
                 continue
             },
@@ -102,7 +108,7 @@ pub fn tokenize<'str, 'a, 'b>(
 
         let result  = match kind {
             TokenType::Operator => {
-                let unar = Operator::unary(&slice);
+                let unar = Operator::unary(slice);
 
                 if unary && unar.is_some() {
                     // Current token is a unary operator
@@ -111,7 +117,7 @@ pub fn tokenize<'str, 'a, 'b>(
                     // Support for consecutive unary ops
                     Ok((Token::operator(*kind), len, true))
                 } else {
-                    let (operator, len) = Operator::by_repr(&slice).unwrap();
+                    let (operator, len) = Operator::by_repr(slice).unwrap();
                     let token = Token::Operator {
                         inner: Functions::Builtin(operator),
                     };
@@ -141,13 +147,13 @@ pub fn tokenize<'str, 'a, 'b>(
                 Ok((token, s, unary_))
             }
             TokenType::Number => {
-                match Token::number(&slice) {
+                match Token::number(slice) {
                     Some((token, len)) => Ok((token, len, false)),
                     None => Err(Error::UnknownToken),
                 }
             }
             TokenType::Constant => {
-                let (constant, len) = Constant::by_repr(&slice).unwrap();
+                let (constant, len) = Constant::by_repr(slice).unwrap();
                 let token = Token::Constant { inner: constant };
                 Ok((token, len, false))
             }
@@ -175,7 +181,7 @@ pub fn tokenize<'str, 'a, 'b>(
             },
             Err(e) => {
                 // partial_token.push(c);
-                idx += 1;
+                // idx += 1;
                 // partial_token.push(c);
                 // if current_error.as_ref().map(|er| mem::discriminant(er) != mem::discriminant(&e)).unwrap_or(false) {
                 //     tokens.push(StringToken {
@@ -197,10 +203,22 @@ pub fn tokenize<'str, 'a, 'b>(
         tokens.push(PartialToken {
             inner: Err(Error::UnknownToken),
             repr: &string[idx..],
-            idx: string.len() - idx,
+            idx,
         })
     }
-    tokens
+
+    if tokens.iter().any(|pt: &PartialToken| pt.inner.is_err()) {
+        Err(tokens)
+    } else {
+        let vec = tokens.into_iter().map(|pt: PartialToken| {
+            StringToken {
+                inner: pt.inner.unwrap(),
+                repr: pt.repr,
+                idx: pt.idx,
+            }
+        }).collect_vec();
+        Ok(vec)
+    }
 }
 
 // #[cfg(test)]

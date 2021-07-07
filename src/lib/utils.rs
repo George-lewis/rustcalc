@@ -47,12 +47,14 @@ pub fn slice<'a>(string: &'a str, start: usize, end: &Pos) -> &'a str {
         Pos::End => len,
     } - start;
 
+    // dbg!(string, start, end);
+
     assert!(start + end <= len, "end ({}) > len ({})", start + end, len);
 
     let mut x = string.char_indices().skip(start);
     let a = x.next().unwrap();
-    let b = x.skip(end - 1).next().unwrap();
-    &string[a.0..b.0]
+    let b = x.nth(end).unwrap_or(a);
+    &string[a.0..=b.0]
 }
 
 #[macro_export]

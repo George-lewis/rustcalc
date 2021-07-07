@@ -4,7 +4,7 @@ use colored::Colorize;
 use rustmatheval::{model::EvaluationContext, tokenize};
 use rustyline::highlight::Highlighter;
 
-use crate::stringify::stringify;
+use crate::stringify::{self, stringify};
 
 use super::MyHelper;
 
@@ -22,9 +22,10 @@ impl Highlighter for MyHelper<'_> {
             context: rustmatheval::model::errors::ErrorContext::Main,
             depth: 0,
         };
-        let tokens = tokenize(line, &context);
-        // dbg!(&tokens);
-        let string = stringify(&tokens);
+        let string = match tokenize(line, &context) {
+            Ok(tokens) => stringify(&tokens),
+            Err(tokens) => stringify(&tokens)
+        };
         Cow::Owned(string)
     }
 
