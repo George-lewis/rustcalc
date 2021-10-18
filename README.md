@@ -7,7 +7,7 @@ A CLI calculator written in rust
 # Features
 
  - **Advanced Editing**: Rustcalc allows you to edit statements in-line and keeps a navigatable history of your input
- - **Implicit Parentheses**: For functions accept one parameter, the parantheses may be omitted and Rustcalc will insert them for you.
+ - **Implicit Parentheses**: For functions accepting one parameter, the parantheses may be omitted and Rustcalc will insert them for you.
  - **Implicit Coefficients**: In certain situations Rustcalc will insert a multiplication operation on your behalf. Example: `1 2 3` is interpreted as `1 * 2 * 3`.
 
 ## Bedmas
