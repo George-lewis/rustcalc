@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::cell::Cell;
 use std::rc::Rc;
 
-use crate::funcs::{assign_func_command, format_func_name, format_funcs, format_func_with_args};
+use crate::funcs::{assign_func_command, format_func_name, format_func_with_args, format_funcs};
 use crate::utils::Format;
 
 use super::lib::model::{

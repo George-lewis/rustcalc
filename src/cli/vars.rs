@@ -115,7 +115,7 @@ pub fn assign_var(name: &str, value: f64, vars: &mut Vec<Rc<Variable>>) {
     match vars.binary_search_by(|v| v.repr.deref().cmp(name)) {
         Ok(idx) => {
             vars[idx].value.set(value);
-        },
+        }
         Err(idx) => {
             let var = Variable {
                 repr: name.to_string(),
@@ -123,6 +123,6 @@ pub fn assign_var(name: &str, value: f64, vars: &mut Vec<Rc<Variable>>) {
             };
             let var = Rc::new(var);
             vars.insert(idx, var);
-        },
+        }
     }
 }
