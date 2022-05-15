@@ -50,8 +50,6 @@ pub fn assign_var_command<'a>(
     // Trim again to remove whitespace between end of variable name and = sign
     let user_repr = &trimmed_left[1..];
 
-    // let _vars = vars.iter().map(Rc::clone).collect_vec();
-
     let context = EvaluationContext {
         vars,
         funcs,
@@ -59,28 +57,8 @@ pub fn assign_var_command<'a>(
         context: ErrorContext::Main,
     };
 
-    // let context = &context;
-
     // Get value for variable
     let result = doeval(sides[1], context);
-    // match result {
-    //     DoEvalResult::RecursionLimit { context } => todo!(),
-    //     DoEvalResult::ParsingError { context, partial_tokens } => todo!(),
-    //     DoEvalResult::RpnError { context, error } => todo!(),
-    //     DoEvalResult::EvalError { context, error } => todo!(),
-    //     DoEvalResult::Ok { string_tokens, result } => todo!(),
-    // }
-    // if let Err(ContextualLibError {
-    //     error: LibError::Parsing,
-    //     ..
-    // }) = result
-    // {
-    //     return Err(Error::Library(
-    //         LibError::Parsing.with_context(ErrorContext::Main),
-    //     ));
-    //     // Length of untrimmed lefthand side
-    //     // Offset is added so that highlighting can be added to expressions that come after an '=' during assignment
-    // }
 
     if let DoEvalResult::Ok { tokens, result } = &result {
         let conf_string = format!(
@@ -112,9 +90,7 @@ pub fn assign_var_command<'a>(
 
 pub fn assign_var(name: &str, value: f64, vars: &mut Vec<Rc<Variable>>) {
     match vars.binary_search_by(|v| v.repr.deref().cmp(name)) {
-        Ok(idx) => {
-            vars[idx].value.set(value);
-        }
+        Ok(idx) => vars[idx].value.set(value),
         Err(idx) => {
             let var = Variable {
                 repr: name.to_string(),
