@@ -106,6 +106,11 @@ impl Operator {
     pub fn unary(repr: &str) -> Option<(&OperatorType, &str)> {
         get_by_repr(repr, UNARY_OPERATORS)
     }
+
+    #[inline]
+    pub fn apply(&self, args: &[f64]) -> f64 {
+        (self.doit)(args)
+    }
 }
 
 #[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
