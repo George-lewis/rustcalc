@@ -38,7 +38,7 @@ pub enum DoEvalResult<'str, 'funcs> {
     },
     EvalError {
         context: ErrorContext<'funcs>,
-        // string_tokens: Vec<StringToken<'a>>,
+        tokens: Vec<Tokens<'str, 'funcs>>,
         error: EvalError<'str, 'funcs>,
     },
     Ok {
@@ -100,10 +100,7 @@ pub fn doeval<'funcs, 'var>(
     };
 
     // Perform evaluation
-    match eval(rpn, context) {
-        Ok(result) => DoEvalResult::Ok { tokens, result },
-        Err(e) => e,
-    }
+    eval(rpn, tokens, context)
 }
 
 // #[cfg(test)]

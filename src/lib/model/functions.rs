@@ -98,9 +98,8 @@ impl Function {
         &'funcs self,
         args: &[f64],
         context: &EvaluationContext<'str, 'funcs>,
-    ) -> Result<f64, DoEvalResult<'funcs, 'funcs>> {
+    ) -> DoEvalResult<'funcs, 'funcs> {
         let mut vars = self.create_arguments(args);
-
         vars.extend(context.vars.iter().map(Rc::clone));
 
         let context = EvaluationContext {
@@ -110,13 +109,6 @@ impl Function {
             context: ErrorContext::Scoped(self),
         };
 
-        let code: &'funcs str = &self.code;
-        let res: DoEvalResult = doeval(code, context);
-
-        if let DoEvalResult::Ok { result, .. } = &res {
-            Ok(*result)
-        } else {
-            Err(res)
-        }
+        doeval(&self.code, context)
     }
 }

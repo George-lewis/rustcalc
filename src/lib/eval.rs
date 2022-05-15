@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 use crate::{
     model::{errors::EvalError, tokens::Tokens, EvaluationContext},
     DoEvalResult,
@@ -15,21 +17,20 @@ use super::model::{errors::InnerFunction, functions::Functions, tokens::Token};
 ///
 /// Returns the result as a 64-bit float or an `Error`
 pub fn eval<'vars, 'funcs>(
-    mut tokens: Vec<Tokens<'funcs, 'funcs>>,
+    mut rpn: Vec<Tokens<'funcs, 'funcs>>,
+    tokens: Vec<Tokens<'funcs, 'funcs>>,
     eval_context: EvaluationContext<'vars, 'funcs>,
-) -> Result<f64, DoEvalResult<'funcs, 'funcs>> {
-    tokens.reverse();
-    let mut stack = tokens;
+) -> DoEvalResult<'funcs, 'funcs> {
+    let mut stack = {
+        rpn.reverse();
+        rpn
+    };
     let mut args: Vec<f64> = Vec::new();
 
     while let Some(token) = stack.pop() {
         match token.token() {
-            Token::Number { value } => {
-                args.push(*value);
-            }
-            Token::Constant { inner } => {
-                args.push(inner.value);
-            }
+            Token::Number { value } => args.push(*value),
+            Token::Constant { inner } => args.push(inner.value),
             Token::Variable { inner } => args.push(inner.value.get()),
             Token::Operator { inner: op } => {
                 let start = if let Some(x) = args.len().checked_sub(op.arity()) {
@@ -43,13 +44,14 @@ pub fn eval<'vars, 'funcs>(
                         Tokens::String(st) => st,
                         Tokens::Synthetic(_) => panic!("Synthetic operand?"),
                     };
-                    return Err(DoEvalResult::EvalError {
+                    return DoEvalResult::EvalError {
+                        tokens,
                         context: eval_context.context,
                         error: EvalError::Operand {
                             op: inner,
                             tok: token,
                         },
-                    });
+                    };
                 };
 
                 // Takes the last `op.arity` number of values from `args`
@@ -57,8 +59,13 @@ pub fn eval<'vars, 'funcs>(
                 let args_: Vec<f64> = args.drain(start..).collect();
 
                 let result = match op {
-                    Functions::Builtin(b) => (b.doit)(&args_),
-                    Functions::User(f) => f.apply(&args_, &eval_context)?,
+                    Functions::Builtin(op) => op.apply(&args_),
+                    Functions::User(f) => {
+                        match f.apply(&args_, &eval_context) {
+                            DoEvalResult::Ok { result, .. } => result,
+                            error => return error
+                        }
+                    },
                 };
 
                 // Push the result of the evaluation
@@ -70,12 +77,16 @@ pub fn eval<'vars, 'funcs>(
 
     // Result
     if args.len() == 1 {
-        Ok(args[0])
+        DoEvalResult::Ok{
+            tokens,
+            result: args[0],
+        }
     } else {
-        Err(DoEvalResult::EvalError {
+        DoEvalResult::EvalError {
+            tokens,
             context: eval_context.context,
             error: EvalError::EmptyStack,
-        })
+        }
     }
 }
 
