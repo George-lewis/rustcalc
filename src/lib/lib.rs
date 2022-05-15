@@ -140,31 +140,31 @@ pub fn doeval<'funcs, 'var>(
     }
 }
 
-#[cfg(test)]
-mod tests {
+// #[cfg(test)]
+// mod tests {
 
-    #![allow(clippy::shadow_unrelated, clippy::needless_for_each)]
+//     #![allow(clippy::shadow_unrelated, clippy::needless_for_each)]
 
-    use super::doeval;
+//     use super::doeval;
 
-    use crate::{
-        model::{
-            constants::Constant, constants::ConstantType, errors::ErrorContext,
-            operators::OperatorType, tokens::ParenType, variables::Variable, EvaluationContext,
-        },
-        Token,
-    };
+//     use crate::{
+//         model::{
+//             constants::Constant, constants::ConstantType, errors::ErrorContext,
+//             operators::OperatorType, tokens::ParenType, variables::Variable, EvaluationContext,
+//         },
+//         Token,
+//     };
 
-    macro_rules! context {
-        ($vars:ident) => {
-            EvaluationContext {
-                vars: &$vars,
-                funcs: &[],
-                depth: 0,
-                context: ErrorContext::Main,
-            };
-        };
-    }
+//     macro_rules! context {
+//         ($vars:ident) => {
+//             EvaluationContext {
+//                 vars: &$vars,
+//                 funcs: &[],
+//                 depth: 0,
+//                 context: ErrorContext::Main,
+//             };
+//         };
+//     }
 
     // #[test]
     // #[allow(clippy::too_many_lines)]
@@ -416,4 +416,4 @@ mod tests {
     //             );
     //         });
     // }
-}
+// }
