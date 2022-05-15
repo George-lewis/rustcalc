@@ -48,7 +48,7 @@ mod tests {
 
     #![allow(clippy::non_ascii_literal)]
 
-    use std::cell::Cell;
+    
 
     use super::Variable;
 
