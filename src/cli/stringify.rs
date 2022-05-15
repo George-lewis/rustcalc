@@ -1,4 +1,4 @@
-use std::iter;
+use std::{iter, borrow::Cow};
 
 use colored::{ColoredString, Colorize};
 use rustmatheval::model::{
@@ -26,6 +26,7 @@ pub trait StringableToken {
     fn spaces(&self, other: &Self) -> usize;
     fn token(&self) -> Option<&Token<'_>>;
     fn colorize(&self) -> ColoredString;
+    fn repr(&self) -> Cow<'_, str>;
 }
 
 impl StringableToken for Token<'_> {
@@ -44,6 +45,10 @@ impl StringableToken for Token<'_> {
     fn colorize(&self) -> ColoredString {
         color_cli(&ideal_repr(self), self)
     }
+
+    fn repr(&self) -> Cow<'_, str> {
+        Cow::Owned(ideal_repr(self))
+    }
 }
 
 impl StringableToken for StringToken<'_, '_> {
@@ -57,6 +62,10 @@ impl StringableToken for StringToken<'_, '_> {
 
     fn colorize(&self) -> ColoredString {
         color_cli(self.repr, &self.inner)
+    }
+
+    fn repr(&self) -> Cow<'_, str> {
+        Cow::Borrowed(self.repr)
     }
 }
 
@@ -75,6 +84,10 @@ impl StringableToken for PartialToken<'_, '_> {
         } else {
             self.repr.on_magenta()
         }
+    }
+
+    fn repr(&self) -> Cow<'_, str> {
+        Cow::Borrowed(self.repr)
     }
 }
 
@@ -104,6 +117,13 @@ impl StringableToken for Tokens<'_, '_> {
             Tokens::String(st) => st.colorize(),
             Tokens::Synthetic(syn) => syn.colorize(),
         }
+    }
+
+    fn repr(&self) -> Cow<'_, str> {
+        match self {
+            Tokens::String(st) => Cow::Borrowed(st.repr),
+            Tokens::Synthetic(t) => Cow::Owned(ideal_repr(t)),
+        }   
     }
 }
 
