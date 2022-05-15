@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::cell::Cell;
 use std::rc::Rc;
 
-use crate::funcs::{assign_func_command, format_func_name, format_funcs};
+use crate::funcs::{assign_func_command, format_func_name, format_funcs, format_func_with_args};
 use crate::utils::Format;
 
 use super::lib::model::{
@@ -81,6 +81,8 @@ pub fn handle_input<'a>(
                 repr: "ans".into(),
                 value: Cell::new(*result_),
             };
+
+            let ans = Rc::new(ans);
 
             let vars = unsafe {
                 // transmute::<& _, &mut _>(&vars)
@@ -177,8 +179,8 @@ pub fn handle_library_errors(result: &DoEvalResult, input: &str) -> Cow<'static,
                         InnerFunction::User(func) => {
                             format!(
                                 "User function [{}] requires [{}] arguments.",
-                                format_func_name(&func.name),
-                                func.arity()
+                                format_func_with_args(func),
+                                format!("{}", func.arity()).red(),
                             )
                         }
                     };
@@ -209,6 +211,5 @@ pub fn handle_errors(error: &Error, input: &str) -> Cow<'static, str> {
     match error {
         Error::Assignment => "Couldn't assign. Malformed assignment statement.".into(),
         Error::Library(contextual_error) => handle_library_errors(contextual_error, input),
-        Error::Io(..) => unreachable!(),
     }
 }

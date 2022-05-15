@@ -1,8 +1,9 @@
 use super::config::{DEFAULT_RCFILE, RCFILE};
-use super::error::{Error, IoError};
+use super::error::Error;
 use super::lib::model::{functions::Function, variables::Variable};
 use colored::Colorize;
 use std::cell::RefCell;
+use std::io;
 use std::rc::Rc;
 use std::{fs, io::ErrorKind::NotFound};
 
@@ -21,14 +22,10 @@ use super::cli::{handle_errors, handle_input};
 pub fn load<'a>(
     vars: &'a mut Vec<Rc<Variable>>,
     funcs: &'a mut Vec<Function>,
-) -> Result<(), Error<'a>> {
-    return Ok(());
-    let path = match RCFILE.as_deref() {
-        Some(path) => path,
-        None => {
-            return Err(IoError::new(NotFound, "Couldn't get path for config directory").into())
-        }
-    };
+) -> Result<(), io::Error> {
+    let path = RCFILE
+        .as_deref()
+        .ok_or_else(|| io::Error::new(NotFound, "Couldn't get path for config directory"))?;
 
     // If RCFile doesn't exist, create it and write the default contents
     if !path.exists() {
@@ -55,9 +52,8 @@ pub fn load<'a>(
         if let Err(inner) = handle_input(line, vars, funcs) {
             let message = handle_errors(&inner, line);
             println!(
-                "Error in RCFile on line [{}]: {}",
-                format!("{}", n).red(),
-                message
+                "Error in RCFile on line [{}]\n{message}",
+                format!("{}", n).red()
             );
         }
     }

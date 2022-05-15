@@ -58,13 +58,8 @@ pub fn main() -> ! {
     let vars: RefCell<Vec<Rc<Variable>>> = RefCell::new(vec![]);
     let funcs: RefCell<Vec<Function>> = RefCell::new(vec![]);
 
-    if let Err(inner) = rcfile::load(&mut vars.borrow_mut(), &mut funcs.borrow_mut()) {
-        match inner {
-            Error::Io(inner) => {
-                println!("Error loading RCFile: {:#?}", inner);
-            }
-            _ => unreachable!(),
-        }
+    if let Err(error) = rcfile::load(&mut vars.borrow_mut(), &mut funcs.borrow_mut()) {
+        println!("Error loading RCFile: {:#?}", error);
     };
 
     let mut editor = editor(&funcs, &vars);

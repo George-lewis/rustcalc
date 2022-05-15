@@ -96,6 +96,8 @@ pub fn assign_var_command<'a>(
             value: Cell::new(*result),
         };
 
+        let var = Rc::new(var);
+
         // Safety: This is a non-lexical lifetime that Rust
         // can't understand yet. By this point in the code
         // vars is no longer being borrowed
@@ -115,9 +117,9 @@ pub fn assign_var_command<'a>(
     }
 }
 
-pub fn assign_var(var: Variable, vars: &mut Vec<Variable>) {
+pub fn assign_var(var: Rc<Variable>, vars: &mut Vec<Rc<Variable>>) {
     let repr = var.repr.clone();
-    let cmp = |v: &Variable| repr.cmp(&v.repr);
+    let cmp = |v: &Rc<Variable>| repr.cmp(&v.repr);
 
     insert_or_swap_sort(vars, var, cmp);
 }
