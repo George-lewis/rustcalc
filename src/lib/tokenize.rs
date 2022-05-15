@@ -85,6 +85,15 @@ pub fn tokenize<'vars, 'funcs>(
         // Current character
         let c = slice.chars().next().unwrap();
 
+        if let Some(idx_) = partial_token {
+            tokens.push(PartialToken {
+                inner: Err(Error::UnknownToken),
+                repr: &string[idx_..idx],
+                idx: idx_,
+            });
+            partial_token = None;
+        }
+
         // Ignore whitespace and commas
         if c.is_whitespace() {
             idx += 1;
@@ -103,15 +112,6 @@ pub fn tokenize<'vars, 'funcs>(
                 continue;
             }
         };
-
-        if let Some(idx_) = partial_token {
-            tokens.push(PartialToken {
-                inner: Err(Error::UnknownToken),
-                repr: &string[idx_..idx],
-                idx: idx_,
-            });
-            partial_token = None;
-        }
 
         let result = match kind {
             TokenType::Operator => {
@@ -158,9 +158,15 @@ pub fn tokenize<'vars, 'funcs>(
                 None => Err(Error::UnknownToken),
             },
             TokenType::Constant => {
-                let (constant, len) = Constant::by_repr(slice).unwrap();
-                let token = Token::Constant { inner: constant };
-                Ok((token, len, false))
+                // Prevents finding constants inside unknown token blobs
+                let last_err = tokens.last().map_or(false, |t| t.inner.is_err());
+                if  last_err {
+                    Err(Error::UnknownToken)
+                } else {
+                    let (constant, len) = Constant::by_repr(slice).unwrap();
+                    let token = Token::Constant { inner: constant };
+                    Ok((token, len, false))
+                }
             }
             TokenType::Variable => {
                 // Err(Error::UnknownVariable)
