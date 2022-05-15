@@ -1,4 +1,4 @@
-use std::{borrow::Cow, fmt::Display, iter};
+use std::iter;
 
 use colored::{ColoredString, Colorize};
 use rustmatheval::model::{

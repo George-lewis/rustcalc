@@ -1,8 +1,8 @@
 use super::config::{DEFAULT_RCFILE, RCFILE};
-use super::error::Error;
+
 use super::lib::model::{functions::Function, variables::Variable};
 use colored::Colorize;
-use std::cell::RefCell;
+
 use std::io;
 use std::rc::Rc;
 use std::{fs, io::ErrorKind::NotFound};

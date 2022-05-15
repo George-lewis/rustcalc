@@ -2,8 +2,8 @@ use colored::{ColoredString, Colorize};
 use itertools::Itertools;
 use lazy_static::__Deref;
 use rustmatheval::DoEvalResult;
-use std::borrow::Borrow;
-use std::cell::{Cell, RefCell, UnsafeCell};
+
+use std::cell::Cell;
 use std::rc::Rc;
 
 use super::error::Error;
@@ -12,7 +12,6 @@ use super::lib::model::{
     errors::ErrorContext, functions::Function, variables::Variable, EvaluationContext,
 };
 use super::stringify::stringify;
-use super::utils::insert_or_swap_sort;
 
 pub fn format_var_name(name: &str) -> ColoredString {
     format!("${}", name.green().bold()).normal()

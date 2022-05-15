@@ -4,7 +4,7 @@ use itertools::Itertools;
 use rustmatheval::{
     model::{
         errors::ErrorContext,
-        functions::{self, Function},
+        functions::Function,
         variables::{self, Variable},
         EvaluationContext,
     },

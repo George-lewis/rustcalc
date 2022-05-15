@@ -19,7 +19,6 @@ pub use rustmatheval as lib;
 
 use config::HISTORY_FILE;
 
-use error::Error;
 use std::{cell::RefCell, env, process, rc::Rc};
 
 use cli::{handle_errors, handle_input};

@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-use std::cell::Cell;
+
 use std::rc::Rc;
 
 use crate::funcs::{assign_func_command, format_func_name, format_func_with_args, format_funcs};
@@ -12,7 +12,7 @@ use super::lib::utils;
 
 use colored::Colorize;
 use rustmatheval::model::errors::{EvalError, InnerFunction, RpnError};
-use rustmatheval::model::tokens::{PartialToken, StringToken};
+use rustmatheval::model::tokens::PartialToken;
 use rustmatheval::DoEvalResult;
 use utils::Pos;
 
