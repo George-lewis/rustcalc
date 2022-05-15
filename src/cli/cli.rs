@@ -153,7 +153,7 @@ pub fn handle_library_errors(result: &DoEvalResult, input: &str) -> Cow<'static,
                 (context, "Couldn't evaluate. Mismatched parantheses.".into())
             }
         },
-        DoEvalResult::EvalError { context, error } => {
+        DoEvalResult::EvalError { context, tokens, error } => {
             let msg = match error {
                 EvalError::EmptyStack => "Couldn't evaluate. Stack was empty?".into(),
                 EvalError::Operand { op, tok } => {
