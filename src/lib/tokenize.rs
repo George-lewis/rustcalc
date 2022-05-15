@@ -79,32 +79,47 @@ pub fn tokenize<'vars, 'funcs>(
         // Current character
         let c = slice.chars().next().unwrap();
 
-        if let Some(idx_) = partial_token {
-            tokens.push(PartialToken {
-                inner: Err(Error::UnknownToken),
-                repr: &string[idx_..idx],
-                idx: idx_,
-            });
-            partial_token = None;
-        }
+        let whitespace = c.is_whitespace();
+        let kind = _type(slice);
 
-        // Ignore whitespace and commas
-        if c.is_whitespace() {
-            idx += 1;
-            continue;
-        }
-
-        let kind: TokenType = match _type(slice) {
-            Some(kind) => kind,
-            None => {
+        match (whitespace, &kind) {
+            // don't finish partial tokens on a possible constant
+            (false, Some(ty)) if *ty == TokenType::Constant => {
+                // This is here to block the next arm; do nothing
+            }
+            // If this is whitespace or a good token (not a constant)
+            // we complete our partial unknown token
+            (true, None) | (false, Some(_)) => {
+                if let Some(idx_) = partial_token {
+                    tokens.push(PartialToken {
+                        inner: Err(Error::UnknownToken),
+                        repr: utils::slice(string, idx_, &Pos::Idx(idx)),
+                        idx: idx_,
+                    });
+                    partial_token = None;
+                }
+            },
+            // Some garbage
+            (false, None) => {
+                // Start a new partial unknown token if there isn't one already
                 if partial_token.is_none() {
                     partial_token = Some(idx);
                 }
 
                 idx += 1;
                 continue;
-            }
-        };
+            },
+            (true, Some(_)) => unreachable!("A character cannot be whitespace and a valid kind at the same time"),
+        }
+
+        if whitespace {
+            idx += 1;
+            continue;
+        }
+
+        // Safety: If this is none, then either whitespace is true
+        // and thus we have continued or we started a new partial token and continued
+        let kind = kind.unwrap();
 
         let result = match kind {
             TokenType::Operator => {
@@ -151,14 +166,14 @@ pub fn tokenize<'vars, 'funcs>(
                 None => Err(Error::UnknownToken),
             },
             TokenType::Constant => {
-                // Prevents finding constants inside unknown token blobs
-                let last_err = tokens.last().map_or(false, |t| t.inner.is_err());
-                if last_err {
-                    Err(Error::UnknownToken)
-                } else {
+                // If partial_token is empty, then we're not in an unknown blob
+                // or there is a space preceeding, so we're ok to find constants
+                if partial_token == None {
                     let (constant, len) = Constant::by_repr(slice).unwrap();
                     let token = Token::Constant { inner: constant };
                     Ok((token, len, false))
+                } else {
+                    Err(Error::UnknownToken)
                 }
             }
             TokenType::Variable => {
@@ -194,12 +209,12 @@ pub fn tokenize<'vars, 'funcs>(
                 unary = unary_;
             }
             Err(e) => match e {
+                // If the token is unknown, we check
+                // if we have to start a new partial and advance the read
                 Error::UnknownToken => {
-                    tokens.push(PartialToken {
-                        inner: Err(e),
-                        repr: &slice[..1],
-                        idx,
-                    });
+                    if partial_token.is_none() {
+                        partial_token = Some(idx);
+                    }
                     idx += 1;
                 }
                 Error::UnknownVariable | Error::UnknownFunction => {
@@ -223,10 +238,12 @@ pub fn tokenize<'vars, 'funcs>(
             },
         }
     }
+
+    // If the line ends with bad input we need to push the final partial token
     if let Some(idx) = partial_token {
         tokens.push(PartialToken {
             inner: Err(Error::UnknownToken),
-            repr: &string[idx..],
+            repr: utils::slice(string, idx, &Pos::End),
             idx,
         });
     }
