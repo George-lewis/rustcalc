@@ -100,14 +100,11 @@ pub fn assign_func_command<'a>(
         })
         .collect_vec();
     let code = right.to_string();
-
-    dbg!(&name, &args, &code);
-
     let func = Function { name, args, code };
 
-    assign_func(func.clone(), funcs);
-
     let formatted = format_func(&func, funcs, vars);
+
+    assign_func(func, funcs);
 
     Ok(formatted)
 }
