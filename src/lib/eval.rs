@@ -58,7 +58,7 @@ pub fn eval<'vars, 'funcs>(
 
                 let result = match op {
                     Functions::Builtin(b) => (b.doit)(&args_),
-                    Functions::User(f) => f.apply(&args_, &eval_context)?
+                    Functions::User(f) => f.apply(&args_, &eval_context)?,
                 };
 
                 // Push the result of the evaluation
