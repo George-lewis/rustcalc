@@ -29,9 +29,6 @@ impl Hinter for MyHelper<'_> {
         let funcs = self.funcs.borrow();
         let vars = self.vars.borrow();
 
-        let hint =
-            find_hint(line, &funcs).or_else(|| find_hint::<Variable, Rc<Variable>>(line, &vars));
-        dbg!("found it?", &hint);
-        hint
+        find_hint(line, &funcs).or_else(|| find_hint::<Variable, Rc<Variable>>(line, &vars))
     }
 }

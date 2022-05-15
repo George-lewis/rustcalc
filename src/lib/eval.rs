@@ -18,8 +18,6 @@ pub fn eval<'vars, 'funcs>(
     mut tokens: Vec<Tokens<'funcs, 'funcs>>,
     eval_context: EvaluationContext<'vars, 'funcs>,
 ) -> Result<f64, DoEvalResult<'funcs, 'funcs>> {
-    // We need a mutable copy of the tokens
-    // let mut stack: Vec<Token> = tokens.into_iter().rev().collect();
     tokens.reverse();
     let mut stack = tokens;
     let mut args: Vec<f64> = Vec::new();
@@ -34,7 +32,6 @@ pub fn eval<'vars, 'funcs>(
             }
             Token::Variable { inner } => args.push(inner.value.get()),
             Token::Operator { inner: op } => {
-                // let op: Functions<'func> = op;
                 let start = if let Some(x) = args.len().checked_sub(op.arity()) {
                     x
                 } else {
@@ -61,19 +58,10 @@ pub fn eval<'vars, 'funcs>(
 
                 let result = match op {
                     Functions::Builtin(b) => (b.doit)(&args_),
-                    Functions::User(f) => {
-                        let x: Result<f64, DoEvalResult<'funcs, 'funcs>> =
-                            f.apply(&args_, &eval_context);
-                        x?
-                        // match x {
-                        //     Ok(x) => x,
-                        //     Err(e) => return Err(e),
-                        // }
-                    }
+                    Functions::User(f) => f.apply(&args_, &eval_context)?
                 };
 
                 // Push the result of the evaluation
-                // stack.push(Token::Number { value: result });
                 args.push(result);
             }
             Token::Paren { .. } | Token::Comma => {}

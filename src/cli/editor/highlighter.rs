@@ -13,8 +13,6 @@ use super::MyHelper;
 
 impl Highlighter for MyHelper<'_> {
     fn highlight<'l>(&self, line: &'l str, _pos: usize) -> std::borrow::Cow<'l, str> {
-        // Cow::Borrowed(line)
-        // println!("color");
         if line.trim().is_empty() {
             return Cow::Borrowed(line);
         }
@@ -30,7 +28,6 @@ impl Highlighter for MyHelper<'_> {
             Ok(tokens) => stringify(&tokens),
             Err(tokens) => stringify(&tokens),
         };
-        println!("colored!");
         Cow::Owned(string)
     }
 

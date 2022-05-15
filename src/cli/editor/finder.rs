@@ -65,8 +65,6 @@ where
         let line = &line[pos + 1..];
         let stride = line.len();
 
-        // println!("stuff");
-
         let matches: Vec<Intermediate> = items
             .iter()
             .filter(|it| {

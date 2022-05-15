@@ -25,7 +25,7 @@ fn stringify_func_code(func: &Function, funcs: &[Function], vars: &[Rc<Variable>
     let args = [0_f64].repeat(func.arity());
 
     // Creates args and merges with variables in-scope (`vars`)
-    let args = func.create_variables(&args);
+    let args = func.create_arguments(&args);
 
     let vars = args
         .into_iter()

@@ -46,13 +46,6 @@ impl<'vars, 'funcs> Tokens<'vars, 'funcs> {
     }
 }
 
-// #[allow(clippy::from_over_into)]
-// impl<'repr, 'tok> Into<Token<'tok>> for StringToken<'repr, 'tok> {
-//     fn into(self) -> Token<'tok> {
-//         self.inner
-//     }
-// }
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token<'funcs> {
     Number { value: f64 },

@@ -23,17 +23,12 @@ where
 }
 
 pub trait StringableToken {
-    // fn to_string(&self) -> Cow<'_, str>;
     fn spaces(&self, other: &Self) -> usize;
     fn token(&self) -> Option<&Token<'_>>;
     fn colorize(&self) -> ColoredString;
 }
 
 impl StringableToken for Token<'_> {
-    // fn to_string(&self) -> Cow<'_, str> {
-    //     Cow::Owned(ideal_repr(self))
-    // }
-
     fn spaces(&self, other: &Self) -> usize {
         if exclude_space(other) {
             0
@@ -52,10 +47,6 @@ impl StringableToken for Token<'_> {
 }
 
 impl StringableToken for StringToken<'_, '_> {
-    // fn to_string(&self) -> Cow<'_, str> {
-    //     Cow::Borrowed(self.repr)
-    // }
-
     fn spaces(&self, other: &Self) -> usize {
         other.idx - (self.idx + self.repr.len())
     }
@@ -70,10 +61,6 @@ impl StringableToken for StringToken<'_, '_> {
 }
 
 impl StringableToken for PartialToken<'_, '_> {
-    // fn to_string(&self) -> Cow<'_, str> {
-    //     Cow::Borrowed(self.repr)
-    // }
-
     fn spaces(&self, other: &Self) -> usize {
         dbg!(self, other);
         other.idx - (self.idx + self.repr.chars().count())
@@ -234,7 +221,6 @@ fn _stringify(tokens: &[impl StringableToken]) -> String {
 
             // `exclude_space` determines if any conditions prevent there from being a space
             // and then `spaces` determines the number of spaces to insert, if they are permitted
-            #[allow(clippy::collapsible_else_if)]
             let space = cur.spaces(next);
 
             (cur, space)

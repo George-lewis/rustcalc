@@ -69,18 +69,12 @@ pub fn tokenize<'vars, 'funcs>(
 
     // Indicates that the current operator would be unary
     let mut unary = true;
-
-    // let mut spaces: usize = 0;
     let mut partial_token: Option<usize> = None;
-    // let mut current_error: Option<Error> = None;
-
     let mut idx = 0;
     let end = string.chars().count();
 
     while idx < end {
         let slice = utils::slice(string, idx, &Pos::End);
-
-        // println!("cur slice: [{slice}] which is from [{idx}] to [Pos::End] and of [{string}]");
 
         // Current character
         let c = slice.chars().next().unwrap();
@@ -229,11 +223,6 @@ pub fn tokenize<'vars, 'funcs>(
                 }
             },
         }
-
-        // idx += len;
-        // tokens.push(token);
-        // unary = unary_;
-        // spaces = 0;
     }
     if let Some(idx) = partial_token {
         tokens.push(PartialToken {

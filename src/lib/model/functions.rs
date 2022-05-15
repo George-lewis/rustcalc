@@ -74,9 +74,8 @@ impl Function {
         self.args.len()
     }
 
-    /// Create the variables required to evaluate this function, including both arguments and scoped variables.
-    /// The list is created such that arguments always come before scoped variables. This is important for correct varible-name resolution.
-    pub fn create_variables(&self, args: &[f64]) -> Vec<Rc<Variable>> {
+    /// Creates the argument variables for calling this function
+    pub fn create_arguments(&self, args: &[f64]) -> Vec<Rc<Variable>> {
         // Create the arguments for the function
         let args = self
             .args
@@ -88,13 +87,6 @@ impl Function {
             })
             .map(Rc::new);
 
-        // Create a cloned iteration of the scoped variables
-        // let scoped = vars.iter().cloned();
-
-        // Merge the function arguments with scoped variables
-        // It's important that the function variables are first
-        // So that variable name resolution prioritizes args
-        // args.chain(scoped).collect()
         args.collect()
     }
 
@@ -102,18 +94,15 @@ impl Function {
     ///
     /// # Errors
     /// This function calls into `lib::doeval` and bubbles up and errors occuring from within there.
-    pub fn apply<'str, 'vars, 'funcs>(
+    pub fn apply<'str, 'funcs>(
         &'funcs self,
         args: &[f64],
         context: &EvaluationContext<'str, 'funcs>,
     ) -> Result<f64, DoEvalResult<'funcs, 'funcs>> {
-        let mut vars = self.create_variables(args);
+        let mut vars = self.create_arguments(args);
 
         vars.extend(context.vars.iter().map(Rc::clone));
 
-        // vars: &'_
-        // funcs: &'func
-        // context: &'func self
         let context = EvaluationContext {
             vars: &vars,
             funcs: context.funcs,
@@ -127,26 +116,7 @@ impl Function {
         if let DoEvalResult::Ok { result, .. } = &res {
             Ok(*result)
         } else {
-            // > cannot return value referencing local variable `v`
-            // > returns a value referencing data owned by the current function
-            // SAFETY:
-            // In this branch `res` must be an error kind
-            // And, in fact, only contains data from `v` if it is `DoEvalResult::ParsingError`
-            // However, in that case it contains clones of Rc's
-            // Need to investigate how to get Rust to understand that
-            // Err(unsafe {
-            //     transmute(res)
-            // })
             Err(res)
         }
-
-        // res
-
-        // match doeval(&self.code, context) {
-        //     x @ DoEvalResult::RecursionLimit {..} => todo!(),
-        //     DoEvalResult::ParsingError { context, string_tokens } => todo!(),
-        //     DoEvalResult::EvalError { context, error } => todo!(),
-        //     a @ DoEvalResult::Ok {..} => a,
-        // }
     }
 }

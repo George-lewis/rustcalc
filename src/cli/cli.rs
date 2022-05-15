@@ -66,7 +66,7 @@ pub fn handle_input<'a>(
             depth: 0,
             context: ErrorContext::Main,
         };
-        // let context = &context;
+
         let result = doeval(input, context);
 
         if let DoEvalResult::Ok {
@@ -83,7 +83,8 @@ pub fn handle_input<'a>(
                 &mut *((vars as *const _) as *mut _)
             };
 
-            assign_var("ans", *result_, vars); // Set ans to new value
+            // Set ans to new value
+            assign_var("ans", *result_, vars);
 
             Ok(eval_string)
         } else {
@@ -133,7 +134,7 @@ fn highlight_parsing_error(input_len: usize, tokens: &[PartialToken]) -> String 
         line.push_str(&"-".repeat(stride).red().format());
         last = idx + stride;
     }
-    // dbg!(input.len(), line.len());
+
     line.push_str(&"-".repeat(input_len - last).blue().format());
 
     let styled = stringify(tokens);

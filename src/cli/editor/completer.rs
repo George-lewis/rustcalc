@@ -45,12 +45,6 @@ impl Completer for MyHelper<'_> {
             .or_else(|| find_candidates::<Variable, Rc<Variable>>(line, &vars))
             .map_or((0, vec![]), |candidates| (pos, candidates));
 
-        // let candidates = (0, vec![]);
-
-        // println!("pogg?");
-
-        // println!("{candidates:?}");
-
         rustyline::Result::Ok(candidates)
     }
 

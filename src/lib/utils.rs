@@ -51,16 +51,12 @@ pub fn slice<'a>(string: &'a str, start: usize, end: &Pos) -> &'a str {
         Pos::End => len,
     } - start;
 
-    // dbg!(string, start, end);
-
     assert!(
         start + stride <= len,
         "end ({}) > len ({})",
         start + stride,
         len
     );
-
-    // println!("");
 
     let mut x = string.char_indices().skip(start);
     let a = x.next().map(|(a, _)| a).unwrap();
@@ -72,7 +68,6 @@ pub fn slice<'a>(string: &'a str, start: usize, end: &Pos) -> &'a str {
         x.nth(stride - 1).map(|(b, _)| b).unwrap()
     };
 
-    // println!("slice [{string}] from [{start}] tp [{end:?}] is [{}] to [{}] @ [{}]", a, b, &string[a..b]);
     &string[a..b]
 }
 

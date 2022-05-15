@@ -23,36 +23,6 @@ pub use tokenize::tokenize;
 
 pub const RECURSION_LIMIT: u8 = 25;
 
-/// Tokenize a string and perform transformations on it, e.g. adding implicit parentheses and coefficients
-///
-/// * `string` - The input to tokenize
-/// * `context` - The evaluation context
-///
-/// ## Returns
-/// A transformed list of parsed tokens, or an error
-///
-/// ## Errors
-/// Reraises errors that occur during tokenization
-// pub fn tokenize_and_transform<'a>(
-//     string: &str,
-//     context: &EvaluationContext<'a>,
-// ) -> Result<Vec<Token<'a>>, Error> {
-//     let mut tokens = tokenize(string, context).iter().map(|st| st.inner.unwrap()).collect_vec();
-//     implicit_parens(&mut tokens);
-//     implicit_coeffs(&mut tokens);
-//     Ok(tokens)
-//     Ok(vec![])
-// }
-
-// pub enum Errors<'a> {
-//     Single(Error),
-//     Many(Vec<StringToken<'a>>)
-// }
-
-pub enum RResult {}
-
-pub enum DoEvalError {}
-
 #[derive(Debug, Clone)]
 pub enum DoEvalResult<'str, 'funcs> {
     RecursionLimit {
