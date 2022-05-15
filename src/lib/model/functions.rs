@@ -1,7 +1,5 @@
 use std::{cell::Cell, rc::Rc};
 
-
-
 use crate::{doeval, DoEvalResult};
 
 use super::{

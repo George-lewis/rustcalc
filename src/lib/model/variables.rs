@@ -1,7 +1,5 @@
 use std::borrow::Borrow;
-use std::{cell::Cell};
-
-
+use std::cell::Cell;
 
 use super::representable::{get_by_repr, Searchable};
 
@@ -47,8 +45,6 @@ impl Variable {
 mod tests {
 
     #![allow(clippy::non_ascii_literal)]
-
-    
 
     use super::Variable;
 

@@ -6,9 +6,7 @@ use crate::model::{
     EvaluationContext,
 };
 
-use std::{
-    rc::Rc,
-};
+use std::rc::Rc;
 
 use super::{
     model::{

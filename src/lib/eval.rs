@@ -1,9 +1,5 @@
 use crate::{
-    model::{
-        errors::EvalError,
-        tokens::{Tokens},
-        EvaluationContext,
-    },
+    model::{errors::EvalError, tokens::Tokens, EvaluationContext},
     DoEvalResult,
 };
 

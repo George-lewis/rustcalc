@@ -14,3 +14,25 @@ where
         }
     }
 }
+
+pub trait Effect {
+    type Inner;
+
+    fn effect<F>(self, f: F) -> Self
+    where
+        F: FnMut(&mut Self::Inner);
+}
+
+impl<T> Effect for Option<T> {
+    type Inner = T;
+
+    fn effect<F>(mut self, mut f: F) -> Self
+    where
+        F: FnMut(&mut T),
+    {
+        if let Some(t) = &mut self {
+            f(t);
+        }
+        self
+    }
+}

@@ -13,6 +13,7 @@ mod vars;
 use lib::{
     doeval,
     model::{functions::Function, variables::Variable, EvaluationContext},
+    DoEvalResult,
 };
 pub use rustmatheval as lib;
 
@@ -38,21 +39,17 @@ pub fn main() -> ! {
 
         // Evaluate
         let context = EvaluationContext::default();
-        // let code = match doeval(&input, context) {
-        //     Ok((result, _)) => {
-        //         println!("{:.3}", result);
-        //         0
-        //     }
-        //     Err(contextual_error) => {
-        //         let msg = handle_library_errors(&contextual_error, &input);
-        //         eprintln!("{}", msg);
-        //         1
-        //     }
-        // };
-
-        // match doeval(&input, context) {}
-
-        let code = 0;
+        let code = match doeval(&input, context) {
+            DoEvalResult::Ok { result, .. } => {
+                println!("{result:.3}");
+                0
+            }
+            error => {
+                let msg = handle_library_errors(&error, &input);
+                eprintln!("{}", msg);
+                1
+            }
+        };
 
         // Exit
         process::exit(code);

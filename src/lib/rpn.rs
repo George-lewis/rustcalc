@@ -1,9 +1,4 @@
-
-
-use crate::model::{
-    errors::{RpnError},
-    tokens::{Tokens},
-};
+use crate::model::{errors::RpnError, tokens::Tokens};
 
 use super::model::{
     operators::Associativity,

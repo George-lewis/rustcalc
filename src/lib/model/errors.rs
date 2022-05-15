@@ -1,8 +1,4 @@
-
-
-use super::{
-    functions::Function, operators::OperatorType, tokens::StringToken,
-};
+use super::{functions::Function, operators::OperatorType, tokens::StringToken};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum InnerFunction<'a> {

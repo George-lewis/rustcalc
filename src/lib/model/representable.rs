@@ -1,6 +1,5 @@
 use std::borrow::Borrow;
 
-
 pub trait Representable {
     fn repr(&self) -> &[&str];
 }
