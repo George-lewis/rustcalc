@@ -132,7 +132,7 @@ pub fn tokenize<'vars, 'funcs>(
                     let token = Token::Operator {
                         inner: Functions::User(func),
                     };
-                    // For thje prefix
+                    // For the prefix
                     idx += 1;
                     Ok((token, len, func.arity() > 0))
                 }

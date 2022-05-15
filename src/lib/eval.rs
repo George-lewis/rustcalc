@@ -60,11 +60,9 @@ pub fn eval<'vars, 'funcs>(
 
                 let result = match op {
                     Functions::Builtin(op) => op.apply(&args_),
-                    Functions::User(f) => {
-                        match f.apply(&args_, &eval_context) {
-                            DoEvalResult::Ok { result, .. } => result,
-                            error => return error
-                        }
+                    Functions::User(f) => match f.apply(&args_, &eval_context) {
+                        DoEvalResult::Ok { result, .. } => result,
+                        error => return error,
                     },
                 };
 
@@ -77,7 +75,7 @@ pub fn eval<'vars, 'funcs>(
 
     // Result
     if args.len() == 1 {
-        DoEvalResult::Ok{
+        DoEvalResult::Ok {
             tokens,
             result: args[0],
         }

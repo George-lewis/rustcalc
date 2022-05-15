@@ -112,6 +112,10 @@ impl Token<'_> {
     pub fn is_next_comma(string: &str) -> bool {
         Self::is_next_t(string, &COMMA_CHARACTERS)
     }
+
+    pub const fn has_prefix(&self) -> bool {
+        matches!(self, Token::Operator { inner: Functions::User(_) } | Token::Variable { .. })
+    }
 }
 
 #[cfg(test)]

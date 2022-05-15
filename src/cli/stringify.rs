@@ -1,4 +1,7 @@
-use std::{iter, borrow::Cow};
+use std::{
+    borrow::Cow,
+    iter,
+};
 
 use colored::{ColoredString, Colorize};
 use rustmatheval::model::{
@@ -22,10 +25,15 @@ where
     _stringify(tokens)
 }
 
+#[allow(clippy::module_name_repetitions)]
+pub fn stringify_off(tokens: &[Tokens]) -> (String, Vec<Offset>) {
+    _stringify_off(tokens)
+}
+
 pub trait StringableToken {
     fn spaces(&self, other: &Self) -> usize;
     fn token(&self) -> Option<&Token<'_>>;
-    fn colorize(&self) -> ColoredString;
+    fn colorize(&self) -> (ColoredString, usize);
     fn repr(&self) -> Cow<'_, str>;
 }
 
@@ -42,8 +50,12 @@ impl StringableToken for Token<'_> {
         Some(self)
     }
 
-    fn colorize(&self) -> ColoredString {
-        color_cli(&ideal_repr(self), self)
+    fn colorize(&self) -> (ColoredString, usize) {
+        let repr = ideal_repr(self);
+        (
+            color_cli(&repr, self),
+            repr.chars().count()
+        )
     }
 
     fn repr(&self) -> Cow<'_, str> {
@@ -53,15 +65,18 @@ impl StringableToken for Token<'_> {
 
 impl StringableToken for StringToken<'_, '_> {
     fn spaces(&self, other: &Self) -> usize {
-        other.idx - (self.idx + self.repr.len())
+        other.idx - (self.idx + self.repr.chars().count())
     }
 
     fn token(&self) -> Option<&Token<'_>> {
         Some(&self.inner)
     }
 
-    fn colorize(&self) -> ColoredString {
-        color_cli(self.repr, &self.inner)
+    fn colorize(&self) -> (ColoredString, usize) {
+        (
+            color_cli(self.repr, &self.inner),
+            self.repr.chars().count()
+        )
     }
 
     fn repr(&self) -> Cow<'_, str> {
@@ -78,12 +93,13 @@ impl StringableToken for PartialToken<'_, '_> {
         self.inner.as_ref().ok()
     }
 
-    fn colorize(&self) -> ColoredString {
-        if let Ok(ref token) = self.inner {
+    fn colorize(&self) -> (ColoredString, usize) {
+        let fmt = if let Ok(ref token) = self.inner {
             color_cli(self.repr, token)
         } else {
             self.repr.on_magenta()
-        }
+        };
+        (fmt, self.repr.chars().count())
     }
 
     fn repr(&self) -> Cow<'_, str> {
@@ -112,7 +128,7 @@ impl StringableToken for Tokens<'_, '_> {
         }
     }
 
-    fn colorize(&self) -> ColoredString {
+    fn colorize(&self) -> (ColoredString, usize) {
         match self {
             Tokens::String(st) => st.colorize(),
             Tokens::Synthetic(syn) => syn.colorize(),
@@ -123,7 +139,7 @@ impl StringableToken for Tokens<'_, '_> {
         match self {
             Tokens::String(st) => Cow::Borrowed(st.repr),
             Tokens::Synthetic(t) => Cow::Owned(ideal_repr(t)),
-        }   
+        }
     }
 }
 
@@ -216,7 +232,70 @@ fn exclude_space(next: &Token) -> bool {
     }
 }
 
+pub struct Offset {
+    pub old_idx: usize,
+    pub new_idx: usize,
+}
+
+fn _stringify_off(tokens: &[Tokens]) -> (String, Vec<Offset>) {
+    type Folded = (String, Vec<Offset>);
+    type Mapped = (String, Option<Offset>);
+
+    let mut acc = 0;
+    let map = |tok: &Tokens, fmt: String, stride| {
+        let (skip, off) = if let Tokens::String(st) = tok {
+            let prefix_skip = if st.inner.has_prefix() {
+                1
+            } else {
+                0
+            };
+            let off = Offset {
+                old_idx: st.idx,
+                new_idx: acc + prefix_skip,
+            };
+            (prefix_skip, Some(off))
+        } else {
+            (0, None)
+        };
+        // println!("{stride}; [{fmt}]");
+        acc += stride + skip;
+        (fmt, off)
+    };
+    
+    let fold = |(mut astr, mut avec): Folded, (fmt, off): Mapped| {
+        astr.push_str(&fmt);
+        if let Some(off) = off {
+            avec.push(off);
+        }
+        (astr, avec)
+    };
+    let init: Folded = (String::new(), vec![]);
+
+    __stringify(tokens, map, fold, init)
+}
+
 fn _stringify(tokens: &[impl StringableToken]) -> String {
+    let map = |_, string, _| string;
+    let fold = |mut acc: String, s: String| {
+        acc.push_str(&s);
+        acc
+    };
+    let init = String::new();
+
+    __stringify(tokens, map, fold, init)
+}
+
+fn __stringify<'tok, Tok, Mapper, Mapped, Folder, Folded>(
+    tokens: &'tok [Tok],
+    mut map: Mapper,
+    fold: Folder,
+    init: Folded,
+) -> Folded
+where
+    Tok: StringableToken,
+    Mapper: FnMut(&'tok Tok, String, usize) -> Mapped,
+    Folder: Fn(Folded, Mapped) -> Folded,
+{
     // The last element of the slice
     // `std::slice::windows` does not include the last element as its own window
     // So we must add it ourselves
@@ -247,6 +326,10 @@ fn _stringify(tokens: &[impl StringableToken]) -> String {
         // Insert the last token
         .chain(last)
         // Color
-        .map(|(token, space)| format!("{}{}", token.colorize(), " ".repeat(space)))
-        .collect()
+        .map(|(token, space)| {
+            let (colored, len) = token.colorize();
+            let fmt = format!("{}{}", colored, " ".repeat(space));
+            map(token, fmt, len + space)
+        })
+        .fold(init, fold)
 }

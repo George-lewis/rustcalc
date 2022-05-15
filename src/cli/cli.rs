@@ -3,6 +3,7 @@ use std::borrow::Cow;
 use std::rc::Rc;
 
 use crate::funcs::{assign_func_command, format_func_name, format_func_with_args, format_funcs};
+use crate::stringify::stringify_off;
 use crate::utils::Format;
 
 use super::lib::model::{
@@ -12,7 +13,7 @@ use super::lib::utils;
 
 use colored::Colorize;
 use rustmatheval::model::errors::{EvalError, InnerFunction, RpnError};
-use rustmatheval::model::tokens::PartialToken;
+use rustmatheval::model::tokens::{PartialToken, StringTokenInterface, Tokens, StringToken};
 use rustmatheval::DoEvalResult;
 use utils::Pos;
 
@@ -82,7 +83,7 @@ pub fn handle_input<'a>(
 
             Ok(eval_string)
         } else {
-            Err(Error::Library(result))
+            Err(result.into())
         }
     }
 }
@@ -96,21 +97,18 @@ pub fn handle_input<'a>(
 ///
 /// ## Panics
 /// Panics if `idx > input_str.chars().count()`
-fn make_highlighted_error(msg: &str, input: &str, idx: usize, stride: usize) -> String {
-    let first = if idx > 0 {
-        utils::slice(input, 0, &Pos::Idx(idx))
-    } else {
-        ""
-    };
+fn make_highlighted_error(
+    msg: &str,
+    tokens: &[Tokens],
+    tok: &StringToken,
+) -> String {
+    let (styled, off) = stringify_off(tokens);
+    let off = off.iter().find(|off| off.old_idx == tok.idx).expect("New index for string token could not be found.");
     format!(
-        "{}\n{}{}{}\n{}{}{}",
-        msg,
-        first,
-        input[idx..idx + stride].on_magenta().white(),
-        utils::slice(input, idx + stride, &Pos::End),
-        "-".repeat(idx).blue(),
+        "{msg}\n{styled}\n{}{}{}",
+        "-".repeat(off.new_idx).blue(),
         "^".red(),
-        "~".repeat(stride - 1).red()
+        "~".repeat(tok.stride() - 1).red()
     )
 }
 
@@ -153,7 +151,11 @@ pub fn handle_library_errors(result: &DoEvalResult, input: &str) -> Cow<'static,
                 (context, "Couldn't evaluate. Mismatched parantheses.".into())
             }
         },
-        DoEvalResult::EvalError { context, tokens, error } => {
+        DoEvalResult::EvalError {
+            context,
+            tokens,
+            error,
+        } => {
             let msg = match error {
                 EvalError::EmptyStack => "Couldn't evaluate. Stack was empty?".into(),
                 EvalError::Operand { op, tok } => {
@@ -172,7 +174,7 @@ pub fn handle_library_errors(result: &DoEvalResult, input: &str) -> Cow<'static,
                             )
                         }
                     };
-                    make_highlighted_error(&msg, input, tok.idx, tok.repr.len()).into()
+                    make_highlighted_error(&msg, tokens, tok).into()
                 }
             };
             (context, msg)
