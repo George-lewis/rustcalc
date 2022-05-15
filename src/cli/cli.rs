@@ -12,8 +12,8 @@ use super::lib::utils;
 
 use colored::Colorize;
 use rustmatheval::model::errors::{EvalError, InnerFunction, RpnError};
+use rustmatheval::model::tokens::{PartialToken, StringToken};
 use rustmatheval::DoEvalResult;
-use rustmatheval::model::tokens::{StringToken, PartialToken};
 use utils::Pos;
 
 use super::error::Error;
@@ -116,9 +116,7 @@ fn make_highlighted_error(msg: &str, input: &str, idx: usize, stride: usize) -> 
         "{}\n{}{}{}\n{}{}{}",
         msg,
         first,
-        input[idx..idx + stride]
-            .on_magenta()
-            .white(),
+        input[idx..idx + stride].on_magenta().white(),
         utils::slice(input, idx + stride, &Pos::End),
         "-".repeat(idx).blue(),
         "^".red(),
@@ -127,11 +125,9 @@ fn make_highlighted_error(msg: &str, input: &str, idx: usize, stride: usize) -> 
 }
 
 fn highlight_parsing_error(input_len: usize, tokens: &[PartialToken]) -> String {
-    let errors = tokens.iter().filter_map(|tok| {
-        match tok.inner {
-            Ok(_) => None,
-            Err(_) => Some((tok.idx, tok.repr.len())),
-        }
+    let errors = tokens.iter().filter_map(|tok| match tok.inner {
+        Ok(_) => None,
+        Err(_) => Some((tok.idx, tok.repr.len())),
     });
 
     let mut line = String::new();
@@ -158,7 +154,10 @@ pub fn handle_library_errors(result: &DoEvalResult, input: &str) -> Cow<'static,
         DoEvalResult::ParsingError {
             context,
             partial_tokens,
-        } => (context, highlight_parsing_error(input.len(), partial_tokens).into()),
+        } => (
+            context,
+            highlight_parsing_error(input.len(), partial_tokens).into(),
+        ),
         DoEvalResult::RpnError { context, error } => match error {
             RpnError::MismatchingParens => {
                 (context, "Couldn't evaluate. Mismatched parantheses.".into())

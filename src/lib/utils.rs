@@ -5,7 +5,6 @@
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss
 )]
-
 #[derive(Debug)]
 pub enum Pos {
     Idx(usize),

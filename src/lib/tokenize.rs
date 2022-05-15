@@ -160,7 +160,7 @@ pub fn tokenize<'vars, 'funcs>(
             TokenType::Constant => {
                 // Prevents finding constants inside unknown token blobs
                 let last_err = tokens.last().map_or(false, |t| t.inner.is_err());
-                if  last_err {
+                if last_err {
                     Err(Error::UnknownToken)
                 } else {
                     let (constant, len) = Constant::by_repr(slice).unwrap();
