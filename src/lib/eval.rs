@@ -1,8 +1,7 @@
 use crate::{
     model::{
         errors::EvalError,
-        functions::Function,
-        tokens::{StringToken, Tokens},
+        tokens::{Tokens},
         EvaluationContext,
     },
     DoEvalResult,

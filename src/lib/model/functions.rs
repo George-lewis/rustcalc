@@ -1,6 +1,6 @@
-use std::{borrow::Cow, cell::Cell, env::VarError, intrinsics::transmute, rc::Rc};
+use std::{cell::Cell, rc::Rc};
 
-use itertools::Itertools;
+
 
 use crate::{doeval, DoEvalResult};
 

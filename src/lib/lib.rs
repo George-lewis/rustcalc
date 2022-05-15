@@ -11,20 +11,20 @@ mod transform;
 
 pub mod model;
 
-use std::{intrinsics::transmute, rc::Rc};
+
 
 use eval::eval;
 use itertools::Itertools;
 use model::{
     errors::{ErrorContext, EvalError, RpnError},
-    tokens::{PartialToken, StringToken, Tokens},
+    tokens::{PartialToken, Tokens},
     EvaluationContext,
 };
 use rpn::rpn;
 pub use tokenize::tokenize;
-use transform::implicit_coeffs;
 
-use self::model::tokens::Token;
+
+
 
 pub const RECURSION_LIMIT: u8 = 25;
 

@@ -1,5 +1,5 @@
 use std::borrow::Borrow;
-use std::ops::Deref;
+
 
 pub trait Representable {
     fn repr(&self) -> &[&str];

@@ -1,19 +1,12 @@
 use itertools::Itertools;
 
 use crate::model::{
-    errors::ErrorContext,
     functions::{Function, Functions},
     tokens::{PartialToken, StringToken},
     EvaluationContext,
 };
 
 use std::{
-    borrow::{
-        Borrow,
-        Cow::{self, Borrowed, Owned},
-    },
-    env::VarError,
-    mem,
     rc::Rc,
 };
 

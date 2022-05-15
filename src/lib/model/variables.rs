@@ -1,7 +1,7 @@
 use std::borrow::Borrow;
-use std::{borrow::Cow, cell::Cell, rc::Rc};
+use std::{cell::Cell};
 
-use std::ops::Deref;
+
 
 use super::representable::{get_by_repr, Searchable};
 

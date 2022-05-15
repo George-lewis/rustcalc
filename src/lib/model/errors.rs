@@ -1,8 +1,7 @@
-use std::borrow::Cow;
+
 
 use super::{
-    functions::Function, operators::OperatorType, tokens::StringToken, variables::Variable,
-    EvaluationContext,
+    functions::Function, operators::OperatorType, tokens::StringToken,
 };
 
 #[derive(Debug, PartialEq, Clone)]

@@ -1,6 +1,6 @@
 #![allow(clippy::non_ascii_literal, clippy::bind_instead_of_map)]
 
-use std::{borrow::Cow, rc::Rc};
+use std::{rc::Rc};
 
 use super::{
     constants::{Constant, ConstantType},

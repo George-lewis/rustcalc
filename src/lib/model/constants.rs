@@ -1,6 +1,6 @@
 #![allow(clippy::non_ascii_literal)]
 
-use super::representable::{get_by_repr, Representable, Searchable};
+use super::representable::{get_by_repr, Representable};
 
 #[allow(clippy::upper_case_acronyms)]
 #[derive(PartialEq, Clone, Copy, Debug)]
