@@ -6,6 +6,7 @@
     clippy::cast_sign_loss
 )]
 
+#[derive(Debug)]
 pub enum Pos {
     Idx(usize),
     End,
@@ -40,6 +41,10 @@ pub enum Pos {
 #[must_use]
 pub fn slice<'a>(string: &'a str, start: usize, end: &Pos) -> &'a str {
     let len = string.chars().count();
+
+    if start == len {
+        return "";
+    }
 
     let stride = match end {
         // This will panic if `start > end`
