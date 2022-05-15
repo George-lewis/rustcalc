@@ -1,5 +1,7 @@
 use std::cmp::Ordering;
 
+use colored::ColoredString;
+
 #[allow(clippy::let_underscore_drop)]
 pub fn insert_or_swap_sort<Element, Cmp>(vec: &mut Vec<Element>, element: Element, cmp: Cmp)
 where
@@ -34,5 +36,15 @@ impl<T> Effect for Option<T> {
             f(t);
         }
         self
+    }
+}
+
+pub trait Format {
+    fn format(&self) -> String;
+}
+
+impl Format for ColoredString {
+    fn format(&self) -> String {
+        format!("{}", self)
     }
 }

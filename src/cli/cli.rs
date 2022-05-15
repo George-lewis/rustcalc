@@ -1,7 +1,9 @@
+use std::borrow::Cow;
 use std::cell::Cell;
 use std::rc::Rc;
 
-use crate::funcs::{assign_func_command, format_funcs};
+use crate::funcs::{assign_func_command, format_func_name, format_funcs};
+use crate::utils::Format;
 
 use super::lib::model::{
     errors::ErrorContext, functions::Function, variables::Variable, EvaluationContext,
@@ -9,7 +11,9 @@ use super::lib::model::{
 use super::lib::utils;
 
 use colored::Colorize;
+use rustmatheval::model::errors::{EvalError, InnerFunction, RpnError};
 use rustmatheval::DoEvalResult;
+use rustmatheval::model::tokens::{StringToken, PartialToken};
 use utils::Pos;
 
 use super::error::Error;
@@ -102,87 +106,96 @@ pub fn handle_input<'a>(
 ///
 /// ## Panics
 /// Panics if `idx > input_str.chars().count()`
-fn make_highlighted_error(msg: &str, input_str: &str, idx: usize) -> String {
+fn make_highlighted_error(msg: &str, input: &str, idx: usize, stride: usize) -> String {
     let first = if idx > 0 {
-        utils::slice(input_str, 0, &Pos::Idx(idx))
+        utils::slice(input, 0, &Pos::Idx(idx))
     } else {
         ""
     };
     format!(
-        "{} at index [{}]\n{}{}{}\n{}{}",
+        "{}\n{}{}{}\n{}{}{}",
         msg,
-        idx.to_string().red(),
         first,
-        input_str
-            .chars()
-            .nth(idx)
-            .unwrap()
-            .to_string()
-            .on_red()
+        input[idx..idx + stride]
+            .on_magenta()
             .white(),
-        utils::slice(input_str, idx + 1, &Pos::End),
-        "~".repeat(idx).red().bold(),
-        "^".red()
+        utils::slice(input, idx + stride, &Pos::End),
+        "-".repeat(idx).blue(),
+        "^".red(),
+        "~".repeat(stride - 1).red()
     )
+}
+
+fn highlight_parsing_error(input_len: usize, tokens: &[PartialToken]) -> String {
+    let errors = tokens.iter().filter_map(|tok| {
+        match tok.inner {
+            Ok(_) => None,
+            Err(_) => Some((tok.idx, tok.repr.len())),
+        }
+    });
+
+    let mut line = String::new();
+    let mut last = 0;
+
+    for (idx, stride) in errors {
+        line.push_str(&"-".repeat(idx - last).blue().format());
+        line.push_str(&"-".repeat(stride).red().format());
+        last = idx + stride;
+    }
+    // dbg!(input.len(), line.len());
+    line.push_str(&"-".repeat(input_len - last).blue().format());
+
+    let styled = stringify(tokens);
+    format!("Some tokens failed to parse.\n{styled}\n{line}")
 }
 
 /// Produce an error message for a given [`super::lib::ContextualError`] and input string
 /// * `error` - The error
 /// * `input` - The user's input
-pub fn handle_library_errors(result: &DoEvalResult, input: &str) -> String {
-    match result {
-        DoEvalResult::RecursionLimit { context } => todo!(),
+pub fn handle_library_errors(result: &DoEvalResult, input: &str) -> Cow<'static, str> {
+    let (ctxt, msg): (_, Cow<'static, str>) = match result {
+        DoEvalResult::RecursionLimit { context } => (context, "Exceeded recursion limit.".into()),
         DoEvalResult::ParsingError {
             context,
             partial_tokens,
-        } => todo!(),
-        DoEvalResult::RpnError { context, error } => todo!(),
-        DoEvalResult::EvalError { context, error } => todo!(),
-        DoEvalResult::Ok { tokens, result } => todo!(),
+        } => (context, highlight_parsing_error(input.len(), partial_tokens).into()),
+        DoEvalResult::RpnError { context, error } => match error {
+            RpnError::MismatchingParens => {
+                (context, "Couldn't evaluate. Mismatched parantheses.".into())
+            }
+        },
+        DoEvalResult::EvalError { context, error } => {
+            let msg = match error {
+                EvalError::EmptyStack => "Couldn't evaluate. Stack was empty?".into(),
+                EvalError::Operand { op, tok } => {
+                    let msg = match op {
+                        InnerFunction::Builtin(op) => {
+                            format!(
+                                "Built in operator [{}] requires an operand.",
+                                format!("{op:?}").green()
+                            )
+                        }
+                        InnerFunction::User(func) => {
+                            format!(
+                                "User function [{}] requires [{}] arguments.",
+                                format_func_name(&func.name),
+                                func.arity()
+                            )
+                        }
+                    };
+                    make_highlighted_error(&msg, input, tok.idx, tok.repr.len()).into()
+                }
+            };
+            (context, msg)
+        }
+        DoEvalResult::Ok { .. } => unreachable!(),
+    };
+
+    if let ErrorContext::Scoped(func) = ctxt {
+        format!("In function {}: {}", format_func_name(&func.name), msg).into()
+    } else {
+        msg
     }
-    // dbg!(result);
-    // let ctx, msg = match result {
-    //     DoEvalResult::RecursionLimit { context } => (context, Borrowed("Exceeded recursion limit")),
-    //     DoEvalResult::ParsingError { context, partial_tokens } => todo!(),
-    //     DoEvalResult::RpnError { context, error } => todo!(),
-    //     DoEvalResult::EvalError { context, error } => todo!(),
-    //     DoEvalResult::Ok { .. } => panic!(),
-    // }
-
-    // let error = &contextual_error.error;
-    // let context = &contextual_error.context;
-
-    // let code = match context {
-    //     ErrorContext::Main => input,
-    //     ErrorContext::Scoped(func) => &func.code,
-    // };
-    // let msg = match error {
-    //     LibError::Parsing => make_highlighted_error("Couldn't parse the token", code, 0),
-    //     LibError::Operand(op) => {
-    //         let msg = match op {
-    //             InnerFunction::Builtin(kind) => format!(
-    //                 "Operator [{}] requires an operand",
-    //                 format!("{:?}", kind).green()
-    //             ),
-    //             InnerFunction::User(f) => format!(
-    //                 "Function {} requires [{}] arguments",
-    //                 format_func_name(&f.name),
-    //                 format!("{}", f.args.len()).red()
-    //             ),
-    //         };
-    //         format!("Couldn't evaluate. {}.", msg)
-    //     }
-    //     LibError::EmptyStack => "Couldn't evalutate. Stack was empty?".to_string(),
-    //     LibError::MismatchingParens => "Couldn't evaluate. Mismatched parens.".to_string(),
-    //     LibError::UnknownVariable => make_highlighted_error("Unknown variable", code, 0),
-    //     LibError::UnknownFunction => make_highlighted_error("Unknown function", code, 0),
-    //     LibError::RecursionLimit => "Exceeded recursion limit.".to_string(),
-    // };
-    // if let ErrorContext::Scoped(func) = context {
-    //     format!("In function {}: {}", format_func_name(&func.name), msg)
-    // } else {
-    //     msg
-    // }
 }
 
 /// Produces an error message to show to the user
@@ -193,9 +206,9 @@ pub fn handle_library_errors(result: &DoEvalResult, input: &str) -> String {
 ///
 /// ## Panics
 /// Does not handle `Error::Io`
-pub fn handle_errors(error: &Error, input: &str) -> String {
+pub fn handle_errors(error: &Error, input: &str) -> Cow<'static, str> {
     match error {
-        Error::Assignment => "Couldn't assign. Malformed assignment statement.".to_string(),
+        Error::Assignment => "Couldn't assign. Malformed assignment statement.".into(),
         Error::Library(contextual_error) => handle_library_errors(contextual_error, input),
         Error::Io(..) => unreachable!(),
     }
