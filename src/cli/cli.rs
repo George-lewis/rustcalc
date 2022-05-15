@@ -77,12 +77,6 @@ pub fn handle_input<'a>(
             let formatted = stringify(tokens);
             let eval_string = format!("[ {} ] => {}", formatted, format!("{:.3}", result_).blue());
 
-            let vars = unsafe {
-                // transmute::<& _, &mut _>(&vars)
-                #[allow(clippy::cast_ref_to_mut)]
-                &mut *((vars as *const _) as *mut _)
-            };
-
             // Set ans to new value
             assign_var("ans", *result_, vars);
 

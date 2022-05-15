@@ -69,17 +69,6 @@ pub fn assign_var_command<'a>(
             format!("{:.3}", result).blue()
         );
 
-        // Safety: This is a non-lexical lifetime that Rust
-        // can't understand yet. By this point in the code
-        // vars is no longer being borrowed
-        // (the other branch of this if statement requires vars to be borrowed)
-        // (which is why the compiler complains)
-        let vars = unsafe {
-            // transmute::<& _, &mut _>(&vars)
-            #[allow(clippy::cast_ref_to_mut)]
-            &mut *((vars as *const _) as *mut _)
-        };
-
         assign_var(user_repr, *result, vars);
 
         Ok(conf_string)
