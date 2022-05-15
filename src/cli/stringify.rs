@@ -62,7 +62,6 @@ impl StringableToken for StringToken<'_, '_> {
 
 impl StringableToken for PartialToken<'_, '_> {
     fn spaces(&self, other: &Self) -> usize {
-        dbg!(self, other);
         other.idx - (self.idx + self.repr.chars().count())
     }
 

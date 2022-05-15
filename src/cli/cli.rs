@@ -138,7 +138,7 @@ fn highlight_parsing_error(input_len: usize, tokens: &[PartialToken]) -> String 
     line.push_str(&"-".repeat(input_len - last).blue().format());
 
     let styled = stringify(tokens);
-    format!("Some tokens failed to parse.\n{styled}\n{line}")
+    format!("Failed to parse some tokens.\n{styled}\n{line}")
 }
 
 /// Produce an error message for a given [`super::lib::ContextualError`] and input string
@@ -204,6 +204,6 @@ pub fn handle_library_errors(result: &DoEvalResult, input: &str) -> Cow<'static,
 pub fn handle_errors(error: &Error, input: &str) -> Cow<'static, str> {
     match error {
         Error::Assignment => "Couldn't assign. Malformed assignment statement.".into(),
-        Error::Library(contextual_error) => handle_library_errors(contextual_error, input),
+        Error::Library(eval_result) => handle_library_errors(eval_result, input),
     }
 }

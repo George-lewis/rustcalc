@@ -97,7 +97,6 @@ pub fn tokenize<'vars, 'funcs>(
         let kind: TokenType = match _type(slice) {
             Some(kind) => kind,
             None => {
-                dbg!("bad:", slice);
                 if partial_token.is_none() {
                     partial_token = Some(idx);
                 }
