@@ -1,6 +1,7 @@
+use std::borrow::Borrow;
+use std::{borrow::Cow, cell::Cell, rc::Rc};
 
-
-use std::{cell::Cell, rc::Rc};
+use std::ops::Deref;
 
 use super::representable::{get_by_repr, Searchable};
 
@@ -29,8 +30,11 @@ impl Variable {
     /// * `text` - The string to search. Must start with the name of a variable (not a '$') but can
     /// be arbitrarily long. Matches are case sensitive.
     /// * `vars` - A slice of [Variable]s to check for
-    pub fn next_variable<'a, 'b>(text: &'b str, vars: &'a [Rc<Self>]) -> Option<(Rc<Self>, &'b str)> {
-        get_by_repr::<Self, Rc<Self>>(text, vars).map(|(rc, s)| (Rc::clone(rc), s))
+    pub fn next_variable<'a, 'b, Zelf: Borrow<Self>>(
+        text: &'b str,
+        vars: &'a [Zelf],
+    ) -> Option<(&'a Zelf, &'b str)> {
+        get_by_repr(text, vars)
     }
 
     /// Returns whether or not the given representation could reference a valid variable

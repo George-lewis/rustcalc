@@ -1,8 +1,21 @@
 use itertools::Itertools;
 
-use crate::model::{EvaluationContext, errors::ErrorContext, functions::{Function, Functions}, tokens::{PartialToken, StringToken}};
+use crate::model::{
+    errors::ErrorContext,
+    functions::{Function, Functions},
+    tokens::{PartialToken, StringToken},
+    EvaluationContext,
+};
 
-use std::{borrow::Cow::{self, Borrowed, Owned}, intrinsics::transmute, mem};
+use std::{
+    borrow::{
+        Borrow,
+        Cow::{self, Borrowed, Owned},
+    },
+    env::VarError,
+    mem,
+    rc::Rc,
+};
 
 use super::{
     model::{
@@ -57,10 +70,10 @@ fn _type(s: &str) -> Option<TokenType> {
     clippy::too_many_lines,
     clippy::missing_errors_doc
 )]
-pub fn tokenize<'str, 'a, 'b>(
-    string: &'str str,
-    context: &'b EvaluationContext<'a>,
-) -> Result<Vec<StringToken<'str, 'a>>, Vec<PartialToken<'str, 'a>>> {
+pub fn tokenize<'vars, 'funcs>(
+    string: &'funcs str,
+    context: &EvaluationContext<'vars, 'funcs>,
+) -> Result<Vec<StringToken<'funcs, 'funcs>>, Vec<PartialToken<'funcs, 'funcs>>> {
     let mut tokens: Vec<PartialToken> = Vec::new();
 
     // Indicates that the current operator would be unary
@@ -72,8 +85,11 @@ pub fn tokenize<'str, 'a, 'b>(
 
     let mut idx = 0;
     let end = string.chars().count();
+
     while idx < end {
         let slice = utils::slice(string, idx, &Pos::End);
+
+        // println!("cur slice: [{slice}] which is from [{idx}] to [Pos::End] and of [{string}]");
 
         // Current character
         let c = slice.chars().next().unwrap();
@@ -91,10 +107,10 @@ pub fn tokenize<'str, 'a, 'b>(
                 if partial_token.is_none() {
                     partial_token = Some(idx);
                 }
-                
+
                 idx += 1;
-                continue
-            },
+                continue;
+            }
         };
 
         if let Some(idx_) = partial_token {
@@ -106,7 +122,7 @@ pub fn tokenize<'str, 'a, 'b>(
             partial_token = None;
         }
 
-        let result  = match kind {
+        let result = match kind {
             TokenType::Operator => {
                 let unar = Operator::unary(slice);
 
@@ -127,17 +143,17 @@ pub fn tokenize<'str, 'a, 'b>(
                     Ok((token, len, operator.kind != OperatorType::Factorial))
                 }
             }
-            TokenType::Function => {
-                match Function::next_function(&slice[1..], context.funcs) {
-                    Some((func, len)) => {
-                        let token = Token::Operator {
-                            inner: Functions::User(func),
-                        };
-                        Ok((token, len, func.arity() > 0))
-                    },
-                    None => Err(Error::UnknownFunction),
+            TokenType::Function => match Function::next_function(&slice[1..], context.funcs) {
+                Some((func, len)) => {
+                    let token = Token::Operator {
+                        inner: Functions::User(func),
+                    };
+                    // For thje prefix
+                    idx += 1;
+                    Ok((token, len, func.arity() > 0))
                 }
-            }
+                None => Err(Error::UnknownFunction),
+            },
             TokenType::Paren => {
                 let (token, kind) = Token::paren(c).unwrap();
                 let (unary_, s) = match kind {
@@ -146,12 +162,10 @@ pub fn tokenize<'str, 'a, 'b>(
                 };
                 Ok((token, s, unary_))
             }
-            TokenType::Number => {
-                match Token::number(slice) {
-                    Some((token, len)) => Ok((token, len, false)),
-                    None => Err(Error::UnknownToken),
-                }
-            }
+            TokenType::Number => match Token::number(slice) {
+                Some((token, len)) => Ok((token, len, false)),
+                None => Err(Error::UnknownToken),
+            },
             TokenType::Constant => {
                 let (constant, len) = Constant::by_repr(slice).unwrap();
                 let token = Token::Constant { inner: constant };
@@ -161,7 +175,17 @@ pub fn tokenize<'str, 'a, 'b>(
                 // Err(Error::UnknownVariable)
                 // [1..] to ignore the $ prefix
                 match Variable::next_variable(&slice[1..], context.vars) {
-                    Some((variable, len)) => Ok((Token::Variable { inner: variable }, len, false)),
+                    Some((variable, len)) => {
+                        // For the prefix
+                        idx += 1;
+                        Ok((
+                            Token::Variable {
+                                inner: Rc::clone(variable),
+                            },
+                            len,
+                            false,
+                        ))
+                    }
                     None => Err(Error::UnknownVariable),
                 }
             }
@@ -178,19 +202,34 @@ pub fn tokenize<'str, 'a, 'b>(
                 });
                 idx += len;
                 unary = unary_;
-            },
-            Err(e) => {
-                // partial_token.push(c);
-                // idx += 1;
-                // partial_token.push(c);
-                // if current_error.as_ref().map(|er| mem::discriminant(er) != mem::discriminant(&e)).unwrap_or(false) {
-                //     tokens.push(StringToken {
-                //         inner: Err(e),
-                //         repr: partial_token.clone(),
-                //         idx: idx - partial_token.len(),
-                //     })
-                // }
-                // partial_token.clear();
+            }
+            Err(e) => match e {
+                Error::UnknownToken => {
+                    tokens.push(PartialToken {
+                        inner: Err(e),
+                        repr: &slice[..1],
+                        idx,
+                    });
+                    idx += 1;
+                }
+                Error::UnknownVariable | Error::UnknownFunction => {
+                    let until = slice
+                        .char_indices()
+                        .find_map(|(i, c)| {
+                            if [' ', '('].contains(&c) {
+                                Some(i)
+                            } else {
+                                None
+                            }
+                        })
+                        .unwrap_or(slice.len());
+                    tokens.push(PartialToken {
+                        inner: Err(e),
+                        repr: &slice[..until],
+                        idx,
+                    });
+                    idx += until;
+                }
             },
         }
 
@@ -204,19 +243,20 @@ pub fn tokenize<'str, 'a, 'b>(
             inner: Err(Error::UnknownToken),
             repr: &string[idx..],
             idx,
-        })
+        });
     }
 
     if tokens.iter().any(|pt: &PartialToken| pt.inner.is_err()) {
         Err(tokens)
     } else {
-        let vec = tokens.into_iter().map(|pt: PartialToken| {
-            StringToken {
+        let vec = tokens
+            .into_iter()
+            .map(|pt: PartialToken| StringToken {
                 inner: pt.inner.unwrap(),
                 repr: pt.repr,
                 idx: pt.idx,
-            }
-        }).collect_vec();
+            })
+            .collect_vec();
         Ok(vec)
     }
 }

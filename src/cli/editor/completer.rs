@@ -1,14 +1,20 @@
 use std::{borrow::Borrow, rc::Rc};
 
 use rustmatheval::model::variables::Variable;
-use rustyline::completion::{Completer, Pair};
+use rustyline::{
+    completion::{Completer, Pair},
+    line_buffer::LineBuffer,
+};
 
 use super::{
     finder::{find_items, Findable},
     MyHelper,
 };
 
-fn find_candidates<Item: Findable, ItemItem: Borrow<Item>>(line: &str, items: &[ItemItem]) -> Option<Vec<Pair>> {
+fn find_candidates<Item: Findable, ItemItem: Borrow<Item>>(
+    line: &str,
+    items: &[ItemItem],
+) -> Option<Vec<Pair>> {
     let create_intermediate = |stride, item: &Item| {
         let replacement = item.replacement()[stride..].to_string();
         let display = item.format();
@@ -39,10 +45,17 @@ impl Completer for MyHelper<'_> {
             .or_else(|| find_candidates::<Variable, Rc<Variable>>(line, &vars))
             .map_or((0, vec![]), |candidates| (pos, candidates));
 
+        // let candidates = (0, vec![]);
+
+        // println!("pogg?");
+
+        // println!("{candidates:?}");
+
         rustyline::Result::Ok(candidates)
     }
 
-    fn update(&self, line: &mut rustyline::line_buffer::LineBuffer, start: usize, elected: &str) {
+    fn update(&self, line: &mut LineBuffer, start: usize, elected: &str) {
+        println!("complete with cand [{elected}] starting at [{start}]");
         let end = line.pos();
         line.replace(start..end, elected);
     }

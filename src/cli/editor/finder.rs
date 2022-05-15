@@ -65,11 +65,18 @@ where
         let line = &line[pos + 1..];
         let stride = line.len();
 
+        // println!("stuff");
+
         let matches: Vec<Intermediate> = items
             .iter()
-            .filter(|it| <ItemItem as Borrow<Item>>::borrow(it).name().starts_with(line))
+            .filter(|it| {
+                <ItemItem as Borrow<Item>>::borrow(it)
+                    .name()
+                    .starts_with(line)
+            })
             .map(|it| create_intermediate(stride, it.borrow()))
             .collect();
+        // println!("outta here");
         if !matches.is_empty() {
             return Some(matches);
         }

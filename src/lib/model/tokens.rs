@@ -2,7 +2,13 @@
 
 use std::{borrow::Cow, rc::Rc};
 
-use super::{constants::{Constant, ConstantType}, errors::{ParserError}, functions::Functions, operators::{Operator, OperatorType}, variables::Variable};
+use super::{
+    constants::{Constant, ConstantType},
+    errors::ParserError,
+    functions::Functions,
+    operators::{Operator, OperatorType},
+    variables::Variable,
+};
 
 const NUMBER_CHARACTERS: [char; 11] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'];
 const PAREN_CHARACTERS: [char; 2] = ['(', ')'];
@@ -21,8 +27,24 @@ pub struct StringTokenInterface<'repr, Inner> {
     pub idx: usize,
 }
 
-pub type PartialToken<'repr, 'a> = StringTokenInterface<'repr, Result<Token<'a>, ParserError>>;
-pub type StringToken<'repr, 'a> = StringTokenInterface<'repr, Token<'a>>;
+pub type PartialToken<'repr, 'funcs> =
+    StringTokenInterface<'repr, Result<Token<'funcs>, ParserError>>;
+pub type StringToken<'repr, 'funcs> = StringTokenInterface<'repr, Token<'funcs>>;
+
+#[derive(Debug, Clone)]
+pub enum Tokens<'vars, 'funcs> {
+    String(StringToken<'vars, 'funcs>),
+    Synthetic(Token<'funcs>),
+}
+
+impl<'vars, 'funcs> Tokens<'vars, 'funcs> {
+    pub const fn token(&self) -> &Token<'funcs> {
+        match self {
+            Tokens::String(st) => &st.inner,
+            Tokens::Synthetic(t) => t,
+        }
+    }
+}
 
 // #[allow(clippy::from_over_into)]
 // impl<'repr, 'tok> Into<Token<'tok>> for StringToken<'repr, 'tok> {
@@ -32,14 +54,14 @@ pub type StringToken<'repr, 'a> = StringTokenInterface<'repr, Token<'a>>;
 // }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Token<'a> {
+pub enum Token<'funcs> {
     Number { value: f64 },
-    Operator { inner: Functions<'a> },
+    Operator { inner: Functions<'funcs> },
     Paren { kind: ParenType },
     Constant { inner: &'static Constant },
     Variable { inner: Rc<Variable> },
     Comma,
-}       
+}
 
 impl Token<'_> {
     pub fn paren(c: char) -> Option<(Self, ParenType)> {

@@ -2,6 +2,7 @@ use super::config::{DEFAULT_RCFILE, RCFILE};
 use super::error::{Error, IoError};
 use super::lib::model::{functions::Function, variables::Variable};
 use colored::Colorize;
+use std::cell::RefCell;
 use std::rc::Rc;
 use std::{fs, io::ErrorKind::NotFound};
 
@@ -17,7 +18,10 @@ use super::cli::{handle_errors, handle_input};
 ///
 /// ## Output
 /// Returns an empty `Result` on success, or a `CliError` from io operations
-pub fn load<'a >(vars: &'a mut Vec<Rc<Variable>>, funcs: &'a mut Vec<Function>) -> Result<(), Error<'a>> {
+pub fn load<'a>(
+    vars: &'a mut Vec<Rc<Variable>>,
+    funcs: &'a mut Vec<Function>,
+) -> Result<(), Error<'a>> {
     return Ok(());
     let path = match RCFILE.as_deref() {
         Some(path) => path,

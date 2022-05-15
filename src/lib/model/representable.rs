@@ -1,4 +1,5 @@
 use std::borrow::Borrow;
+use std::ops::Deref;
 
 pub trait Representable {
     fn repr(&self) -> &[&str];
@@ -17,9 +18,10 @@ impl<Repr: Representable> Searchable for Repr {
     }
 }
 
-pub(super) fn get_by_repr<'list, 'str, T: Searchable, U: Borrow<T>>(
+pub(super) fn get_by_repr<'list, 'str, U: Borrow<impl Searchable>>(
     search: &'str str,
     list: &'list [U],
 ) -> Option<(&'list U, &'str str)> {
-    list.iter().find_map(|t| t.borrow().search(search).map(|(a, b)| (t, b)))
+    list.iter()
+        .find_map(|u| u.borrow().search(search).map(|(_, b)| (u, b)))
 }

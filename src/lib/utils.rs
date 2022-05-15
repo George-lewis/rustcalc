@@ -41,7 +41,7 @@ pub enum Pos {
 pub fn slice<'a>(string: &'a str, start: usize, end: &Pos) -> &'a str {
     let len = string.chars().count();
 
-    let end = match end {
+    let stride = match end {
         // This will panic if `start > end`
         Pos::Idx(idx) => *idx,
         Pos::End => len,
@@ -49,12 +49,27 @@ pub fn slice<'a>(string: &'a str, start: usize, end: &Pos) -> &'a str {
 
     // dbg!(string, start, end);
 
-    assert!(start + end <= len, "end ({}) > len ({})", start + end, len);
+    assert!(
+        start + stride <= len,
+        "end ({}) > len ({})",
+        start + stride,
+        len
+    );
+
+    // println!("");
 
     let mut x = string.char_indices().skip(start);
-    let a = x.next().unwrap();
-    let b = x.nth(end).unwrap_or(a);
-    &string[a.0..=b.0]
+    let a = x.next().map(|(a, _)| a).unwrap();
+    let b = if stride == 0 {
+        a
+    } else if stride + start == len {
+        x.last().map_or(a + 1, |(b, _)| b + 1)
+    } else {
+        x.nth(stride - 1).map(|(b, _)| b).unwrap()
+    };
+
+    // println!("slice [{string}] from [{start}] tp [{end:?}] is [{}] to [{}] @ [{}]", a, b, &string[a..b]);
+    &string[a..b]
 }
 
 #[macro_export]

@@ -1,11 +1,11 @@
-use std::{borrow::Cow, cell::Cell, intrinsics::transmute, rc::Rc};
+use std::{borrow::Cow, cell::Cell, env::VarError, intrinsics::transmute, rc::Rc};
 
 use itertools::Itertools;
 
-use crate::{DoEvalResult, doeval};
+use crate::{doeval, DoEvalResult};
 
 use super::{
-    errors::{ErrorContext},
+    errors::ErrorContext,
     operators::{Associativity, Operator},
     representable::{get_by_repr, Searchable},
     variables::Variable,
@@ -15,9 +15,9 @@ use super::{
 pub const PREFIX: char = '#';
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Functions<'a> {
-    Builtin(&'a Operator),
-    User(&'a Function),
+pub enum Functions<'func> {
+    Builtin(&'static Operator),
+    User(&'func Function),
 }
 
 impl<'inner> Functions<'inner> {
@@ -80,10 +80,15 @@ impl Function {
     /// The list is created such that arguments always come before scoped variables. This is important for correct varible-name resolution.
     pub fn create_variables(&self, args: &[f64]) -> Vec<Rc<Variable>> {
         // Create the arguments for the function
-        let args = self.args.iter().zip(args).map(|(name, value)| Variable {
-            repr: name.clone(),
-            value: Cell::new(*value),
-        }).map(Rc::new);
+        let args = self
+            .args
+            .iter()
+            .zip(args)
+            .map(|(name, value)| Variable {
+                repr: name.to_string(),
+                value: Cell::new(*value),
+            })
+            .map(Rc::new);
 
         // Create a cloned iteration of the scoped variables
         // let scoped = vars.iter().cloned();
@@ -99,39 +104,31 @@ impl Function {
     ///
     /// # Errors
     /// This function calls into `lib::doeval` and bubbles up and errors occuring from within there.
-    pub fn apply<'a>(
-        &'a self,
+    pub fn apply<'str, 'vars, 'funcs>(
+        &'funcs self,
         args: &[f64],
-        context: &EvaluationContext<'a>,
-    ) -> Result<f64, DoEvalResult<'a, 'a>> {
-        let vars = self.create_variables(args);
+        context: &EvaluationContext<'str, 'funcs>,
+    ) -> Result<f64, DoEvalResult<'funcs, 'funcs>> {
+        let mut vars = self.create_variables(args);
 
-        let iter = context.vars.iter().map(Rc::clone).collect_vec();
-
-        let v = vars.into_iter().chain(iter.into_iter()).collect_vec();
-
-        // Return
-        //
+        vars.extend(context.vars.iter().map(Rc::clone));
 
         // vars: &'_
         // funcs: &'func
         // context: &'func self
         let context = EvaluationContext {
-            vars: &v,
+            vars: &vars,
             funcs: context.funcs,
             depth: context.depth + 1,
             context: ErrorContext::Scoped(self),
         };
 
-        let res: DoEvalResult = doeval(&self.code, context);
+        let code: &'funcs str = &self.code;
+        let res: DoEvalResult = doeval(code, context);
 
-        if let DoEvalResult::Ok {
-            result,
-            ..
-        } = &res {
+        if let DoEvalResult::Ok { result, .. } = &res {
             Ok(*result)
         } else {
-
             // > cannot return value referencing local variable `v`
             // > returns a value referencing data owned by the current function
             // SAFETY:
@@ -139,9 +136,10 @@ impl Function {
             // And, in fact, only contains data from `v` if it is `DoEvalResult::ParsingError`
             // However, in that case it contains clones of Rc's
             // Need to investigate how to get Rust to understand that
-            Err(unsafe {
-                transmute(res)
-            })
+            // Err(unsafe {
+            //     transmute(res)
+            // })
+            Err(res)
         }
 
         // res

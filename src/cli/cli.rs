@@ -1,5 +1,4 @@
-use std::cell::Cell;
-use std::intrinsics::transmute;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 use crate::funcs::{assign_func_command, format_funcs};
@@ -10,11 +9,11 @@ use super::lib::model::{
 use super::lib::utils;
 
 use colored::Colorize;
-use rustmatheval::DoEvalResult;
 use rustmatheval::model::errors::InnerFunction;
+use rustmatheval::DoEvalResult;
 use utils::Pos;
 
-use super::error::{Error};
+use super::error::Error;
 
 use super::vars::{assign_var, assign_var_command, format_vars};
 
@@ -66,25 +65,33 @@ pub fn handle_input<'a>(
             depth: 0,
             context: ErrorContext::Main,
         };
+        // let context = &context;
         let result = doeval(input, context);
 
         if let DoEvalResult::Ok {
-            string_tokens,
-            result
-        } = result {
-            let formatted = stringify(&string_tokens);
-            let eval_string = format!("[ {} ] => {}", formatted, format!("{:.3}", result).blue());
+            tokens,
+            result: result_,
+        } = &result
+        {
+            let formatted = stringify(tokens);
+            let eval_string = format!("[ {} ] => {}", formatted, format!("{:.3}", result_).blue());
 
             let ans = Variable {
-                repr: "ans".to_string(),
-                value: Cell::new(result),
+                repr: "ans".into(),
+                value: Cell::new(*result_),
+            };
+
+            let vars = unsafe {
+                // transmute::<& _, &mut _>(&vars)
+                #[allow(clippy::cast_ref_to_mut)]
+                &mut *((vars as *const _) as *mut _)
             };
 
             assign_var(ans, vars); // Set ans to new value
 
             Ok(eval_string)
         } else {
-            Err(Error::Library(unsafe {transmute(result)}))
+            Err(Error::Library(result))
         }
     }
 }
@@ -126,7 +133,17 @@ fn make_highlighted_error(msg: &str, input_str: &str, idx: usize) -> String {
 /// * `error` - The error
 /// * `input` - The user's input
 pub fn handle_library_errors(result: &DoEvalResult, input: &str) -> String {
-    dbg!(result);
+    match result {
+        DoEvalResult::RecursionLimit { context } => todo!(),
+        DoEvalResult::ParsingError {
+            context,
+            partial_tokens,
+        } => todo!(),
+        DoEvalResult::RpnError { context, error } => todo!(),
+        DoEvalResult::EvalError { context, error } => todo!(),
+        DoEvalResult::Ok { tokens, result } => todo!(),
+    }
+    // dbg!(result);
     // let ctx, msg = match result {
     //     DoEvalResult::RecursionLimit { context } => (context, Borrowed("Exceeded recursion limit")),
     //     DoEvalResult::ParsingError { context, partial_tokens } => todo!(),
@@ -134,8 +151,6 @@ pub fn handle_library_errors(result: &DoEvalResult, input: &str) -> String {
     //     DoEvalResult::EvalError { context, error } => todo!(),
     //     DoEvalResult::Ok { .. } => panic!(),
     // }
-
-
 
     // let error = &contextual_error.error;
     // let context = &contextual_error.context;

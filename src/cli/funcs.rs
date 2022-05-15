@@ -1,7 +1,15 @@
 use std::rc::Rc;
 
 use itertools::Itertools;
-use rustmatheval::{model::{errors::ErrorContext, functions::Function, variables::Variable, EvaluationContext}, tokenize};
+use rustmatheval::{
+    model::{
+        errors::ErrorContext,
+        functions::{self, Function},
+        variables::{self, Variable},
+        EvaluationContext,
+    },
+    tokenize,
+};
 
 use colored::{ColoredString, Colorize};
 
@@ -14,12 +22,15 @@ fn color_arg(arg: impl AsRef<str>) -> ColoredString {
 fn stringify_func_code(func: &Function, funcs: &[Function], vars: &[Rc<Variable>]) -> String {
     // We don't care about the actual value of the arguments here
     // Because we're just going to tokenize it
-    let args = [0.0].repeat(func.arity());
+    let args = [0_f64].repeat(func.arity());
 
     // Creates args and merges with variables in-scope (`vars`)
     let args = func.create_variables(&args);
 
-    let vars = args.into_iter().chain(vars.into_iter().map(Rc::clone)).collect_vec();
+    let vars = args
+        .into_iter()
+        .chain(vars.iter().map(Rc::clone))
+        .collect_vec();
 
     // Depth and context also don't matter here
     let context = EvaluationContext {
@@ -33,9 +44,6 @@ fn stringify_func_code(func: &Function, funcs: &[Function], vars: &[Rc<Variable>
     // That don't exist right now, the tokenize will fail
     // So we just fall back to a copy of the function's code
     let tokens = tokenize(&func.code, &context).expect("Function code is invalid?");
-    //     Ok(tokens) => stringify(&tokens),
-    //     Err(_) => func.code.clone(),
-    // }
     stringify(&tokens)
 }
 
@@ -65,7 +73,7 @@ pub fn format_funcs(funcs: &[Function], vars: &[Rc<Variable>]) -> String {
 }
 
 pub fn assign_func_command<'a>(
-    input: &str,
+    input: &'a str,
     funcs: &'a mut Vec<Function>,
     vars: &'a [Rc<Variable>],
 ) -> Result<String, Error<'a>> {
@@ -82,8 +90,18 @@ pub fn assign_func_command<'a>(
     let mut split = left.split_whitespace();
 
     let name = split.next().unwrap()[1..].to_string();
-    let args: Vec<String> = split.map(|arg| arg[1..].to_string()).collect();
+    let args = split
+        .map(|arg| {
+            if arg.starts_with(variables::PREFIX) {
+                arg[1..].to_string()
+            } else {
+                arg.to_string()
+            }
+        })
+        .collect_vec();
     let code = right.to_string();
+
+    dbg!(&name, &args, &code);
 
     let func = Function { name, args, code };
 

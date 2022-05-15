@@ -20,13 +20,13 @@ path = "src/cli/main.rs"
 colored = "2"
 
 # For getting standard dirs
-dirs = "3.0.2"
+dirs = "4.0.0"
 
 # For random numbers
 rand = "0.8.3"
 
 # For line editing, history, etc
-rustyline = "8.0.0"
+rustyline = "9.1.2"
 
 # For fast formatting of multi-line outputs
 itertools = "0.10.0"

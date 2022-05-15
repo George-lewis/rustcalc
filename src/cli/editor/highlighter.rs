@@ -1,31 +1,36 @@
 use std::borrow::Cow;
 
 use colored::Colorize;
-use rustmatheval::{model::EvaluationContext, tokenize};
+use rustmatheval::{
+    model::{errors::ErrorContext, EvaluationContext},
+    tokenize,
+};
 use rustyline::highlight::Highlighter;
 
-use crate::stringify::{self, stringify};
+use crate::stringify::stringify;
 
 use super::MyHelper;
 
 impl Highlighter for MyHelper<'_> {
     fn highlight<'l>(&self, line: &'l str, _pos: usize) -> std::borrow::Cow<'l, str> {
         // Cow::Borrowed(line)
+        // println!("color");
         if line.trim().is_empty() {
             return Cow::Borrowed(line);
         }
-        let funcs = self.funcs.borrow();
-        let vars = self.vars.borrow();
+        let funcs = &self.funcs.borrow();
+        let vars = &self.vars.borrow();
         let context = EvaluationContext {
-            vars: &vars,
-            funcs: &funcs,
-            context: rustmatheval::model::errors::ErrorContext::Main,
+            vars,
+            funcs,
+            context: ErrorContext::Main,
             depth: 0,
         };
         let string = match tokenize(line, &context) {
             Ok(tokens) => stringify(&tokens),
-            Err(tokens) => stringify(&tokens)
+            Err(tokens) => stringify(&tokens),
         };
+        println!("colored!");
         Cow::Owned(string)
     }
 

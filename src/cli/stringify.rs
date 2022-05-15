@@ -1,7 +1,11 @@
 use std::{borrow::Cow, fmt::Display, iter};
 
 use colored::{ColoredString, Colorize};
-use rustmatheval::model::{functions::Functions, operators::FUNCTIONAL_STYLE_OPERATORS, tokens::{PartialToken, StringToken}};
+use rustmatheval::model::{
+    functions::Functions,
+    operators::FUNCTIONAL_STYLE_OPERATORS,
+    tokens::{PartialToken, StringToken, Tokens},
+};
 
 use crate::{funcs::format_func_name, vars::format_var_name};
 
@@ -88,6 +92,35 @@ impl StringableToken for PartialToken<'_, '_> {
     }
 }
 
+impl StringableToken for Tokens<'_, '_> {
+    fn spaces(&self, other: &Self) -> usize {
+        match self {
+            Tokens::String(st) => match other {
+                Tokens::String(st_) => st.spaces(st_),
+                Tokens::Synthetic(syn) => st.inner.spaces(syn),
+            },
+            Tokens::Synthetic(syn) => {
+                let other = other.token();
+                syn.spaces(other)
+            }
+        }
+    }
+
+    fn token(&self) -> Option<&Token<'_>> {
+        match self {
+            Tokens::String(st) => Some(&st.inner),
+            Tokens::Synthetic(syn) => Some(syn),
+        }
+    }
+
+    fn colorize(&self) -> ColoredString {
+        match self {
+            Tokens::String(st) => st.colorize(),
+            Tokens::Synthetic(syn) => syn.colorize(),
+        }
+    }
+}
+
 /// Construct the ideal representation of a `Token`
 fn ideal_repr(tok: &Token) -> String {
     match tok {
@@ -129,7 +162,7 @@ fn color_cli(string: &str, token: &Token) -> ColoredString {
 }
 
 /// Determine if a space should be come after `cur` in a string representation.
-#[allow(clippy::unnested_or_patterns)]
+#[allow(clippy::unnested_or_patterns, clippy::cast_lossless)]
 fn spaces(cur: &Token) -> usize {
     // Cases:
     // - Spaces after value types: numbers, variables, and constants
@@ -177,10 +210,7 @@ fn exclude_space(next: &Token) -> bool {
     }
 }
 
-fn _stringify(
-    tokens: &[impl StringableToken]
-) -> String
-{
+fn _stringify(tokens: &[impl StringableToken]) -> String {
     // The last element of the slice
     // `std::slice::windows` does not include the last element as its own window
     // So we must add it ourselves
@@ -212,8 +242,6 @@ fn _stringify(
         // Insert the last token
         .chain(last)
         // Color
-        .map(|(token, space)| {
-            format!("{}{}", token.colorize(), " ".repeat(space))
-        })
+        .map(|(token, space)| format!("{}{}", token.colorize(), " ".repeat(space)))
         .collect()
 }

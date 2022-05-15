@@ -9,7 +9,6 @@ pub enum Error<'a> {
     Io(IoError),
     Library(DoEvalResult<'a, 'a>),
 }
-
 impl<'a> From<DoEvalResult<'a, 'a>> for Error<'a> {
     fn from(error: DoEvalResult<'a, 'a>) -> Self {
         Self::Library(error)

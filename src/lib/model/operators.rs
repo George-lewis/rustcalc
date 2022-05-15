@@ -96,6 +96,12 @@ impl Operator {
         Self::by_repr(repr).is_some()
     }
 
+    pub fn is_next(string: &str) -> bool {
+        OPERATORS
+            .iter()
+            .any(|op| op.repr.iter().any(|s| s.starts_with(string)))
+    }
+
     // Determines if the next sequence is a unary `Operator`
     pub fn unary(repr: &str) -> Option<(&OperatorType, &str)> {
         get_by_repr(repr, UNARY_OPERATORS)

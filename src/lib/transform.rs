@@ -1,21 +1,24 @@
 use crate::model::{
     functions::Functions,
     operators::{OperatorType, FUNCTIONAL_STYLE_OPERATORS},
-    tokens::{ParenType, Token},
+    tokens::{ParenType, Token, Tokens},
 };
 
 /// Insert implicit parantheses into the tokens.
 /// Implicit parentheses are inserted for arguments to functions
 /// or function-like operators that accept 0 or 1 arguments
 /// Ex: sin sin 2^5 + 9 => sin(sin(2^5)) + 9
-pub fn implicit_parens(tokens: &mut Vec<Token>) {
+pub fn implicit_parens(tokens: &mut Vec<Tokens>) {
     let mut implicit_paren: usize = 0;
 
     let mut idx = 0;
     while idx < tokens.len() {
         let (cur, next) = {
             let mut iter = tokens.iter();
-            (iter.nth(idx).unwrap(), iter.next())
+            (
+                iter.nth(idx).unwrap().token(),
+                iter.next().map(Tokens::token),
+            )
         };
 
         let preclude = matches!(
@@ -45,9 +48,9 @@ pub fn implicit_parens(tokens: &mut Vec<Token>) {
             for offset in 0..implicit_paren {
                 tokens.insert(
                     idx + 1 + offset as usize,
-                    Token::Paren {
+                    Tokens::Synthetic(Token::Paren {
                         kind: ParenType::Right,
-                    },
+                    }),
                 );
             }
             idx += implicit_paren as usize;
@@ -69,15 +72,15 @@ pub fn implicit_parens(tokens: &mut Vec<Token>) {
                         } else {
                             tokens.insert(
                                 idx + 1,
-                                Token::Paren {
+                                Tokens::Synthetic(Token::Paren {
                                     kind: ParenType::Left,
-                                },
+                                }),
                             );
                             tokens.insert(
                                 idx + 2,
-                                Token::Paren {
+                                Tokens::Synthetic(Token::Paren {
                                     kind: ParenType::Right,
-                                },
+                                }),
                             );
                             idx += 2;
                             false
@@ -89,9 +92,9 @@ pub fn implicit_parens(tokens: &mut Vec<Token>) {
             if wants_implicit_paren {
                 tokens.insert(
                     idx + 1,
-                    Token::Paren {
+                    Tokens::Synthetic(Token::Paren {
                         kind: ParenType::Left,
-                    },
+                    }),
                 );
                 implicit_paren += 1;
                 idx += 1;
@@ -105,12 +108,15 @@ pub fn implicit_parens(tokens: &mut Vec<Token>) {
 /// It's important that parantheses and commas are present.
 /// `tokens` should be run through `implicit_parantheses` before this function
 #[allow(clippy::unnested_or_patterns)]
-pub fn implicit_coeffs(tokens: &mut Vec<Token>) {
+pub fn implicit_coeffs(tokens: &mut Vec<Tokens>) {
     let mut idx = 0;
     while idx < tokens.len() {
         let (cur, next) = {
             let mut iter = tokens.iter();
-            (iter.nth(idx).unwrap(), iter.next())
+            (
+                iter.nth(idx).unwrap().token(),
+                iter.next().map(Tokens::token),
+            )
         };
 
         // Certain tokens preclude coefficients
@@ -147,7 +153,10 @@ pub fn implicit_coeffs(tokens: &mut Vec<Token>) {
             };
 
             if can_coeff {
-                tokens.insert(idx + 1, Token::operator(OperatorType::Mul));
+                tokens.insert(
+                    idx + 1,
+                    Tokens::Synthetic(Token::operator(OperatorType::Mul)),
+                );
                 idx += 1;
             }
         }

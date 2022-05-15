@@ -1,6 +1,9 @@
 use std::borrow::Cow;
 
-use crate::model::{errors::{EvalError, ParserError, RpnError}, tokens::StringToken};
+use crate::model::{
+    errors::{EvalError, ParserError, RpnError},
+    tokens::{StringToken, Tokens},
+};
 
 use super::model::{
     operators::Associativity,
@@ -12,20 +15,22 @@ use super::model::{
 ///
 /// Returns a `Vec` of token in RPN or an `Error::MismatchingParens`. This function will catch
 /// some instances of parentheses-mismatch, but not all.
-pub fn rpn<'a, 'b>(tokens: &[StringToken<'b, 'a>]) -> Result<Vec<StringToken<'b, 'a>>, RpnError> {
-    let mut operator_stack: Vec<StringToken> = Vec::new();
-    let mut output: Vec<StringToken> = Vec::with_capacity(tokens.len());
+pub fn rpn<'vars, 'funcs>(
+    tokens: &[Tokens<'vars, 'funcs>],
+) -> Result<Vec<Tokens<'vars, 'funcs>>, RpnError> {
+    let mut operator_stack: Vec<Tokens> = Vec::new();
+    let mut output: Vec<Tokens> = Vec::with_capacity(tokens.len());
 
     for token in tokens {
         let cloned = token.clone();
-        match token.inner {
+        match token.token() {
             Token::Comma => {}
             Token::Number { .. } | Token::Constant { .. } | Token::Variable { .. } => {
                 output.push(cloned);
             }
             Token::Operator { inner: op1 } => {
                 while !operator_stack.is_empty() {
-                    let last = &operator_stack.last().unwrap().inner;
+                    let last = &operator_stack.last().unwrap().token();
                     if let Token::Paren { kind } = last {
                         if *kind == ParenType::Left {
                             break;
@@ -51,14 +56,17 @@ pub fn rpn<'a, 'b>(tokens: &[StringToken<'b, 'a>]) -> Result<Vec<StringToken<'b,
                             return Err(RpnError::MismatchingParens);
                         }
                         let tok = operator_stack.pop().unwrap();
-                        if let Token::Paren { kind } = tok.inner {
-                            if kind == ParenType::Left {
+                        if let Token::Paren { kind } = tok.token() {
+                            if *kind == ParenType::Left {
                                 break;
                             }
                         }
                         output.push(tok);
                     }
-                    if matches!(operator_stack.last().map(|s| &s.inner), Some(Token::Operator { .. })) {
+                    if matches!(
+                        operator_stack.last().map(Tokens::token),
+                        Some(Token::Operator { .. })
+                    ) {
                         output.push(operator_stack.pop().unwrap());
                     }
                 }

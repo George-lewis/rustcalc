@@ -11,11 +11,11 @@ pub mod variables;
 
 mod representable;
 
-#[derive(Clone, Default)]
-pub struct EvaluationContext<'a> {
-    pub vars: &'a [Rc<Variable>],
-    pub funcs: &'a [Function],
-    pub context: ErrorContext<'a>,
+#[derive(Clone, Copy, Default)]
+pub struct EvaluationContext<'vars, 'funcs> {
+    pub vars: &'vars [Rc<Variable>],
+    pub funcs: &'funcs [Function],
+    pub context: ErrorContext<'funcs>,
     pub depth: u8,
 }
 
@@ -23,7 +23,7 @@ pub struct EvaluationContext<'a> {
 mod tests {
 
     use super::{
-        errors::{ErrorContext},
+        errors::ErrorContext,
         functions::{Function, Functions},
         operators::{Associativity, Operator, OperatorType},
         tokens::Token,

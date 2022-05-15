@@ -11,18 +11,20 @@ mod transform;
 
 pub mod model;
 
-use std::intrinsics::transmute;
+use std::{intrinsics::transmute, rc::Rc};
 
 use eval::eval;
 use itertools::Itertools;
-use model::{EvaluationContext, errors::{ErrorContext, EvalError, RpnError}, tokens::{PartialToken, StringToken}};
+use model::{
+    errors::{ErrorContext, EvalError, RpnError},
+    tokens::{PartialToken, StringToken, Tokens},
+    EvaluationContext,
+};
 use rpn::rpn;
 pub use tokenize::tokenize;
 use transform::implicit_coeffs;
 
-use self::model::{
-    tokens::Token,
-};
+use self::model::tokens::Token;
 
 pub const RECURSION_LIMIT: u8 = 25;
 
@@ -54,47 +56,31 @@ pub const RECURSION_LIMIT: u8 = 25;
 
 pub enum RResult {}
 
-pub enum DoEvalError {
+pub enum DoEvalError {}
 
-}
-
-#[derive(Debug)]
-pub enum DoEvalResult<'str, 'a> {
+#[derive(Debug, Clone)]
+pub enum DoEvalResult<'str, 'funcs> {
     RecursionLimit {
-        context: ErrorContext<'a>
+        context: ErrorContext<'funcs>,
     },
     ParsingError {
-        context: ErrorContext<'a>,
-        partial_tokens: Vec<PartialToken<'str, 'a>>
+        context: ErrorContext<'funcs>,
+        partial_tokens: Vec<PartialToken<'str, 'funcs>>,
     },
     RpnError {
-        context: ErrorContext<'a>,
-        error: RpnError
+        context: ErrorContext<'funcs>,
+        error: RpnError,
     },
     EvalError {
-        context: ErrorContext<'a>,
+        context: ErrorContext<'funcs>,
         // string_tokens: Vec<StringToken<'a>>,
-        error: EvalError<'str, 'a>,
+        error: EvalError<'str, 'funcs>,
     },
     Ok {
-        string_tokens: Vec<StringToken<'str, 'a>>,
-        result: f64
+        tokens: Vec<Tokens<'str, 'funcs>>,
+        result: f64,
     },
 }
- 
-// impl Try for DoEvalResult<'_> {
-//     type Output;
-
-//     type Residual;
-
-//     fn from_output(output: Self::Output) -> Self {
-//         todo!()
-//     }
-
-//     fn branch(self) -> std::ops::ControlFlow<Self::Residual, Self::Output> {
-//         todo!()
-//     }
-// }
 
 /// Evaluate a string containing a mathematical expression
 ///
@@ -107,44 +93,50 @@ pub enum DoEvalResult<'str, 'a> {
 ///
 /// ## Errors
 /// Returns an error if the expression couldn't be computed
-pub fn doeval<'str, 'a>(
-    string: &'str str,
-    context: EvaluationContext<'a>,
-) -> DoEvalResult<'str, 'a> {
+pub fn doeval<'funcs, 'var>(
+    string: &'funcs str,
+    context: EvaluationContext<'var, 'funcs>,
+) -> DoEvalResult<'funcs, 'funcs> {
+    // let context = Rc::new(context);
+    // let bcontext = &context
+
     if context.depth == RECURSION_LIMIT {
         return DoEvalResult::RecursionLimit {
             context: context.context,
         };
     }
 
-    let string_tokens  = match tokenize(string, &context) {
+    let string_tokens = match tokenize(string, &context) {
         Ok(string_tokens) => string_tokens,
         Err(partial_tokens) => {
             return DoEvalResult::ParsingError {
                 context: context.context,
                 partial_tokens,
             };
-        },
-    };
-
-    let mut rpn = match rpn(&string_tokens) {
-        Ok(rpn) => rpn,
-        Err(error) => return DoEvalResult::RpnError {
-            context: context.context,
-            error,
-        },
-    };
-
-    match eval(&mut rpn, context) {
-        Ok(result) => {
-            DoEvalResult::Ok {
-                string_tokens,
-                result
-            }
-        },
-        Err(e) => unsafe {
-            transmute(e)
         }
+    };
+
+    let mut tokens = string_tokens
+        .into_iter()
+        .map(|t| Tokens::String(t))
+        .collect_vec();
+
+    transform::implicit_parens(&mut tokens);
+    transform::implicit_coeffs(&mut tokens);
+
+    let rpn = match rpn(&tokens) {
+        Ok(rpn) => rpn,
+        Err(error) => {
+            return DoEvalResult::RpnError {
+                context: context.context,
+                error,
+            }
+        }
+    };
+
+    match eval(rpn, context) {
+        Ok(result) => DoEvalResult::Ok { tokens, result },
+        Err(e) => e,
     }
 }
 

@@ -1,12 +1,11 @@
-use std::cell::Cell;
-use std::intrinsics::transmute;
-use std::rc::Rc;
-
 use colored::{ColoredString, Colorize};
 use itertools::Itertools;
 use rustmatheval::DoEvalResult;
+use std::borrow::Borrow;
+use std::cell::{Cell, RefCell, UnsafeCell};
+use std::rc::Rc;
 
-use super::error::{Error};
+use super::error::Error;
 use super::lib::doeval;
 use super::lib::model::{
     errors::ErrorContext, functions::Function, variables::Variable, EvaluationContext,
@@ -51,14 +50,16 @@ pub fn assign_var_command<'a>(
     // Trim again to remove whitespace between end of variable name and = sign
     let user_repr: String = trimmed_left[1..].to_string();
 
-    let _vars = vars.iter().map(Rc::clone).collect_vec();
+    // let _vars = vars.iter().map(Rc::clone).collect_vec();
 
     let context = EvaluationContext {
-        vars: &_vars,
+        vars,
         funcs,
         depth: 0,
         context: ErrorContext::Main,
     };
+
+    // let context = &context;
 
     // Get value for variable
     let result = doeval(sides[1], context);
@@ -81,40 +82,42 @@ pub fn assign_var_command<'a>(
     //     // Offset is added so that highlighting can be added to expressions that come after an '=' during assignment
     // }
 
-    if let DoEvalResult::Ok {
-        string_tokens,
-        result
-    } = result {
-
+    if let DoEvalResult::Ok { tokens, result } = &result {
         let conf_string = format!(
             "[ ${} {} {} ] => {}",
             user_repr.green().bold(),
             "=".cyan(),
-            stringify(&string_tokens),
+            stringify(tokens),
             format!("{:.3}", result).blue()
         );
 
-        drop(string_tokens);
-
         let var = Variable {
             repr: user_repr,
-            value: Cell::new(result),
+            value: Cell::new(*result),
+        };
+
+        // Safety: This is a non-lexical lifetime that Rust
+        // can't understand yet. By this point in the code
+        // vars is no longer being borrowed
+        // (the other branch of this if statement requires vars to be borrowed)
+        // (which is why the compiler complains)
+        let vars = unsafe {
+            // transmute::<& _, &mut _>(&vars)
+            #[allow(clippy::cast_ref_to_mut)]
+            &mut *((vars as *const _) as *mut _)
         };
 
         assign_var(var, vars);
 
         Ok(conf_string)
     } else {
-        unsafe {
-            Err(Error::Library( transmute(result)) )
-        }
+        Err(Error::Library(result))
     }
-    
 }
 
-pub fn assign_var(var: Variable, vars: &mut Vec<Rc<Variable>>) {
+pub fn assign_var(var: Variable, vars: &mut Vec<Variable>) {
     let repr = var.repr.clone();
-    let cmp = |v: &Rc<Variable>| repr.cmp(&v.repr);
+    let cmp = |v: &Variable| repr.cmp(&v.repr);
 
-    insert_or_swap_sort(vars, Rc::new(var), cmp);
+    insert_or_swap_sort(vars, var, cmp);
 }

@@ -10,13 +10,16 @@ mod stringify;
 mod utils;
 mod vars;
 
-use lib::{doeval, model::EvaluationContext};
+use lib::{
+    doeval,
+    model::{functions::Function, variables::Variable, EvaluationContext},
+};
 pub use rustmatheval as lib;
 
 use config::HISTORY_FILE;
 
 use error::Error;
-use std::{cell::RefCell, env, process};
+use std::{cell::RefCell, env, process, rc::Rc};
 
 use cli::{handle_errors, handle_input};
 
@@ -55,8 +58,8 @@ pub fn main() -> ! {
         process::exit(code);
     }
 
-    let vars = RefCell::new(vec![]);
-    let funcs = RefCell::new(vec![]);
+    let vars: RefCell<Vec<Rc<Variable>>> = RefCell::new(vec![]);
+    let funcs: RefCell<Vec<Function>> = RefCell::new(vec![]);
 
     if let Err(inner) = rcfile::load(&mut vars.borrow_mut(), &mut funcs.borrow_mut()) {
         match inner {

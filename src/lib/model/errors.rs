@@ -1,6 +1,9 @@
 use std::borrow::Cow;
 
-use super::{EvaluationContext, functions::Function, operators::OperatorType, tokens::StringToken, variables::Variable};
+use super::{
+    functions::Function, operators::OperatorType, tokens::StringToken, variables::Variable,
+    EvaluationContext,
+};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum InnerFunction<'a> {
@@ -8,10 +11,10 @@ pub enum InnerFunction<'a> {
     User(&'a Function),
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub enum ErrorContext<'a> {
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum ErrorContext<'funcs> {
     Main,
-    Scoped(&'a Function),
+    Scoped(&'funcs Function),
 }
 
 impl Default for ErrorContext<'_> {
@@ -24,21 +27,21 @@ impl Default for ErrorContext<'_> {
 pub enum ParserError {
     UnknownToken,
     UnknownVariable,
-    UnknownFunction
+    UnknownFunction,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub enum RpnError {
-    MismatchingParens
+    MismatchingParens,
 }
 
 #[derive(Debug, Clone)]
-pub enum EvalError<'str, 'a> {
+pub enum EvalError<'str, 'funcs> {
     EmptyStack,
     Operand {
-        op: InnerFunction<'a>,
-        tok: StringToken<'str, 'a>
-    }
+        op: InnerFunction<'funcs>,
+        tok: StringToken<'str, 'funcs>,
+    },
 }
 
 // #[derive(Debug, Clone, Copy)]
@@ -99,7 +102,6 @@ pub enum EvalError<'str, 'a> {
 //         }
 //     }
 // }
-
 
 // pub fn some_err_with_context<T>(error: Error, context: &EvaluationContext) -> Option<Result<T, ContextualError>> {
 //     Some(Err(error.with_context(context.context)))

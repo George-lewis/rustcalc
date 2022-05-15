@@ -1,12 +1,14 @@
-use std::intrinsics::transmute;
-
-use crate::{DoEvalResult, model::{EvaluationContext, errors::EvalError, functions::Function, tokens::StringToken}};
-
-use super::model::{
-    errors::{InnerFunction},
-    functions::Functions,
-    tokens::Token,
+use crate::{
+    model::{
+        errors::EvalError,
+        functions::Function,
+        tokens::{StringToken, Tokens},
+        EvaluationContext,
+    },
+    DoEvalResult,
 };
+
+use super::model::{errors::InnerFunction, functions::Functions, tokens::Token};
 
 // enum EvalToken {
 //     StringToken(StringToken),
@@ -17,19 +19,20 @@ use super::model::{
 /// * `tokens` - The tokens
 ///
 /// Returns the result as a 64-bit float or an `Error`
-pub fn eval<'a>(tokens: &mut Vec<StringToken<'a, 'a>>, eval_context: EvaluationContext<'a>) -> Result<f64, DoEvalResult<'a, 'a>> 
-{
+pub fn eval<'vars, 'funcs>(
+    mut tokens: Vec<Tokens<'funcs, 'funcs>>,
+    eval_context: EvaluationContext<'vars, 'funcs>,
+) -> Result<f64, DoEvalResult<'funcs, 'funcs>> {
     // We need a mutable copy of the tokens
     // let mut stack: Vec<Token> = tokens.into_iter().rev().collect();
     tokens.reverse();
-    let mut stack  = tokens;
+    let mut stack = tokens;
     let mut args: Vec<f64> = Vec::new();
 
     while let Some(token) = stack.pop() {
-        let token = token;
-        match token.inner {
+        match token.token() {
             Token::Number { value } => {
-                args.push(value);
+                args.push(*value);
             }
             Token::Constant { inner } => {
                 args.push(inner.value);
@@ -44,12 +47,16 @@ pub fn eval<'a>(tokens: &mut Vec<StringToken<'a, 'a>>, eval_context: EvaluationC
                         Functions::Builtin(b) => InnerFunction::Builtin(b.kind),
                         Functions::User(func) => InnerFunction::User(func),
                     };
+                    let token = match token {
+                        Tokens::String(st) => st,
+                        Tokens::Synthetic(_) => panic!("Synthetic operand?"),
+                    };
                     return Err(DoEvalResult::EvalError {
                         context: eval_context.context,
                         error: EvalError::Operand {
                             op: inner,
                             tok: token,
-                        }
+                        },
                     });
                 };
 
@@ -60,7 +67,13 @@ pub fn eval<'a>(tokens: &mut Vec<StringToken<'a, 'a>>, eval_context: EvaluationC
                 let result = match op {
                     Functions::Builtin(b) => (b.doit)(&args_),
                     Functions::User(f) => {
-                        f.apply(&args_, &eval_context)?
+                        let x: Result<f64, DoEvalResult<'funcs, 'funcs>> =
+                            f.apply(&args_, &eval_context);
+                        x?
+                        // match x {
+                        //     Ok(x) => x,
+                        //     Err(e) => return Err(e),
+                        // }
                     }
                 };
 
