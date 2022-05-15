@@ -1,5 +1,6 @@
 use colored::{ColoredString, Colorize};
 use itertools::Itertools;
+use lazy_static::__Deref;
 use rustmatheval::DoEvalResult;
 use std::borrow::Borrow;
 use std::cell::{Cell, RefCell, UnsafeCell};
@@ -48,7 +49,7 @@ pub fn assign_var_command<'a>(
     }
 
     // Trim again to remove whitespace between end of variable name and = sign
-    let user_repr: String = trimmed_left[1..].to_string();
+    let user_repr = &trimmed_left[1..];
 
     // let _vars = vars.iter().map(Rc::clone).collect_vec();
 
@@ -91,13 +92,6 @@ pub fn assign_var_command<'a>(
             format!("{:.3}", result).blue()
         );
 
-        let var = Variable {
-            repr: user_repr,
-            value: Cell::new(*result),
-        };
-
-        let var = Rc::new(var);
-
         // Safety: This is a non-lexical lifetime that Rust
         // can't understand yet. By this point in the code
         // vars is no longer being borrowed
@@ -109,7 +103,7 @@ pub fn assign_var_command<'a>(
             &mut *((vars as *const _) as *mut _)
         };
 
-        assign_var(var, vars);
+        assign_var(user_repr, *result, vars);
 
         Ok(conf_string)
     } else {
@@ -117,9 +111,18 @@ pub fn assign_var_command<'a>(
     }
 }
 
-pub fn assign_var(var: Rc<Variable>, vars: &mut Vec<Rc<Variable>>) {
-    let repr = var.repr.clone();
-    let cmp = |v: &Rc<Variable>| repr.cmp(&v.repr);
-
-    insert_or_swap_sort(vars, var, cmp);
+pub fn assign_var(name: &str, value: f64, vars: &mut Vec<Rc<Variable>>) {
+    match vars.binary_search_by(|v| v.repr.deref().cmp(name)) {
+        Ok(idx) => {
+            vars[idx].value.set(value);
+        },
+        Err(idx) => {
+            let var = Variable {
+                repr: name.to_string(),
+                value: Cell::new(value),
+            };
+            let var = Rc::new(var);
+            vars.insert(idx, var);
+        },
+    }
 }
