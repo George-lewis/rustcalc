@@ -1,10 +1,4 @@
-use super::{functions::Function, operators::OperatorType, tokens::StringToken};
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum InnerFunction<'a> {
-    Builtin(OperatorType),
-    User(&'a Function),
-}
+use super::{functions::{Function, Functions}, operators::OperatorType, tokens::StringToken};
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ErrorContext<'funcs> {
@@ -34,7 +28,7 @@ pub enum RpnError {
 pub enum EvalError<'str, 'funcs> {
     EmptyStack,
     Operand {
-        op: InnerFunction<'funcs>,
+        op: Functions<'funcs>,
         tok: StringToken<'str, 'funcs>,
     },
 }

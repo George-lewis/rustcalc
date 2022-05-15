@@ -5,7 +5,7 @@ use crate::{
     DoEvalResult,
 };
 
-use super::model::{errors::InnerFunction, functions::Functions, tokens::Token};
+use super::model::{functions::Functions, tokens::Token};
 
 // enum EvalToken {
 //     StringToken(StringToken),
@@ -36,19 +36,18 @@ pub fn eval<'vars, 'funcs>(
                 let start = if let Some(x) = args.len().checked_sub(op.arity()) {
                     x
                 } else {
-                    let inner: InnerFunction = match op {
-                        Functions::Builtin(b) => InnerFunction::Builtin(b.kind),
-                        Functions::User(func) => InnerFunction::User(func),
-                    };
+                    let op = *op;
                     let token = match token {
                         Tokens::String(st) => st,
-                        Tokens::Synthetic(_) => panic!("Synthetic operand?"),
+                        Tokens::Synthetic(_) => {
+                            panic!("Synthetic operator [{:?}] is missing arguments?: args: {:?} in context [{:?}] with stack: {:?}", op, &args, eval_context.context, &stack);
+                        },
                     };
                     return DoEvalResult::EvalError {
                         tokens,
                         context: eval_context.context,
                         error: EvalError::Operand {
-                            op: inner,
+                            op,
                             tok: token,
                         },
                     };

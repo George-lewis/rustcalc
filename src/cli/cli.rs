@@ -12,7 +12,8 @@ use super::lib::model::{
 use super::lib::utils;
 
 use colored::Colorize;
-use rustmatheval::model::errors::{EvalError, InnerFunction, RpnError};
+use rustmatheval::model::errors::{EvalError, RpnError};
+use rustmatheval::model::functions::Functions;
 use rustmatheval::model::tokens::{PartialToken, StringTokenInterface, Tokens, StringToken};
 use rustmatheval::DoEvalResult;
 use utils::Pos;
@@ -129,6 +130,8 @@ fn highlight_parsing_error(input_len: usize, tokens: &[PartialToken]) -> String 
 
     line.push_str(&"-".repeat(input_len - last).blue().format());
 
+    dbg!(tokens);
+
     let styled = stringify(tokens);
     format!("Failed to parse some tokens.\n{styled}\n{line}")
 }
@@ -160,13 +163,13 @@ pub fn handle_library_errors(result: &DoEvalResult, input: &str) -> Cow<'static,
                 EvalError::EmptyStack => "Couldn't evaluate. Stack was empty?".into(),
                 EvalError::Operand { op, tok } => {
                     let msg = match op {
-                        InnerFunction::Builtin(op) => {
+                        Functions::Builtin(op) => {
                             format!(
                                 "Built in operator [{}] requires an operand.",
-                                format!("{op:?}").green()
+                                format!("{:?}", op.kind).green()
                             )
                         }
-                        InnerFunction::User(func) => {
+                        Functions::User(func) => {
                             format!(
                                 "User function [{}] requires [{}] arguments.",
                                 format_func_with_args(func),
