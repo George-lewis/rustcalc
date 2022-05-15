@@ -27,6 +27,15 @@ pub struct StringTokenInterface<'repr, Inner> {
     pub idx: usize,
 }
 
+impl<T> StringTokenInterface<'_, T> {
+    pub const fn stride(&self) -> usize {
+        self.repr.len()
+    }
+    pub const fn end(&self) -> usize {
+        self.idx + self.stride()
+    }
+}
+
 pub type PartialToken<'repr, 'funcs> =
     StringTokenInterface<'repr, Result<Token<'funcs>, ParserError>>;
 pub type StringToken<'repr, 'funcs> = StringTokenInterface<'repr, Token<'funcs>>;
