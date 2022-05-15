@@ -1,4 +1,4 @@
-use std::cell::{Cell, RefCell};
+use std::cell::Cell;
 use std::rc::Rc;
 
 use crate::funcs::{assign_func_command, format_funcs};
@@ -9,7 +9,6 @@ use super::lib::model::{
 use super::lib::utils;
 
 use colored::Colorize;
-use rustmatheval::model::errors::InnerFunction;
 use rustmatheval::DoEvalResult;
 use utils::Pos;
 
@@ -18,8 +17,6 @@ use super::error::Error;
 use super::vars::{assign_var, assign_var_command, format_vars};
 
 use super::lib::doeval;
-
-use super::funcs::format_func_name;
 
 use super::stringify::stringify;
 
@@ -186,7 +183,6 @@ pub fn handle_library_errors(result: &DoEvalResult, input: &str) -> String {
     // } else {
     //     msg
     // }
-    "".to_string()
 }
 
 /// Produces an error message to show to the user
