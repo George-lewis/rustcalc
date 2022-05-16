@@ -13,10 +13,11 @@ use crate::stringify::stringify;
 use super::MyHelper;
 
 impl Highlighter for MyHelper<'_> {
-    fn highlight<'l>(&self, line: &'l str, _pos: usize) -> std::borrow::Cow<'l, str> {
+    fn highlight<'l>(&self, line: &'l str, _pos: usize) -> Cow<'l, str> {
         if line.trim().is_empty() {
             return Cow::Borrowed(line);
         }
+
         let funcs = &self.funcs.borrow();
         let vars = &self.vars.borrow();
         let context = EvaluationContext {

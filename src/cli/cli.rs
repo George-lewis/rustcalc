@@ -123,8 +123,6 @@ fn highlight_parsing_error(input_len: usize, tokens: &[PartialToken]) -> String 
 
     line.push_str(&"-".repeat(input_len - last).blue().format());
 
-    dbg!(tokens);
-
     let styled = stringify(tokens);
     format!("Failed to parse some tokens.\n{styled}\n{line}")
 }

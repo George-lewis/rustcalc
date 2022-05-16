@@ -60,7 +60,14 @@ impl StringableToken for Token<'_> {
 
 impl StringableToken for StringToken<'_, '_> {
     fn spaces(&self, other: &Self) -> usize {
-        other.idx - (self.idx + self.repr.chars().count())
+        // If this token has a prefix, the idx was adjusted during tokenization
+        let sub = if other.inner.has_prefix() {
+            1
+        } else {
+            0
+        };
+
+        other.idx - (self.idx + self.repr.chars().count()) - sub
     }
 
     fn token(&self) -> Option<&Token<'_>> {
@@ -78,7 +85,18 @@ impl StringableToken for StringToken<'_, '_> {
 
 impl StringableToken for PartialToken<'_, '_> {
     fn spaces(&self, other: &Self) -> usize {
-        other.idx - (self.idx + self.repr.chars().count())
+        // We will be able to unnest this in the future and make it nicer
+        let sub = if let Ok(tok) = &other.inner {
+            if tok.has_prefix() {
+                1
+            } else {
+                0
+            }
+        } else {
+            0
+        };
+
+        other.idx - (self.idx + self.repr.chars().count()) - sub
     }
 
     fn token(&self) -> Option<&Token<'_>> {

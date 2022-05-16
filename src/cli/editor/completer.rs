@@ -49,7 +49,6 @@ impl Completer for MyHelper<'_> {
     }
 
     fn update(&self, line: &mut LineBuffer, start: usize, elected: &str) {
-        println!("complete with cand [{elected}] starting at [{start}]");
         let end = line.pos();
         line.replace(start..end, elected);
     }
