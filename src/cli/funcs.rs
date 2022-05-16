@@ -21,12 +21,7 @@ fn stringify_func_code(func: &Function, funcs: &[Function], vars: &[Rc<Variable>
     let args = [0_f64].repeat(func.arity());
 
     // Creates args and merges with variables in-scope (`vars`)
-    let args = func.create_arguments(&args);
-
-    let vars = args
-        .into_iter()
-        .chain(vars.iter().map(Rc::clone))
-        .collect_vec();
+    let vars = func.create_arguments(&args, vars);
 
     // Depth and context also don't matter here
     let context = EvaluationContext {
