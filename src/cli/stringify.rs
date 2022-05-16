@@ -7,8 +7,8 @@ use rustmatheval::model::{
     tokens::{PartialToken, StringToken, Tokens},
 };
 
-use crate::{funcs::format_func_name, vars::format_var_name};
 use crate::Cow;
+use crate::{funcs::format_func_name, vars::format_var_name};
 
 use super::lib::model::{
     operators::{Associativity, OperatorType},

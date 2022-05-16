@@ -1,5 +1,3 @@
-
-
 use std::rc::Rc;
 
 use crate::funcs::{assign_func_command, format_func_name, format_func_with_args, format_funcs};

@@ -14,15 +14,15 @@ use std::{cell::RefCell, env, process, rc::Rc};
 
 pub use beef::lean::Cow;
 
+use cli::{handle_errors, handle_input, handle_library_errors};
+use config::HISTORY_FILE;
+use editor::editor;
 use lib::{
     doeval,
     model::{functions::Function, variables::Variable, EvaluationContext},
     DoEvalResult,
 };
 pub use rustmatheval as lib;
-use config::HISTORY_FILE;
-use cli::{handle_errors, handle_library_errors, handle_input};
-use editor::editor;
 
 pub fn main() -> ! {
     // One-shot mode
