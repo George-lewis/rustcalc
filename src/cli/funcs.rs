@@ -8,16 +8,12 @@ use rustmatheval::{
         variables::{self, Variable},
         EvaluationContext,
     },
-    tokenize,
+    tokenize, tokenize_and_transform,
 };
 
 use colored::{ColoredString, Colorize};
 
 use crate::{error::Error, stringify::stringify, utils::insert_or_swap_sort};
-
-fn color_arg(arg: impl AsRef<str>) -> ColoredString {
-    arg.as_ref().yellow()
-}
 
 fn stringify_func_code(func: &Function, funcs: &[Function], vars: &[Rc<Variable>]) -> String {
     // We don't care about the actual value of the arguments here
@@ -43,8 +39,12 @@ fn stringify_func_code(func: &Function, funcs: &[Function], vars: &[Rc<Variable>
     // If the function code references variables or other functions
     // That don't exist right now, the tokenize will fail
     // So we just fall back to a copy of the function's code
-    let tokens = tokenize(&func.code, &context).expect("Function code is invalid?");
+    let tokens = tokenize_and_transform(&func.code, &context).expect("Function code is invalid?");
     stringify(&tokens)
+}
+
+pub fn color_arg(arg: impl AsRef<str>) -> ColoredString {
+    arg.as_ref().yellow()
 }
 
 pub fn format_func_name(name: &str) -> ColoredString {

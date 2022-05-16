@@ -48,6 +48,24 @@ pub enum DoEvalResult<'str, 'funcs> {
     },
 }
 
+pub fn tokenize_and_transform<'vars, 'funcs>(
+    string: &'funcs str,
+    context: &EvaluationContext<'vars, 'funcs>,
+) -> Result<Vec<Tokens<'funcs, 'funcs>>, Vec<PartialToken<'funcs, 'funcs>>> {
+    // Tokenize input
+    let string_tokens = tokenize(string, &context)?;
+
+    // We're about to apply transformations, so we need to
+    // Change to [Tokens]
+    let mut tokens = string_tokens.into_iter().map(Tokens::String).collect_vec();
+
+    // Apply transformations
+    transform::implicit_parens(&mut tokens);
+    transform::implicit_coeffs(&mut tokens);
+
+    Ok(tokens)
+}
+
 /// Evaluate a string containing a mathematical expression
 ///
 /// * `string` - The string
@@ -70,24 +88,15 @@ pub fn doeval<'funcs, 'var>(
         };
     }
 
-    // Tokenize input
-    let string_tokens = match tokenize(string, &context) {
-        Ok(string_tokens) => string_tokens,
-        Err(partial_tokens) => {
+    let tokens = match tokenize_and_transform(string, &context) {
+        Ok(tokens) => tokens,
+        Err(partial_tokens) =>  {
             return DoEvalResult::ParsingError {
                 context: context.context,
-                partial_tokens,
-            };
+                partial_tokens
+            }
         }
     };
-
-    // We're about to apply transformations, so we need to
-    // Change to [Tokens]
-    let mut tokens = string_tokens.into_iter().map(Tokens::String).collect_vec();
-
-    // Apply transformations
-    transform::implicit_parens(&mut tokens);
-    transform::implicit_coeffs(&mut tokens);
 
     if let Some((tok, op)) = verify::verify_fn_args(&tokens) {
         let stok = match tok {
