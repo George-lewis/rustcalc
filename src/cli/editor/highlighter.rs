@@ -7,7 +7,6 @@ use rustmatheval::{
     model::{
         errors::ErrorContext,
         functions::Function,
-        tokens::StringTokenInterface,
         variables::{self, Variable},
         EvaluationContext,
     },
