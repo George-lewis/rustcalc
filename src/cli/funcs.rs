@@ -13,7 +13,7 @@ use rustmatheval::{
 
 use colored::{ColoredString, Colorize};
 
-use crate::{error::Error, stringify::stringify, utils::insert_or_swap_sort};
+use crate::{error::Error, stringify::{stringify, StringTokenOpts, stringify_opts}, utils::insert_or_swap_sort};
 
 fn stringify_func_code(func: &Function, funcs: &[Function], vars: &[Rc<Variable>]) -> String {
     // We don't care about the actual value of the arguments here
@@ -35,7 +35,9 @@ fn stringify_func_code(func: &Function, funcs: &[Function], vars: &[Rc<Variable>
     // That don't exist right now, the tokenize will fail
     // So we just fall back to a copy of the function's code
     let tokens = tokenize_and_transform(&func.code, &context).expect("Function code is invalid?");
-    stringify(&tokens)
+    stringify_opts(&tokens, StringTokenOpts {
+        ideal_spacing: true
+    })
 }
 
 pub fn color_arg(arg: impl AsRef<str>) -> ColoredString {
