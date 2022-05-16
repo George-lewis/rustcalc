@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::funcs::{assign_func_command, format_func_name, format_func_with_args, format_funcs};
-use crate::stringify::stringify_off;
+use crate::stringify::{stringify_off, stringify_opts, StringTokenOpts};
 use crate::utils::Format;
 use crate::Cow;
 
@@ -70,7 +70,9 @@ pub fn handle_input<'a>(
             result: result_,
         } = &result
         {
-            let formatted = stringify(tokens);
+            let formatted = stringify_opts(tokens, StringTokenOpts {
+                ideal_spacing: true,
+            });
             let eval_string = format!("[ {} ] => {}", formatted, format!("{:.3}", result_).blue());
 
             // Set ans to new value

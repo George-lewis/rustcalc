@@ -20,23 +20,39 @@ pub fn stringify<FormatToken>(tokens: &[FormatToken]) -> String
 where
     FormatToken: StringableToken,
 {
-    _stringify(tokens)
+    _stringify(tokens, FormatToken::Options::default())
+}
+
+pub fn stringify_opts<FormatToken>(tokens: &[FormatToken], opts: FormatToken::Options) -> String
+where
+    FormatToken: StringableToken,
+{
+    _stringify(tokens, opts)
 }
 
 #[allow(clippy::module_name_repetitions)]
 pub fn stringify_off(tokens: &[Tokens]) -> (String, Vec<Offset>) {
-    _stringify_off(tokens)
+    _stringify_off(tokens, StringTokenOpts::default())
+}
+
+#[allow(clippy::module_name_repetitions)]
+pub fn stringify_off_opts(tokens: &[Tokens], opts: StringTokenOpts) -> (String, Vec<Offset>) {
+    _stringify_off(tokens, opts)
 }
 
 pub trait StringableToken {
-    fn spaces(&self, other: &Self) -> usize;
+    type Options: Default + Copy;
+
+    fn spaces(&self, other: &Self, opts: Self::Options) -> usize;
     fn token(&self) -> Option<&Token<'_>>;
     fn colorize(&self) -> (ColoredString, usize);
     fn repr(&self) -> Cow<'_, str>;
 }
 
 impl StringableToken for Token<'_> {
-    fn spaces(&self, other: &Self) -> usize {
+    type Options = ();
+
+    fn spaces(&self, other: &Self, _opts: ()) -> usize {
         if exclude_space(other) {
             0
         } else {
@@ -58,12 +74,46 @@ impl StringableToken for Token<'_> {
     }
 }
 
-impl StringableToken for StringToken<'_, '_> {
-    fn spaces(&self, other: &Self) -> usize {
-        // If this token has a prefix, the idx was adjusted during tokenization
-        let sub = if other.inner.has_prefix() { 1 } else { 0 };
+#[derive(Clone, Copy)]
+pub struct StringTokenOpts {
+    pub ideal_spacing: bool
+}
 
-        other.idx - (self.idx + self.repr.chars().count()) - sub
+#[allow(clippy::derivable_impls)]
+impl Default for StringTokenOpts {
+    fn default() -> Self {
+        Self { ideal_spacing: false }
+    }
+}
+
+impl StringableToken for StringToken<'_, '_> {
+    type Options = StringTokenOpts;
+
+    fn spaces(&self, other: &Self, opts: StringTokenOpts) -> usize {
+        if opts.ideal_spacing {
+            // Determine if this token is a multicharacter representation of a builtin operator (non functional style)
+            let is_multichar_operator = |tok: &StringToken| {
+                if let Token::Operator{ inner } = &self.inner {
+                    if !inner.is_function() && tok.repr.chars().count() != 1 {
+                        return true;
+                    }
+                }
+                false
+            };
+
+            // Assumption: Multicharacter operators needs spaces on all sides
+            // This assumption subsumes the need for additional complexity
+            if is_multichar_operator(self) || is_multichar_operator(other) {
+                return 1;
+            }
+
+            self.inner.spaces(&other.inner, ())
+        } else {
+            // If this token has a prefix, the idx was adjusted during tokenization
+            let sub = if other.inner.has_prefix() { 1 } else { 0 };
+
+            other.idx - (self.idx + self.repr.chars().count()) - sub
+        }
     }
 
     fn token(&self) -> Option<&Token<'_>> {
@@ -80,18 +130,10 @@ impl StringableToken for StringToken<'_, '_> {
 }
 
 impl StringableToken for PartialToken<'_, '_> {
-    fn spaces(&self, other: &Self) -> usize {
-        // We will be able to unnest this in the future and make it nicer
-        let sub = if let Ok(tok) = &other.inner {
-            if tok.has_prefix() {
-                1
-            } else {
-                0
-            }
-        } else {
-            0
-        };
+    type Options = ();
 
+    fn spaces(&self, other: &Self, _opts: ()) -> usize {
+        let sub = other.inner.as_ref().map(|tok| tok.has_prefix() as usize).unwrap_or(0);
         other.idx - (self.idx + self.repr.chars().count()) - sub
     }
 
@@ -114,15 +156,17 @@ impl StringableToken for PartialToken<'_, '_> {
 }
 
 impl StringableToken for Tokens<'_, '_> {
-    fn spaces(&self, other: &Self) -> usize {
+    type Options = StringTokenOpts;
+
+    fn spaces(&self, other: &Self, opts: StringTokenOpts) -> usize {
         match self {
             Tokens::String(st) => match other {
-                Tokens::String(st_) => st.spaces(st_),
-                Tokens::Synthetic(syn) => st.inner.spaces(syn),
+                Tokens::String(st_) => st.spaces(st_, opts),
+                Tokens::Synthetic(syn) => st.inner.spaces(syn, ()),
             },
             Tokens::Synthetic(syn) => {
                 let other = other.token();
-                syn.spaces(other)
+                syn.spaces(other, ())
             }
         }
     }
@@ -243,7 +287,7 @@ pub struct Offset {
     pub new_idx: usize,
 }
 
-fn _stringify_off(tokens: &[Tokens]) -> (String, Vec<Offset>) {
+fn _stringify_off(tokens: &[Tokens], opts: StringTokenOpts) -> (String, Vec<Offset>) {
     type Folded = (String, Vec<Offset>);
     type Mapped = (String, Option<Offset>);
 
@@ -273,10 +317,10 @@ fn _stringify_off(tokens: &[Tokens]) -> (String, Vec<Offset>) {
     };
     let init: Folded = (String::new(), vec![]);
 
-    __stringify(tokens, map, fold, init)
+    __stringify(tokens, map, fold, init, opts)
 }
 
-fn _stringify(tokens: &[impl StringableToken]) -> String {
+fn _stringify<Tok: StringableToken>(tokens: &[Tok], opts: Tok::Options) -> String {
     let map = |_, string, _| string;
     let fold = |mut acc: String, s: String| {
         acc.push_str(&s);
@@ -284,7 +328,7 @@ fn _stringify(tokens: &[impl StringableToken]) -> String {
     };
     let init = String::new();
 
-    __stringify(tokens, map, fold, init)
+    __stringify(tokens, map, fold, init, opts)
 }
 
 fn __stringify<'tok, Tok, Mapper, Mapped, Folder, Folded>(
@@ -292,6 +336,7 @@ fn __stringify<'tok, Tok, Mapper, Mapped, Folder, Folded>(
     mut map: Mapper,
     fold: Folder,
     init: Folded,
+    opts: Tok::Options
 ) -> Folded
 where
     Tok: StringableToken,
@@ -325,7 +370,7 @@ where
 
             // `exclude_space` determines if any conditions prevent there from being a space
             // and then `spaces` determines the number of spaces to insert, if they are permitted
-            let space = cur.spaces(next);
+            let space = cur.spaces(next, opts);
 
             (cur, space)
         })
