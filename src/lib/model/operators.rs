@@ -231,8 +231,8 @@ static OPERATORS: &[Operator] = &[
     },
     Operator {
         kind: OperatorType::Factorial,
-        repr: &["!", "factorial", "fact"],
-        precedence: 4,
+        repr: &["!"],
+        precedence: 5,
         associativity: Associativity::Left,
         arity: 1,
         doit: |arr| factorial(arr[0]),
