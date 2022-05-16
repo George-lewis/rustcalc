@@ -90,10 +90,10 @@ pub fn doeval<'funcs, 'var>(
 
     let tokens = match tokenize_and_transform(string, &context) {
         Ok(tokens) => tokens,
-        Err(partial_tokens) =>  {
+        Err(partial_tokens) => {
             return DoEvalResult::ParsingError {
                 context: context.context,
-                partial_tokens
+                partial_tokens,
             }
         }
     };
