@@ -23,6 +23,7 @@ where
     _stringify(tokens, FormatToken::Options::default())
 }
 
+#[allow(dead_code, clippy::module_name_repetitions)]
 pub fn stringify_opts<FormatToken>(tokens: &[FormatToken], opts: FormatToken::Options) -> String
 where
     FormatToken: StringableToken,
@@ -35,7 +36,7 @@ pub fn stringify_off(tokens: &[Tokens]) -> (String, Vec<Offset>) {
     _stringify_off(tokens, StringTokenOpts::default())
 }
 
-#[allow(clippy::module_name_repetitions)]
+#[allow(dead_code, clippy::module_name_repetitions)]
 pub fn stringify_off_opts(tokens: &[Tokens], opts: StringTokenOpts) -> (String, Vec<Offset>) {
     _stringify_off(tokens, opts)
 }
@@ -131,6 +132,7 @@ impl StringableToken for StringToken<'_, '_> {
     }
 }
 
+#[allow(clippy::cast_lossless)]
 impl StringableToken for PartialToken<'_, '_> {
     type Options = ();
 

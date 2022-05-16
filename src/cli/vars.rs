@@ -28,7 +28,7 @@ fn format_var(var: &Variable) -> String {
 #[allow(clippy::module_name_repetitions)]
 /// Formats a printable string listing all the `Variables` in the given slice `vars`
 pub fn format_vars(vars: &[Rc<Variable>]) -> String {
-    vars.iter().map(|v| format_var(&v)).join("\n")
+    vars.iter().map(Rc::deref).map(format_var).join("\n")
 }
 
 /// Takes the given user `input` and splits it up into a name and value to be assigned or reassigned to a [Variable] in `vars`

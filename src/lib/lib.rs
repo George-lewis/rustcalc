@@ -53,7 +53,7 @@ pub fn tokenize_and_transform<'vars, 'funcs>(
     context: &EvaluationContext<'vars, 'funcs>,
 ) -> Result<Vec<Tokens<'funcs, 'funcs>>, Vec<PartialToken<'funcs, 'funcs>>> {
     // Tokenize input
-    let string_tokens = tokenize(string, &context)?;
+    let string_tokens = tokenize(string, context)?;
 
     // We're about to apply transformations, so we need to
     // Change to [Tokens]
