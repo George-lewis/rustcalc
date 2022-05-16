@@ -17,12 +17,9 @@ use rustmatheval::model::tokens::{PartialToken, StringToken, Tokens};
 use rustmatheval::DoEvalResult;
 
 use super::error::Error;
-
-use super::vars::{assign_var, assign_var_command, format_vars};
-
 use super::lib::doeval;
-
 use super::stringify::stringify;
+use super::vars::{assign_var, assign_var_command, format_vars};
 
 /// Interprets a given user `input` and executes the given command or evaluates the given expression.
 /// * `input` - The user submitted string to be interpreted
