@@ -70,9 +70,12 @@ pub fn handle_input<'a>(
             result: result_,
         } = &result
         {
-            let formatted = stringify_opts(tokens, StringTokenOpts {
-                ideal_spacing: true,
-            });
+            let formatted = stringify_opts(
+                tokens,
+                StringTokenOpts {
+                    ideal_spacing: true,
+                },
+            );
             let eval_string = format!("[ {} ] => {}", formatted, format!("{:.3}", result_).blue());
 
             // Set ans to new value

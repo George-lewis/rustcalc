@@ -76,13 +76,15 @@ impl StringableToken for Token<'_> {
 
 #[derive(Clone, Copy)]
 pub struct StringTokenOpts {
-    pub ideal_spacing: bool
+    pub ideal_spacing: bool,
 }
 
 #[allow(clippy::derivable_impls)]
 impl Default for StringTokenOpts {
     fn default() -> Self {
-        Self { ideal_spacing: false }
+        Self {
+            ideal_spacing: false,
+        }
     }
 }
 
@@ -93,7 +95,7 @@ impl StringableToken for StringToken<'_, '_> {
         if opts.ideal_spacing {
             // Determine if this token is a multicharacter representation of a builtin operator (non functional style)
             let is_multichar_operator = |tok: &StringToken| {
-                if let Token::Operator{ inner } = &self.inner {
+                if let Token::Operator { inner } = &self.inner {
                     if !inner.is_function() && tok.repr.chars().count() != 1 {
                         return true;
                     }
@@ -133,7 +135,11 @@ impl StringableToken for PartialToken<'_, '_> {
     type Options = ();
 
     fn spaces(&self, other: &Self, _opts: ()) -> usize {
-        let sub = other.inner.as_ref().map(|tok| tok.has_prefix() as usize).unwrap_or(0);
+        let sub = other
+            .inner
+            .as_ref()
+            .map(|tok| tok.has_prefix() as usize)
+            .unwrap_or(0);
         other.idx - (self.idx + self.repr.chars().count()) - sub
     }
 
@@ -336,7 +342,7 @@ fn __stringify<'tok, Tok, Mapper, Mapped, Folder, Folded>(
     mut map: Mapper,
     fold: Folder,
     init: Folded,
-    opts: Tok::Options
+    opts: Tok::Options,
 ) -> Folded
 where
     Tok: StringableToken,

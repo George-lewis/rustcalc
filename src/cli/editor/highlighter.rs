@@ -7,8 +7,9 @@ use rustmatheval::{
     model::{
         errors::ErrorContext,
         functions::Function,
+        tokens::StringTokenInterface,
         variables::{self, Variable},
-        EvaluationContext, tokens::StringTokenInterface,
+        EvaluationContext,
     },
     tokenize,
     utils::{self, Pos},
@@ -165,8 +166,8 @@ impl Highlighter for MyHelper<'_> {
                 .find_map(|(idx, c)| not_whitespace(idx, c))
                 .unwrap_or(0);
 
-                let left = left.trim_end();
-                let right = right.trim_start();
+            let left = left.trim_end();
+            let right = right.trim_start();
 
             let (left, right) = if Function::is(line) {
                 format_fun_def(left, right, &context)

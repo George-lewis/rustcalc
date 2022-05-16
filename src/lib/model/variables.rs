@@ -1,5 +1,5 @@
-use std::{borrow::Borrow, rc::Rc};
 use std::cell::Cell;
+use std::{borrow::Borrow, rc::Rc};
 
 use super::representable::{get_by_repr, Searchable};
 
