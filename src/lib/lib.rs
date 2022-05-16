@@ -8,6 +8,7 @@ mod eval;
 mod rpn;
 mod tokenize;
 mod transform;
+mod verify;
 
 pub mod model;
 
@@ -87,6 +88,21 @@ pub fn doeval<'funcs, 'var>(
     // Apply transformations
     transform::implicit_parens(&mut tokens);
     transform::implicit_coeffs(&mut tokens);
+
+    if let Some((tok, func)) = verify::verify_fn_args(&tokens) {
+        let st = match tok {
+            Tokens::String(st) => st,
+            Tokens::Synthetic(_) => unreachable!(),
+        };
+        return DoEvalResult::EvalError {
+            context: context.context,
+            tokens,
+            error: EvalError::Operand {
+                op: func,
+                tok: st,
+            },
+        }
+    }
 
     // Convert in to reverse polish notation to prepare for eval
     let rpn = match rpn(&tokens) {

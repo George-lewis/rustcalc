@@ -8,8 +8,8 @@ use super::model::{
 /// Convert a list of tokens into Reverse-Polish-Notation
 /// * `tokens` - The tokens
 ///
-/// Returns a `Vec` of token in RPN or an `Error::MismatchingParens`. This function will catch
-/// some instances of parentheses-mismatch, but not all.
+/// Returns a `Vec` of token in RPN or an `Error::MismatchingParens`
+/// This function will catch some instances of mismatching parentheses, but not all
 pub fn rpn<'vars, 'funcs>(
     tokens: &[Tokens<'vars, 'funcs>],
 ) -> Result<Vec<Tokens<'vars, 'funcs>>, RpnError> {
@@ -20,7 +20,9 @@ pub fn rpn<'vars, 'funcs>(
         let cloned = token.clone();
         match token.token() {
             Token::Comma => {}
-            Token::Number { .. } | Token::Constant { .. } | Token::Variable { .. } => {
+            Token::Number { .. }
+             | Token::Constant { .. }
+             | Token::Variable { .. } => {
                 output.push(cloned);
             }
             Token::Operator { inner: op1 } => {
@@ -50,6 +52,7 @@ pub fn rpn<'vars, 'funcs>(
                         if operator_stack.is_empty() {
                             return Err(RpnError::MismatchingParens);
                         }
+
                         let tok = operator_stack.pop().unwrap();
                         if let Token::Paren { kind } = tok.token() {
                             if *kind == ParenType::Left {

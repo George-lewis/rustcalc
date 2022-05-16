@@ -4,7 +4,7 @@ use crate::{doeval, DoEvalResult};
 
 use super::{
     errors::ErrorContext,
-    operators::{Associativity, Operator},
+    operators::{Associativity, Operator, FUNCTIONAL_STYLE_OPERATORS},
     representable::{get_by_repr, Searchable},
     variables::Variable,
     EvaluationContext,
@@ -13,9 +13,9 @@ use super::{
 pub const PREFIX: char = '#';
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Functions<'func> {
+pub enum Functions<'funcs> {
     Builtin(&'static Operator),
-    User(&'func Function),
+    User(&'funcs Function),
 }
 
 impl<'inner> Functions<'inner> {
@@ -41,6 +41,13 @@ impl<'inner> Functions<'inner> {
         match self {
             Functions::Builtin(op) => op.associativity,
             Functions::User(_) => Associativity::Right,
+        }
+    }
+
+    pub fn is_function(&self) -> bool {
+        match self {
+            Functions::Builtin(op) => FUNCTIONAL_STYLE_OPERATORS.contains(&op.kind),
+            Functions::User(_) => true,
         }
     }
 }
@@ -108,6 +115,8 @@ impl Function {
             depth: context.depth + 1,
             context: ErrorContext::Scoped(self),
         };
+
+        println!("recursive eval! [{}] with args {:?}", &self.name, args);
 
         doeval(&self.code, context)
     }

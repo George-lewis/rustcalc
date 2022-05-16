@@ -136,6 +136,34 @@ fn highlight_parsing_error(input_len: usize, tokens: &[PartialToken]) -> String 
     format!("Failed to parse some tokens.\n{styled}\n{line}")
 }
 
+fn handle_eval_operand_error(tokens: &[Tokens], tok: &StringToken, op: &Functions) -> String {
+    let arity: Cow<str> = if op.arity() == 1 {
+        "an argument".into()
+    } else { // > 1
+        format!(
+            "[{}] arguments",
+            format!("{}", op.arity()).red()
+        ).into()
+    };
+
+    let msg = match op {
+        Functions::Builtin(op) => {
+            format!(
+                "Built in operator [{}] requires {arity}.",
+                format!("{:?}", op.kind).green()
+            )
+        }
+        Functions::User(func) => {
+            format!(
+                "User function [{}] requires {arity}.",
+                format_func_with_args(func),
+            )
+        }
+    };
+
+    make_highlighted_error(&msg, tokens, tok)
+}
+
 /// Produce an error message for a given [`super::lib::ContextualError`] and input string
 /// * `error` - The error
 /// * `input` - The user's input
@@ -162,22 +190,7 @@ pub fn handle_library_errors(result: &DoEvalResult, input: &str) -> Cow<'static,
             let msg = match error {
                 EvalError::EmptyStack => "Couldn't evaluate. Stack was empty?".into(),
                 EvalError::Operand { op, tok } => {
-                    let msg = match op {
-                        Functions::Builtin(op) => {
-                            format!(
-                                "Built in operator [{}] requires an operand.",
-                                format!("{:?}", op.kind).green()
-                            )
-                        }
-                        Functions::User(func) => {
-                            format!(
-                                "User function [{}] requires [{}] arguments.",
-                                format_func_with_args(func),
-                                format!("{}", func.arity()).red(),
-                            )
-                        }
-                    };
-                    make_highlighted_error(&msg, tokens, tok).into()
+                    handle_eval_operand_error(tokens, tok, op).into()
                 }
             };
             (context, msg)
