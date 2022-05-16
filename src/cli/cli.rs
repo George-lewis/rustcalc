@@ -9,14 +9,12 @@ use crate::utils::Format;
 use super::lib::model::{
     errors::ErrorContext, functions::Function, variables::Variable, EvaluationContext,
 };
-use super::lib::utils;
 
 use colored::Colorize;
 use rustmatheval::model::errors::{EvalError, RpnError};
 use rustmatheval::model::functions::Functions;
-use rustmatheval::model::tokens::{PartialToken, StringToken, StringTokenInterface, Tokens};
+use rustmatheval::model::tokens::{PartialToken, StringToken, Tokens};
 use rustmatheval::DoEvalResult;
-use utils::Pos;
 
 use super::error::Error;
 

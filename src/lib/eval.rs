@@ -1,5 +1,3 @@
-use itertools::Itertools;
-
 use crate::{
     model::{errors::EvalError, tokens::Tokens, EvaluationContext},
     DoEvalResult,

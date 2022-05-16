@@ -1,6 +1,5 @@
 use super::{
     functions::{Function, Functions},
-    operators::OperatorType,
     tokens::StringToken,
 };
 
