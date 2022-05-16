@@ -1,10 +1,15 @@
 // Rustyline forces us
-use std::borrow::Cow;
+use std::{borrow::Cow, rc::Rc};
 
 use colored::Colorize;
 use itertools::Itertools;
 use rustmatheval::{
-    model::{errors::ErrorContext, functions::Function, variables::Variable, EvaluationContext},
+    model::{
+        errors::ErrorContext,
+        functions::Function,
+        variables::{self, Variable},
+        EvaluationContext, tokens::StringTokenInterface,
+    },
     tokenize,
     utils::{self, Pos},
 };
@@ -13,6 +18,7 @@ use rustyline::highlight::Highlighter;
 use crate::{
     funcs::{color_arg, format_func_name},
     stringify::stringify,
+    utils::StripPrefix,
     vars::format_var_name,
 };
 
@@ -64,23 +70,54 @@ fn parse_func_def<'s>(string: &'s str) -> (&str, Vec<Arg>) {
     (&fname[1..], args)
 }
 
-fn _format_func_def(fname: &str, args: Vec<Arg>) -> String {
+fn _format_func_def(fname: &str, args: &[Arg]) -> String {
     let mut fmt = format_func_name(fname).to_string();
 
     for arg in args {
         fmt.push_str(&" ".repeat(arg.offset));
-        fmt.push_str(&color_arg(arg.repr).to_string());
+        let repr = if arg.repr.starts_with(variables::PREFIX) {
+            fmt.push(variables::PREFIX);
+            &arg.repr[1..]
+        } else {
+            arg.repr
+        };
+        fmt.push_str(&color_arg(repr).to_string());
     }
 
     fmt
 }
 
-fn format_fun_def(def: &str) -> String {
+fn format_fun_def(def: &str, right: &str, context: &EvaluationContext) -> (String, String) {
     let (fname, args) = parse_func_def(def);
-    _format_func_def(fname, args)
+
+    let def = _format_func_def(fname, &args);
+
+    let vars = args
+        .iter()
+        .map(|arg| {
+            let repr = arg.repr.strip_pre(variables::PREFIX).to_owned();
+            Variable::rc(repr, 0.0)
+        })
+        .chain(context.vars.iter().map(Rc::clone))
+        .collect_vec();
+
+    let context = EvaluationContext {
+        vars: &vars,
+        funcs: context.funcs,
+        context: ErrorContext::Main,
+        depth: 0,
+    };
+
+    let code = match tokenize(right, &context) {
+        Ok(stoks) => stringify(&stoks),
+        Err(ptoks) => stringify(&ptoks),
+    };
+
+    (def, code)
 }
 
 impl Highlighter for MyHelper<'_> {
+    #[allow(clippy::similar_names)]
     fn highlight<'l>(&self, line: &'l str, _pos: usize) -> Cow<'l, str> {
         if line.trim().is_empty() {
             return Cow::Borrowed(line);
@@ -128,15 +165,16 @@ impl Highlighter for MyHelper<'_> {
                 .find_map(|(idx, c)| not_whitespace(idx, c))
                 .unwrap_or(0);
 
-            let left = if Function::is(line) {
-                format_fun_def(left)
-            } else if Variable::is(line) {
-                format_var_name(&left[1..]).to_string()
-            } else {
-                String::new()
-            };
+                let left = left.trim_end();
+                let right = right.trim_start();
 
-            let right = stringify(right);
+            let (left, right) = if Function::is(line) {
+                format_fun_def(left, right, &context)
+            } else if Variable::is(line) {
+                (format_var_name(&left[1..]).to_string(), stringify(right))
+            } else {
+                Default::default()
+            };
 
             return Cow::Owned(format!(
                 "{left}{}={}{right}",
