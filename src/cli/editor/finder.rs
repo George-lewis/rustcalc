@@ -104,7 +104,7 @@ impl Findable for Function {
             "("
         };
         let formatted = format!("{}{}", &self.name, appendix);
-        Cow::Owned(formatted)
+        Cow::owned(formatted)
     }
 
     fn format(&self) -> String {
@@ -122,7 +122,7 @@ impl Findable for Variable {
     }
 
     fn replacement(&self) -> Cow<'_, str> {
-        Cow::Borrowed(&self.repr)
+        Cow::borrowed(&self.repr)
     }
 
     fn format(&self) -> String {

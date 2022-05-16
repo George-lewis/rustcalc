@@ -1,3 +1,6 @@
+// Rustyline forces us
+use std::borrow::Cow;
+
 use colored::Colorize;
 use rustmatheval::{
     model::{errors::ErrorContext, EvaluationContext},
@@ -6,7 +9,6 @@ use rustmatheval::{
 use rustyline::highlight::Highlighter;
 
 use crate::stringify::stringify;
-use crate::Cow;
 
 use super::MyHelper;
 
@@ -34,7 +36,7 @@ impl Highlighter for MyHelper<'_> {
         &'s self,
         prompt: &'p str,
         _default: bool,
-    ) -> std::borrow::Cow<'b, str> {
+    ) -> Cow<'b, str> {
         Cow::Borrowed(prompt)
     }
 
