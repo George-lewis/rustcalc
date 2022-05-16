@@ -1,4 +1,4 @@
-use std::borrow::{Borrow, Cow};
+use std::borrow::Borrow;
 
 use rustmatheval::model::{
     functions::{Function, PREFIX as FUNCTION_PREFIX},
@@ -7,6 +7,7 @@ use rustmatheval::model::{
 
 use crate::funcs::format_func_with_args;
 use crate::vars::format_var_name;
+use crate::Cow;
 
 /// Find the position of the last instance of `c`
 ///
