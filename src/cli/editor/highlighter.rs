@@ -1,5 +1,5 @@
 // Rustyline forces us
-use std::{borrow::Cow, ops::Index};
+use std::borrow::Cow;
 
 use colored::Colorize;
 use itertools::Itertools;

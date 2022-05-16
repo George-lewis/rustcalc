@@ -8,7 +8,7 @@ use rustmatheval::{
         variables::{self, Variable},
         EvaluationContext,
     },
-    tokenize, tokenize_and_transform,
+    tokenize_and_transform,
 };
 
 use colored::{ColoredString, Colorize};
