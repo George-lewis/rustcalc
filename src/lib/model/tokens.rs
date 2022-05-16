@@ -114,7 +114,12 @@ impl Token<'_> {
     }
 
     pub const fn has_prefix(&self) -> bool {
-        matches!(self, Token::Operator { inner: Functions::User(_) } | Token::Variable { .. })
+        matches!(
+            self,
+            Token::Operator {
+                inner: Functions::User(_)
+            } | Token::Variable { .. }
+        )
     }
 }
 

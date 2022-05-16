@@ -1,4 +1,8 @@
-use super::{functions::{Function, Functions}, operators::OperatorType, tokens::StringToken};
+use super::{
+    functions::{Function, Functions},
+    operators::OperatorType,
+    tokens::StringToken,
+};
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ErrorContext<'funcs> {

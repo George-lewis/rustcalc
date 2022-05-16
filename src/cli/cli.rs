@@ -14,7 +14,7 @@ use super::lib::utils;
 use colored::Colorize;
 use rustmatheval::model::errors::{EvalError, RpnError};
 use rustmatheval::model::functions::Functions;
-use rustmatheval::model::tokens::{PartialToken, StringTokenInterface, Tokens, StringToken};
+use rustmatheval::model::tokens::{PartialToken, StringToken, StringTokenInterface, Tokens};
 use rustmatheval::DoEvalResult;
 use utils::Pos;
 
@@ -98,13 +98,12 @@ pub fn handle_input<'a>(
 ///
 /// ## Panics
 /// Panics if `idx > input_str.chars().count()`
-fn make_highlighted_error(
-    msg: &str,
-    tokens: &[Tokens],
-    tok: &StringToken,
-) -> String {
+fn make_highlighted_error(msg: &str, tokens: &[Tokens], tok: &StringToken) -> String {
     let (styled, off) = stringify_off(tokens);
-    let off = off.iter().find(|off| off.old_idx == tok.idx).expect("New index for string token could not be found.");
+    let off = off
+        .iter()
+        .find(|off| off.old_idx == tok.idx)
+        .expect("New index for string token could not be found.");
     format!(
         "{msg}\n{styled}\n{}{}{}",
         "-".repeat(off.new_idx).blue(),
@@ -139,11 +138,8 @@ fn highlight_parsing_error(input_len: usize, tokens: &[PartialToken]) -> String 
 fn handle_eval_operand_error(tokens: &[Tokens], tok: &StringToken, op: &Functions) -> String {
     let arity: Cow<str> = if op.arity() == 1 {
         "an argument".into()
-    } else { // > 1
-        format!(
-            "[{}] arguments",
-            format!("{}", op.arity()).red()
-        ).into()
+    } else {
+        format!("[{}] arguments", format!("{}", op.arity()).red()).into()
     };
 
     let msg = match op {
@@ -189,9 +185,7 @@ pub fn handle_library_errors(result: &DoEvalResult, input: &str) -> Cow<'static,
         } => {
             let msg = match error {
                 EvalError::EmptyStack => "Couldn't evaluate. Stack was empty?".into(),
-                EvalError::Operand { op, tok } => {
-                    handle_eval_operand_error(tokens, tok, op).into()
-                }
+                EvalError::Operand { op, tok } => handle_eval_operand_error(tokens, tok, op).into(),
             };
             (context, msg)
         }

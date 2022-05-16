@@ -98,7 +98,7 @@ pub fn tokenize<'vars, 'funcs>(
                     });
                     partial_token = None;
                 }
-            },
+            }
             // Some garbage
             (false, None) => {
                 // Start a new partial unknown token if there isn't one already
@@ -108,8 +108,10 @@ pub fn tokenize<'vars, 'funcs>(
 
                 idx += 1;
                 continue;
-            },
-            (true, Some(_)) => unreachable!("A character cannot be whitespace and a valid kind at the same time"),
+            }
+            (true, Some(_)) => {
+                unreachable!("A character cannot be whitespace and a valid kind at the same time")
+            }
         }
 
         if whitespace {

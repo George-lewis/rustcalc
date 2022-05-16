@@ -89,19 +89,16 @@ pub fn doeval<'funcs, 'var>(
     transform::implicit_parens(&mut tokens);
     transform::implicit_coeffs(&mut tokens);
 
-    if let Some((tok, func)) = verify::verify_fn_args(&tokens) {
-        let st = match tok {
-            Tokens::String(st) => st,
+    if let Some((tok, op)) = verify::verify_fn_args(&tokens) {
+        let stok = match tok {
+            Tokens::String(stok) => stok,
             Tokens::Synthetic(_) => unreachable!(),
         };
         return DoEvalResult::EvalError {
             context: context.context,
             tokens,
-            error: EvalError::Operand {
-                op: func,
-                tok: st,
-            },
-        }
+            error: EvalError::Operand { op, tok: stok },
+        };
     }
 
     // Convert in to reverse polish notation to prepare for eval

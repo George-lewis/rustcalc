@@ -20,9 +20,7 @@ pub fn rpn<'vars, 'funcs>(
         let cloned = token.clone();
         match token.token() {
             Token::Comma => {}
-            Token::Number { .. }
-             | Token::Constant { .. }
-             | Token::Variable { .. } => {
+            Token::Number { .. } | Token::Constant { .. } | Token::Variable { .. } => {
                 output.push(cloned);
             }
             Token::Operator { inner: op1 } => {

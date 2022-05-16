@@ -1,7 +1,4 @@
-use std::{
-    borrow::Cow,
-    iter,
-};
+use std::{borrow::Cow, iter};
 
 use colored::{ColoredString, Colorize};
 use rustmatheval::model::{
@@ -52,10 +49,7 @@ impl StringableToken for Token<'_> {
 
     fn colorize(&self) -> (ColoredString, usize) {
         let repr = ideal_repr(self);
-        (
-            color_cli(&repr, self),
-            repr.chars().count()
-        )
+        (color_cli(&repr, self), repr.chars().count())
     }
 
     fn repr(&self) -> Cow<'_, str> {
@@ -73,10 +67,7 @@ impl StringableToken for StringToken<'_, '_> {
     }
 
     fn colorize(&self) -> (ColoredString, usize) {
-        (
-            color_cli(self.repr, &self.inner),
-            self.repr.chars().count()
-        )
+        (color_cli(self.repr, &self.inner), self.repr.chars().count())
     }
 
     fn repr(&self) -> Cow<'_, str> {
@@ -244,11 +235,7 @@ fn _stringify_off(tokens: &[Tokens]) -> (String, Vec<Offset>) {
     let mut acc = 0;
     let map = |tok: &Tokens, fmt: String, stride| {
         let (skip, off) = if let Tokens::String(st) = tok {
-            let prefix_skip = if st.inner.has_prefix() {
-                1
-            } else {
-                0
-            };
+            let prefix_skip = if st.inner.has_prefix() { 1 } else { 0 };
             let off = Offset {
                 old_idx: st.idx,
                 new_idx: acc + prefix_skip,
@@ -261,7 +248,7 @@ fn _stringify_off(tokens: &[Tokens]) -> (String, Vec<Offset>) {
         acc += stride + skip;
         (fmt, off)
     };
-    
+
     let fold = |(mut astr, mut avec): Folded, (fmt, off): Mapped| {
         astr.push_str(&fmt);
         if let Some(off) = off {

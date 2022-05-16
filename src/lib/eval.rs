@@ -41,15 +41,12 @@ pub fn eval<'vars, 'funcs>(
                         Tokens::String(st) => st,
                         Tokens::Synthetic(_) => {
                             panic!("Synthetic operator [{:?}] is missing arguments?: args: {:?} in context [{:?}] with stack: {:?}", op, &args, eval_context.context, &stack);
-                        },
+                        }
                     };
                     return DoEvalResult::EvalError {
                         tokens,
                         context: eval_context.context,
-                        error: EvalError::Operand {
-                            op,
-                            tok: token,
-                        },
+                        error: EvalError::Operand { op, tok: token },
                     };
                 };
 
