@@ -48,3 +48,13 @@ impl Format for ColoredString {
         format!("{}", self)
     }
 }
+
+pub trait StripPrefix {
+    fn strip_pre(&self, prefix: char) -> &Self;
+}
+
+impl StripPrefix for str {
+    fn strip_pre(&self, prefix: char) -> &Self {
+        self.strip_prefix(prefix).unwrap_or(self)
+    }
+}
