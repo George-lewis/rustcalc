@@ -116,8 +116,6 @@ impl Function {
             context: ErrorContext::Scoped(self),
         };
 
-        println!("recursive eval! [{}] with args {:?}", &self.name, args);
-
         doeval(&self.code, context)
     }
 }
