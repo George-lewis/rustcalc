@@ -39,7 +39,7 @@ impl Highlighter for MyHelper<'_> {
         Cow::Borrowed(prompt)
     }
 
-    fn highlight_hint<'h>(&self, hint: &'h str) -> std::borrow::Cow<'h, str> {
+    fn highlight_hint<'h>(&self, hint: &'h str) -> Cow<'h, str> {
         Cow::Owned(hint.black().on_white().to_string())
     }
 
@@ -47,7 +47,7 @@ impl Highlighter for MyHelper<'_> {
         &self,
         candidate: &'c str,
         _completion: rustyline::CompletionType,
-    ) -> std::borrow::Cow<'c, str> {
+    ) -> Cow<'c, str> {
         // We don't highlight the candidate because the completer formats with color
         Cow::Borrowed(candidate)
     }

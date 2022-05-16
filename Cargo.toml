@@ -33,3 +33,6 @@ itertools = "0.10.0"
 
 # Used for configuration
 lazy_static = "1.4.0"
+
+# Fast Cow
+beef = "0.5.1"

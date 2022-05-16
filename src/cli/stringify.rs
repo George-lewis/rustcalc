@@ -1,4 +1,4 @@
-use std::{borrow::Cow, iter};
+use std::iter;
 
 use colored::{ColoredString, Colorize};
 use rustmatheval::model::{
@@ -8,6 +8,7 @@ use rustmatheval::model::{
 };
 
 use crate::{funcs::format_func_name, vars::format_var_name};
+use crate::Cow;
 
 use super::lib::model::{
     operators::{Associativity, OperatorType},
@@ -53,7 +54,7 @@ impl StringableToken for Token<'_> {
     }
 
     fn repr(&self) -> Cow<'_, str> {
-        Cow::Owned(ideal_repr(self))
+        Cow::owned(ideal_repr(self))
     }
 }
 
@@ -71,7 +72,7 @@ impl StringableToken for StringToken<'_, '_> {
     }
 
     fn repr(&self) -> Cow<'_, str> {
-        Cow::Borrowed(self.repr)
+        Cow::borrowed(self.repr)
     }
 }
 
@@ -94,7 +95,7 @@ impl StringableToken for PartialToken<'_, '_> {
     }
 
     fn repr(&self) -> Cow<'_, str> {
-        Cow::Borrowed(self.repr)
+        Cow::borrowed(self.repr)
     }
 }
 
@@ -128,8 +129,8 @@ impl StringableToken for Tokens<'_, '_> {
 
     fn repr(&self) -> Cow<'_, str> {
         match self {
-            Tokens::String(st) => Cow::Borrowed(st.repr),
-            Tokens::Synthetic(t) => Cow::Owned(ideal_repr(t)),
+            Tokens::String(st) => Cow::borrowed(st.repr),
+            Tokens::Synthetic(t) => Cow::owned(ideal_repr(t)),
         }
     }
 }
