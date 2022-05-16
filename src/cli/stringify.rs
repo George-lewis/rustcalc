@@ -61,11 +61,7 @@ impl StringableToken for Token<'_> {
 impl StringableToken for StringToken<'_, '_> {
     fn spaces(&self, other: &Self) -> usize {
         // If this token has a prefix, the idx was adjusted during tokenization
-        let sub = if other.inner.has_prefix() {
-            1
-        } else {
-            0
-        };
+        let sub = if other.inner.has_prefix() { 1 } else { 0 };
 
         other.idx - (self.idx + self.repr.chars().count()) - sub
     }
@@ -302,6 +298,10 @@ where
     Mapper: FnMut(&'tok Tok, String, usize) -> Mapped,
     Folder: Fn(Folded, Mapped) -> Folded,
 {
+    if tokens.is_empty() {
+        return init;
+    }
+
     // The last element of the slice
     // `std::slice::windows` does not include the last element as its own window
     // So we must add it ourselves
