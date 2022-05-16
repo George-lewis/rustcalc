@@ -82,7 +82,7 @@ impl Function {
     }
 
     /// Creates the argument variables for calling this function
-    pub fn create_arguments(&self, args: &[f64]) -> Vec<Rc<Variable>> {
+    pub fn create_arguments(&self, args: &[f64], captured: &[Rc<Variable>]) -> Vec<Rc<Variable>> {
         // Create the arguments for the function
         let args = self
             .args
@@ -94,7 +94,7 @@ impl Function {
             })
             .map(Rc::new);
 
-        args.collect()
+        args.chain(captured.iter().map(Rc::clone)).collect()
     }
 
     /// Apply this function to a set of arguments
@@ -106,8 +106,7 @@ impl Function {
         args: &[f64],
         context: &EvaluationContext<'str, 'funcs>,
     ) -> DoEvalResult<'funcs, 'funcs> {
-        let mut vars = self.create_arguments(args);
-        vars.extend(context.vars.iter().map(Rc::clone));
+        let vars = self.create_arguments(args, context.vars);
 
         let context = EvaluationContext {
             vars: &vars,
