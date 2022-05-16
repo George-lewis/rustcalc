@@ -1,4 +1,4 @@
-use std::borrow::Borrow;
+use std::{borrow::Borrow, rc::Rc};
 use std::cell::Cell;
 
 use super::representable::{get_by_repr, Searchable};
@@ -38,6 +38,15 @@ impl Variable {
     /// Returns whether or not the given representation could reference a valid variable
     pub fn is(repr: &str) -> bool {
         repr.starts_with(PREFIX)
+    }
+
+    #[inline]
+    pub fn rc<S: Into<String>>(repr: S, value: f64) -> Rc<Self> {
+        let var = Self {
+            repr: repr.into(),
+            value: Cell::new(value),
+        };
+        Rc::new(var)
     }
 }
 
