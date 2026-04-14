@@ -23,7 +23,7 @@ colored = "2"
 dirs = "3.0.2"
 
 # For random numbers
-rand = "0.8.3"
+rand = "0.9.3"
 
 # For line editing, history, etc
 rustyline = "8.0.0"
